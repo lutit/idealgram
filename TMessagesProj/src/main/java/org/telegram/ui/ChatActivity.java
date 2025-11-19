@@ -7065,7 +7065,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
         contentView.addView(chatListView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
-        if (false/* && getDialogId() != getUserConfig().getClientUserId()*/) { // Nagram X: disable this stupid feature
+        if (false/* && getDialogId() != getUserConfig().getClientUserId()*/) { // IdealGram: disable this stupid feature
             selectionReactionsOverlay = new ChatSelectionReactionMenuOverlay(this, context);
             contentView.addView(selectionReactionsOverlay, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         }

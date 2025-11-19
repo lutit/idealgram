@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="NekoSettings">Ustawienia Nagram X</string>
+    <string name="NekoSettings">Ustawienia IdealGram</string>
     <string name="IPv6">Preferuj IPv6</string>
     <string name="MessageMenu">Wiadomość menu</string>
     <string name="HidePhone">Ukryj numer telefonu</string>

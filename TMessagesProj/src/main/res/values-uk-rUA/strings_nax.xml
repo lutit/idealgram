@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="XChannel">Канал Nagram X</string>
+    <string name="XChannel">Канал IdealGram</string>
     <string name="EnableSaveDeletedMessages">Зберігати видаленні повідомлення</string>
     <string name="DeletedMessage">видалено</string>
     <string name="EnableSaveEditsHistory">Зберегти історію змін</string>

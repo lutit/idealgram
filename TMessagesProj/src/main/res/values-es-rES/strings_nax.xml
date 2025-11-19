@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="XChannel">Canal de Nagram X</string>
+    <string name="XChannel">Canal de IdealGram</string>
     <string name="EnableSaveDeletedMessages">Guardar Mensajes Borrados</string>
     <string name="DeletedMessage">eliminado</string>
     <string name="EnableSaveEditsHistory">Guardar Historial de Edición</string>
