@@ -15,7 +15,7 @@ jobs:
       CCACHE_HARDLINK: "true"
       CCACHE_NOHASHDIR: "true"
       CCACHE_MAXSIZE: "10G"
-      NATIVE_TARGET: "x64"
+      NATIVE_TARGET: "x86_64"
 
     steps:
       - name: Checkout
