@@ -1,13 +1,6 @@
 name: Canary build
 
 on:
-  push:
-    branches:
-      - canary
-    paths-ignore:
-      - '**.md'
-      - '.github/**'
-      - '!.github/workflows/canary.yml'
   workflow_dispatch:
     inputs:
       upload:
