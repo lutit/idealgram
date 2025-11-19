@@ -1,21 +1,40 @@
 {
   "project_info": {
-    "project_number": "986979746546",
-    "project_id": "nagram-x",
-    "storage_bucket": "nagram-x.firebasestorage.app"
+    "project_number": "830299386933",
+    "project_id": "qulaygram",
+    "storage_bucket": "qulaygram.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:986979746546:android:f63a8620cbea5950dcc66b",
+        "mobilesdk_app_id": "1:830299386933:android:09e3ddd45ac82103246d7c",
         "android_client_info": {
-          "package_name": "nu.gpu.nagram"
+          "package_name": "au.idealgram.org"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAzMqM8tLgsWIvmEyfZRS95ubX-TXiNB3w"
+          "current_key": "AIzaSyBype3W-6lruck4JnuTTKThann_MQikPPg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:830299386933:android:6e3e65e58edef62f246d7c",
+        "android_client_info": {
+          "package_name": "uz.qulaygram.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBype3W-6lruck4JnuTTKThann_MQikPPg"
         }
       ],
       "services": {
