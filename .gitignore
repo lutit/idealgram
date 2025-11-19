@@ -9,6 +9,7 @@ build/
 obj/
 *.iml
 local.properties
+local.properties.b64
 TMessagesProj/.cxx/
 TMessagesProj/jniLibs/
 TMessagesProj/jniRes/

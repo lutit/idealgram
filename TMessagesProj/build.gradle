@@ -68,13 +68,19 @@ android {
 
     splits {
         abi {
-            enable = true
-            reset()
-            universalApk = false
-            if (!nativeTarget.isBlank()) {
-                include nativeTarget
+            def target = nativeTarget?.trim()
+            if (target && !target.isBlank()) {
+                def t = target.toLowerCase()
+                if (t in ['universal', 'all', '*', 'any']) {
+                    enable = false
+                } else {
+                    enable = true
+                    reset()
+                    universalApk = false
+                    include target
+                }
             } else {
-                include 'arm64-v8a', 'x86_64'
+                enable = false
             }
         }
     }
@@ -178,7 +184,7 @@ android {
 
     applicationVariants.configureEach { variant ->
         variant.outputs.configureEach { output ->
-            String gramName = 'NagramX'
+            String gramName = 'IdealGram'
             String first = String.format('%s-v%s(%s)', gramName, versionName, versionCode)
             String name = outputFileName.replace('TMessagesProj', first)
             name = name.replace('-release', '')

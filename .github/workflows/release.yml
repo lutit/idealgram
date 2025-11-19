@@ -1,4 +1,4 @@
-name: Release Build
+name: Release Build (Multi-Arch)
 
 on:
   workflow_dispatch:
@@ -9,29 +9,38 @@ on:
 
 jobs:
   build:
-    name: Gradle Build
+    name: Build for ${{ matrix.arch }}
     runs-on: ubuntu-latest
-    outputs:
-      build_timestamp: ${{ steps.release_build_step.outputs.build_timestamp }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64-v8a, armeabi-v7a, x86, x86_64]
+
     env:
-      NATIVE_TARGET: "arm64-v8a"
+      NATIVE_TARGET: ${{ matrix.arch }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+
       - name: Set up Android SDK Tools
         uses: android-actions/setup-android@v3
         with:
           packages: "build-tools;36.0.0 ndk;27.2.12479018 platforms;android-36"
+
       - name: Configure Android SDK Path
-        run: |
-          echo "sdk.dir=${ANDROID_HOME}" >> local.properties
+        run: echo "sdk.dir=${ANDROID_HOME}" >> local.properties
+
       - name: Modify Gradle JVM Args
         run: |
           MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
@@ -42,55 +51,55 @@ jobs:
             echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> gradle.properties
           fi
           cat gradle.properties
+
       - name: Enable Optimization
         run: |
           sed -i 's/^-dontoptimize$/#-dontoptimize/' TMessagesProj/proguard-rules.pro
           echo "ProGuard optimization enabled for CI build"
-          echo "Modified proguard-rules.pro:"
           grep -n "dontoptimize" TMessagesProj/proguard-rules.pro || echo "No dontoptimize rules found"
-      - name: Release Build
+
+      - name: Release Build (${{ matrix.arch }})
         id: release_build_step
         run: |
           export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
           export BUILD_TIMESTAMP=$(date +%s)
           echo "build_timestamp=$BUILD_TIMESTAMP" >> "$GITHUB_OUTPUT"
-          ./gradlew TMessagesProj:assembleRelease
 
-          APK=$(find TMessagesProj/build/outputs/apk -name '*arm64-v8a*.apk')
-          APK=$(dirname $APK)
-          echo "APK=$APK" >> $GITHUB_ENV
-      - uses: actions/upload-artifact@v4
+          echo "Building for architecture: $NATIVE_TARGET"
+          ./gradlew TMessagesProj:assembleRelease -PNATIVE_TARGET=$NATIVE_TARGET
+
+          APK_DIR=$(find TMessagesProj/build/outputs/apk -type d -name "release")
+          echo "APK_DIR=$APK_DIR" >> $GITHUB_ENV
+
+      - name: Upload APK (${{ matrix.arch }})
+        uses: actions/upload-artifact@v4
         with:
-          name: Release
-          path: ${{ env.APK }}
-  upload:
-    name: Upload release
-    if: github.event.inputs.upload != 'y' && !contains(github.event.head_commit.message, '[skip upload]')
+          name: Release-${{ matrix.arch }}
+          path: ${{ env.APK_DIR }}
+  merge:
+    name: Merge All APKs
     runs-on: ubuntu-latest
-    needs:
-      - build
+    needs: build
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Download Artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-      - name: Send to Telegram
-        env:
-          APP_ID: ${{ secrets.APP_ID }}
-          APP_HASH: ${{ secrets.APP_HASH }}
-          COMMIT_ID: ${{ github.event.head_commit.id }}
-          COMMIT_URL: ${{ github.event.head_commit.url }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-          BUILD_TIMESTAMP: ${{ needs.build.outputs.build_timestamp }}
+          path: release_artifacts
+
+      - name: List downloaded artifacts
+        run: ls -R release_artifacts
+
+      - name: Create combined archive
         run: |
-          # send apk via telegram bot api
-          export mini64=$(find artifacts -name "*arm64-v8a.apk")
-          echo $mini64
-          python -m pip install -r Tools/scripts/requirements.txt
-          python Tools/scripts/upload.py ${{ secrets.HELPER_BOT_TOKEN }} ${{ secrets.HELPER_BOT_TARGET }} release ${{ secrets.HELPER_BOT_CANARY_TARGET }}
+          mkdir merged
+          cp -r release_artifacts/* merged/
+          cd merged
+          zip -r ../IdealGram_Release_All_ABIs.zip .
+          cd ..
+
+      - name: Upload merged archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: IdealGram_Release_All_ABIs
+          path: IdealGram_Release_All_ABIs.zip
