@@ -1,18 +1,20 @@
-name: Pull request
+name: Release Build IdealGram
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
-    paths-ignore:
-      - '**.md'
-      - '**.xml'
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 'Skip Upload: Set to "y" to skip uploading the build.'
+        required: false
 
 jobs:
   build:
     name: Gradle Build
     runs-on: ubuntu-latest
+    outputs:
+      build_timestamp: ${{ steps.release_build_step.outputs.build_timestamp }}
     env:
-      NATIVE_TARGET: "arm64-v8a"
+      NATIVE_TARGET: "universal"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,17 +42,24 @@ jobs:
             echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> gradle.properties
           fi
           cat gradle.properties
-      - name: Debug Build
+      - name: Enable Optimization
+        run: |
+          sed -i 's/^-dontoptimize$/#-dontoptimize/' TMessagesProj/proguard-rules.pro
+          echo "ProGuard optimization enabled for CI build"
+          echo "Modified proguard-rules.pro:"
+          grep -n "dontoptimize" TMessagesProj/proguard-rules.pro || echo "No dontoptimize rules found"
+      - name: Release Build
+        id: release_build_step
         run: |
           export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
-          export DEBUG_BUILD=true
-          sed -i 's/signingConfig = signingConfigs.release//g' TMessagesProj/build.gradle
-          ./gradlew TMessagesProj:assembleDebug
+          export BUILD_TIMESTAMP=$(date +%s)
+          echo "build_timestamp=$BUILD_TIMESTAMP" >> "$GITHUB_OUTPUT"
+          ./gradlew TMessagesProj:assembleRelease
 
           APK=$(find TMessagesProj/build/outputs/apk -name '*arm64-v8a*.apk')
           APK=$(dirname $APK)
           echo "APK=$APK" >> $GITHUB_ENV
       - uses: actions/upload-artifact@v4
         with:
-          name: Debug
+          name: Release
           path: ${{ env.APK }}

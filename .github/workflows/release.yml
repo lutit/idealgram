@@ -1,13 +1,6 @@
 name: Release Build
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - '.github/**'
-      - '!.github/workflows/release.yml'
   workflow_dispatch:
     inputs:
       upload:
