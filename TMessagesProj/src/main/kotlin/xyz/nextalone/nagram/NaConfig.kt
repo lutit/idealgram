@@ -870,6 +870,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             true
         )
+    val drawerItemBible =
+        addConfig(
+            "DrawerItemBible",
+            ConfigItem.configTypeBool,
+            true
+        )
     val drawerItemSessions =
         addConfig(
             "DrawerItemSessions",
