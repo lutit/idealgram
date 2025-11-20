@@ -138,6 +138,8 @@ import java.util.Stack;
 
 import tw.nekomimi.nekogram.helpers.AyuFilter;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
+import tw.nekomimi.nekogram.helpers.SupporterBadgeDrawable;
+import tw.nekomimi.nekogram.helpers.SupporterBadgeHelper;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.utils.AndroidUtil;
 import xyz.nextalone.nagram.NaConfig;
@@ -198,6 +200,10 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
     public boolean isSavedDialog;
     public boolean isSavedDialogCell;
     public DialogCellTags tags;
+    private boolean hasSupporterBadge;
+    private SupporterBadgeDrawable supporterBadgeDrawable;
+    private final RectF supporterBadgeRect = new RectF();
+    private boolean supporterBadgePressed;
 
     public final StoriesUtilities.AvatarStoryParams storyParams = new StoriesUtilities.AvatarStoryParams(false) {
         @Override
@@ -248,6 +254,8 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             ((ForumBubbleDrawable) messageObject.topicIconDrawable[0]).setColor(topic.icon_color);
         }
         currentDialogId = dialog_id;
+        refreshSupporterBadgeState();
+        refreshSupporterBadgeState();
         lastDialogChangedTime = System.currentTimeMillis();
         message = messageObject;
         isDialogCell = false;
@@ -308,6 +316,43 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
         if (visibleOnScreen) {
             invalidate();
         }
+    }
+
+    private void refreshSupporterBadgeState() {
+        boolean newState = SupporterBadgeHelper.hasBadge(currentDialogId);
+        if (hasSupporterBadge != newState) {
+            hasSupporterBadge = newState;
+            if (hasSupporterBadge && supporterBadgeDrawable == null) {
+                supporterBadgeDrawable = SupporterBadgeHelper.newDrawable();
+            }
+            if (!hasSupporterBadge) {
+                supporterBadgeRect.setEmpty();
+                supporterBadgePressed = false;
+            }
+            invalidate();
+        }
+    }
+
+    private void drawSupporterBadge(Canvas canvas, float nameLeft, float nameTop) {
+        if (!hasSupporterBadge || supporterBadgeDrawable == null || nameLayout == null || nameLayout.getLineCount() == 0) {
+            supporterBadgeRect.setEmpty();
+            return;
+        }
+        float lineWidth = nameLayout.getLineWidth(0);
+        float lineLeft = nameLayout.getLineLeft(0);
+        float badgeWidth = supporterBadgeDrawable.getIntrinsicWidth();
+        float badgeHeight = supporterBadgeDrawable.getIntrinsicHeight();
+        float baseX = nameLeft + nameLayoutTranslateX;
+        float badgeX;
+        if (nameLayout.isRtlCharAt(0)) {
+            badgeX = baseX + lineLeft - AndroidUtilities.dp(6) - badgeWidth;
+        } else {
+            badgeX = baseX + lineLeft + lineWidth + AndroidUtilities.dp(6);
+        }
+        float badgeY = nameTop + (nameLayout.getHeight() - badgeHeight) / 2f;
+        supporterBadgeRect.set(badgeX, badgeY, badgeX + badgeWidth, badgeY + badgeHeight);
+        supporterBadgeDrawable.setBounds((int) supporterBadgeRect.left, (int) supporterBadgeRect.top, (int) supporterBadgeRect.right, (int) supporterBadgeRect.bottom);
+        supporterBadgeDrawable.draw(canvas);
     }
 
     public static class FixedWidthSpan extends ReplacementSpan {
@@ -679,6 +724,7 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             lastStatusDrawableParams = -1;
         }
         currentDialogId = dialog.id;
+        refreshSupporterBadgeState();
         lastDialogChangedTime = System.currentTimeMillis();
         isDialogCell = true;
         if (dialog instanceof TLRPC.TL_dialogFolder) {
@@ -3971,6 +4017,13 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                     canvas.restore();
                     canvas.restore();
                 }
+                if (hasSupporterBadge && supporterBadgeDrawable != null) {
+                    drawSupporterBadge(canvas, nameLeft, nameTop);
+                } else {
+                    supporterBadgeRect.setEmpty();
+                }
+            } else {
+                supporterBadgeRect.setEmpty();
             }
 
             if (timeLayout != null && currentDialogFolderId == 0) {
@@ -5875,6 +5928,29 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
     public boolean onTouchEvent(MotionEvent event) {
         if (rightFragmentOpenedProgress == 0 && !isTopic && !isShareToStoryCell && storyParams.checkOnTouchEvent(event, this)) {
             return true;
+        }
+        if (hasSupporterBadge && !supporterBadgeRect.isEmpty()) {
+            boolean hit = supporterBadgeRect.contains(event.getX(), event.getY());
+            int action = event.getAction();
+            if (action == MotionEvent.ACTION_DOWN && hit) {
+                supporterBadgePressed = true;
+                performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+                return true;
+            } else if (supporterBadgePressed) {
+                if (action == MotionEvent.ACTION_MOVE) {
+                    if (!hit) {
+                        supporterBadgePressed = false;
+                    }
+                    return true;
+                } else if (action == MotionEvent.ACTION_UP) {
+                    supporterBadgePressed = false;
+                    SupporterBadgeHelper.showInfo(getContext());
+                    return true;
+                } else if (action == MotionEvent.ACTION_CANCEL) {
+                    supporterBadgePressed = false;
+                    return true;
+                }
+            }
         }
         if (delegate == null || delegate.canClickButtonInside()) {
             if (openBot) {
