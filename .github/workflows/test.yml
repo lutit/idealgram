@@ -40,8 +40,22 @@ jobs:
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
-          path: ~/.gradle
-          key: gradle-${{ hashFiles('**/*.gradle') }}
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Cache Native Build Artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/native
+            TMessagesProj/.cxx
+          key: native-${{ runner.os }}-${{ env.NATIVE_TARGET }}-${{ hashFiles('TMessagesProj/jni/**', 'TMessagesProj/jni/CMakeLists.txt') }}
+          restore-keys: |
+            native-${{ runner.os }}-${{ env.NATIVE_TARGET }}-
 
       - name: Set up Android SDK Tools
         uses: android-actions/setup-android@v3
