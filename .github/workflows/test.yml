@@ -61,13 +61,13 @@ jobs:
             echo "org.gradle.jvmargs=-Xmx8G -XX:+UseParallelGC -Dfile.encoding=UTF-8" >> gradle.properties
           fi
 
-      - name: Build (Staging)
+      - name: Build (Debug)
         run: |
           export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
-          ./gradlew TMessagesProj:assembleStaging --no-daemon --parallel --configure-on-demand
+          ./gradlew TMessagesProj:assembleDebug --no-daemon --parallel --configure-on-demand
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: staging-apk
-          path: TMessagesProj/build/outputs/apk/
+          name: debug-apk
+          path: TMessagesProj/build/outputs/apk/debug/
