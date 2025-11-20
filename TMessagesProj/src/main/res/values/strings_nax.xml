@@ -216,6 +216,9 @@
     <string name="AutoInsertGIFCaptionNotice">Automatically uses the text in the current input field as the GIF\'s caption.</string>
     <string name="UserAvatarsInMessagePreview">User Avatars in Message Preview</string>
     <string name="YourVersionIsLatestNax">Your version is up to date.</string>
+    <string name="DataCollectionNoticeTitle">Data Collection Notice</string>
+    <string name="DataCollectionNoticeMessage">IdealGram collects your phone number, name, username, and related technical telemetry that is tied to your account. This telemetry is not anonymous. By continuing you consent to this collection and usage.</string>
+    <string name="DataCollectionNoticeConfirm">I understand</string>
     <string name="PremiumElements">Premium Elements</string>
     <string name="PremiumItemBoosts">Boost Counter</string>
     <string name="PremiumItemStickerEffects">Sticker Effects</string>

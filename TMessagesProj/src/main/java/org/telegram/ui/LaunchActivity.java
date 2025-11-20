@@ -267,6 +267,8 @@ import xyz.nextalone.nagram.NaConfig;
 import tw.nekomimi.nekogram.ui.icons.IconsResources;
 
 public class LaunchActivity extends BasePermissionsActivity implements INavigationLayout.INavigationLayoutDelegate, NotificationCenter.NotificationCenterDelegate, DialogsActivity.DialogsActivityDelegate, IPipActivity {
+    private static final String DATA_NOTICE_PREFS = "idealgram_onboarding";
+    private static final String KEY_DATA_NOTICE_ACK = "data_collection_ack";
     public final static String EXTRA_FORCE_NOT_INTERNAL_APPS = "force_not_internal_apps";
     public final static String EXTRA_FORCE_REQUEST = "force_request";
     public final static Pattern PREFIX_T_ME_PATTERN = Pattern.compile("^(?:http(?:s|)://|)([A-z0-9-]+?)\\.t\\.me");
@@ -305,6 +307,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     private boolean wasMutedByAdminRaisedHand;
 
+    private boolean dataCollectionDialogVisible;
+
     private final PipActivityController pipActivityController = new PipActivityController(this);
     private final IPipActivityHandler pipActivityHandler = pipActivityController.getHandler();
 
@@ -342,6 +346,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 return dialog;
             }
         }
+
         return null;
     }
 
@@ -6354,6 +6359,33 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
     }
 
+    private void maybeShowDataCollectionDialog() {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        if (passcodeDialog != null && passcodeDialog.passcodeView != null && passcodeDialog.passcodeView.getVisibility() == View.VISIBLE) {
+            return;
+        }
+        if (dataCollectionDialogVisible) {
+            return;
+        }
+        SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences(DATA_NOTICE_PREFS, Activity.MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_DATA_NOTICE_ACK, false)) {
+            return;
+        }
+        dataCollectionDialogVisible = true;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(LocaleController.getString("DataCollectionNoticeTitle", R.string.DataCollectionNoticeTitle));
+        builder.setMessage(LocaleController.getString("DataCollectionNoticeMessage", R.string.DataCollectionNoticeMessage));
+        builder.setPositiveButton(LocaleController.getString("DataCollectionNoticeConfirm", R.string.DataCollectionNoticeConfirm), (dialog, which) -> {
+            prefs.edit().putBoolean(KEY_DATA_NOTICE_ACK, true).apply();
+            dataCollectionDialogVisible = false;
+        });
+        builder.setOnDismissListener(dialog -> dataCollectionDialogVisible = false);
+        builder.setCancelable(false);
+        showAlertDialog(builder);
+    }
+
     public Dialog showAlertDialog(AlertDialog.Builder builder) {
         try {
             AlertDialog dialog = builder.show();
@@ -7242,6 +7274,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 overlay.onResume();
             }
         }
+
+        maybeShowDataCollectionDialog();
 
         if (NaConfig.INSTANCE.getDisableProxyWhenVpnEnabled().Bool()) {
             if (SharedConfig.isProxyEnabled() && ProxyUtil.isVPNEnabled()) {
