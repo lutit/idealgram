@@ -833,6 +833,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     AppRestartHelper.triggerRebirth(ApplicationLoader.applicationContext, new Intent(ApplicationLoader.applicationContext, LaunchActivity.class));
                 } else if (id == DrawerLayoutAdapter.nkbtnBrowser) {
                     BrowserUtils.openBrowserHome(() -> drawerLayoutContainer.closeDrawer(true));
+                } else if (id == DrawerLayoutAdapter.nkbtnOpenQuran) {
+                    Browser.openUrl(LaunchActivity.this, "https://tanzil.net/");
+                    drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnGhostMode) {
                     var msg = NekoConfig.isGhostModeActive()
                             ? LocaleController.getString(R.string.GhostModeDisabled)

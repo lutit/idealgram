@@ -864,6 +864,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val drawerItemQuran =
+        addConfig(
+            "DrawerItemQuran",
+            ConfigItem.configTypeBool,
+            true
+        )
     val drawerItemSessions =
         addConfig(
             "DrawerItemSessions",
