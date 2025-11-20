@@ -25,6 +25,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.os.Build;
@@ -95,6 +96,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     private BottomPagesView bottomPages;
     private TextView switchLanguageTextView;
     private TextView startMessagingButton;
+    private TextView chaosBadgeView;
     private FrameLayout frameLayout2;
     private FrameLayout frameContainerView;
 
@@ -111,6 +113,28 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     private boolean justEndDragging;
     private boolean dragging;
     private int startDragX;
+    private final String[] chaosBadgeLines = new String[]{
+            "IDEALGRAM // CHAOS BUILD",
+            "NONSTANDARD MODE: ON",
+            "BLESSED + CURSED UI CORE",
+            "TANZIL × BIBLE FUSION READY",
+            "RESIST THE VANILLA CLIENT"
+    };
+    private int chaosBadgeIndex;
+    private final Runnable chaosBadgeTicker = new Runnable() {
+        @Override
+        public void run() {
+            if (chaosBadgeView == null || destroyed) {
+                return;
+            }
+            chaosBadgeIndex = (chaosBadgeIndex + 1) % chaosBadgeLines.length;
+            chaosBadgeView.animate().alpha(0f).setDuration(120).withEndAction(() -> {
+                chaosBadgeView.setText(chaosBadgeLines[chaosBadgeIndex]);
+                chaosBadgeView.animate().alpha(1f).setDuration(180).start();
+            }).start();
+            AndroidUtilities.runOnUIThread(this, 2600);
+        }
+    };
 
     private LocaleController.LocaleInfo localeInfo;
 
@@ -358,6 +382,23 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
             destroyed = true;
         });
 
+        chaosBadgeView = new TextView(context);
+        chaosBadgeView.setGravity(Gravity.CENTER);
+        chaosBadgeView.setTypeface(AndroidUtilities.bold());
+        chaosBadgeView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
+        chaosBadgeView.setLetterSpacing(0.12f);
+        chaosBadgeView.setPadding(AndroidUtilities.dp(18), AndroidUtilities.dp(6), AndroidUtilities.dp(18), AndroidUtilities.dp(6));
+        chaosBadgeView.setAllCaps(true);
+        chaosBadgeIndex = 0;
+        chaosBadgeView.setText(chaosBadgeLines[chaosBadgeIndex]);
+        chaosBadgeView.setAlpha(0.95f);
+        chaosBadgeView.setOnClickListener(v -> {
+            AndroidUtilities.cancelRunOnUIThread(chaosBadgeTicker);
+            chaosBadgeTicker.run();
+        });
+        frameContainerView.addView(chaosBadgeView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 32, 0, 32, 134));
+        AndroidUtilities.runOnUIThread(chaosBadgeTicker, 2400);
+
         bottomPages = new BottomPagesView(context, viewPager, 6);
         frameContainerView.addView(bottomPages, LayoutHelper.createFrame(66, 5, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, ICON_HEIGHT_DP + 200, 0, 0));
 
@@ -451,6 +492,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     public void onFragmentDestroy() {
         super.onFragmentDestroy();
         destroyed = true;
+        AndroidUtilities.cancelRunOnUIThread(chaosBadgeTicker);
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.suggestedLangpack);
         NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.configLoaded);
         MessagesController.getGlobalMainSettings().edit().putLong("intro_crashed_time", 0).apply();
@@ -947,6 +989,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         switchLanguageTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText4));
         startMessagingButton.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
         startMessagingButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), Theme.getColor(Theme.key_changephoneinfo_image2), Theme.getColor(Theme.key_chats_actionPressedBackground)));
+        updateChaosBadgeColors();
         darkThemeDrawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_changephoneinfo_image2), PorterDuff.Mode.SRC_IN));
         bottomPages.invalidate();
         if (fromTheme) {
@@ -969,6 +1012,19 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
                 messageTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText3));
             }
         } else Intro.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+    }
+
+    private void updateChaosBadgeColors() {
+        if (chaosBadgeView == null) {
+            return;
+        }
+        int startColor = Theme.getColor(Theme.key_chats_actionBackground);
+        int endColor = Theme.getColor(Theme.key_chats_actionPressedBackground);
+        GradientDrawable gradientDrawable = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{startColor, endColor});
+        gradientDrawable.setCornerRadius(AndroidUtilities.dp(999));
+        gradientDrawable.setStroke(AndroidUtilities.dp(1), Theme.getColor(Theme.key_featuredStickers_addButton));
+        chaosBadgeView.setBackground(gradientDrawable);
+        chaosBadgeView.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
     }
 
     @Override
