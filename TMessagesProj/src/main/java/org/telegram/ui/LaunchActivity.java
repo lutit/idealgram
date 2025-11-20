@@ -6382,8 +6382,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             dataCollectionDialogVisible = false;
         });
         builder.setOnDismissListener(dialog -> dataCollectionDialogVisible = false);
-        builder.setCancelable(false);
-        showAlertDialog(builder);
+        AlertDialog dialog = (AlertDialog) showAlertDialog(builder);
+        if (dialog != null) {
+            dialog.setCancelable(false);
+            dialog.setCanceledOnTouchOutside(false);
+        }
     }
 
     public Dialog showAlertDialog(AlertDialog.Builder builder) {
