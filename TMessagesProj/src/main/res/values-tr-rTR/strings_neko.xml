@@ -164,7 +164,7 @@
     <string name="ClearRecentChatAlert">Son sohbetlerinizi temizlemek istiyor musunuz?</string>
     <string name="CloudConfig">Bulut Ayarları</string>
     <string name="CloudConfigDesc">N-Ayarlarınızı Telegram bulutuna kaydedin.</string>
-    <string name="CloudConfigSyncDate">Son eşitleme: %s, bulut: %s</string>
+    <string name="CloudConfigSyncDate">Son eşitleme: %1$s, bulut: %2$s</string>
     <string name="CloudConfigSyncDateNever">hiçbir zaman</string>
     <string name="CloudConfigSync">Buluta eşitle</string>
     <string name="CloudConfigSyncShort">Eşitle</string>
