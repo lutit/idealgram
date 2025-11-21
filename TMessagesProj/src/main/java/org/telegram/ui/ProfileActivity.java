@@ -381,6 +381,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private ListAdapter listAdapter;
     private SearchAdapter searchAdapter;
     private SimpleTextView[] nameTextView = new SimpleTextView[2];
+    private SupporterBadgeView[] supporterBadgeViews = new SupporterBadgeView[2];
     private String nameTextViewRightDrawableContentDescription = null;
     private String nameTextViewRightDrawable2ContentDescription = null;
     private SimpleTextView[] onlineTextView = new SimpleTextView[4];
@@ -430,6 +431,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private ProfileGalleryBlurView avatarsBlurView;
     private ProfileGalleryView avatarsViewPager;
     private PagerIndicatorView avatarsViewPagerIndicatorView;
+    private ViewTreeObserver.OnPreDrawListener supporterBadgePreDrawListener;
     private AvatarDrawable avatarDrawable;
     private ImageUpdater imageUpdater;
     private int avatarColor;
@@ -491,6 +493,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private long userId;
     private long chatId;
     private long topicId;
+    private long supporterDialogId;
     public boolean saved;
     private long dialogId;
     private boolean creatingChat;
