@@ -62,6 +62,8 @@ public class DrawerActionCell extends FrameLayout {
         addView(imageView, LayoutHelper.createFrame(24, 24, Gravity.LEFT | Gravity.TOP, 19, 12, 0, 0));
         addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.LEFT | Gravity.TOP, 72, 0, 16, 0));
 
+        setBackground(Theme.createSelectorDrawable(Theme.getColor(Theme.key_listSelector)));
+
         setWillNotDraw(false);
     }
 
