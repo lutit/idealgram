@@ -5505,6 +5505,11 @@
     <string name="AppIcon">App Icon</string>
     <string name="AppIconDefault">Default</string>
     <string name="AppIconIdealgram">Idealgram</string>
+    <string name="AppIconIdealgramBlue">Idealgram Blue</string>
+    <string name="AppIconIdealgramRed">Idealgram Red</string>
+    <string name="AppIconIdealgramFilledBlack">Idealgram Filled (Black)</string>
+    <string name="AppIconIdealgramFilledWhite">Idealgram Filled (White)</string>
+    <string name="AppIconIdealgramUzbek">Idealgram Uzbek</string>
     <string name="AppIconVintage">Vintage</string>
     <string name="AppIconAqua">Aqua</string>
     <string name="AppIconPremium">Premium</string>
