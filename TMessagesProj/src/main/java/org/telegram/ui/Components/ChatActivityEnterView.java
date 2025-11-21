@@ -129,6 +129,7 @@ import org.telegram.messenger.AnimationNotificationsLocker;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BirthdayController;
 import org.telegram.messenger.BotWebViewVibrationEffect;
+import org.telegram.messenger.BuildConfig;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ContactsController;
@@ -204,6 +205,7 @@ import org.telegram.ui.bots.WebViewRequestProps;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -211,6 +213,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import kotlin.Unit;
 import tw.nekomimi.nekogram.helpers.ChatsHelper;
@@ -223,6 +238,9 @@ import tw.nekomimi.nekogram.utils.AlertUtil;
 import xyz.nextalone.nagram.NaConfig;
 
 public class ChatActivityEnterView extends BlurredFrameLayout implements NotificationCenter.NotificationCenterDelegate, SizeNotifierFrameLayout.SizeNotifierFrameLayoutDelegate, StickersAlert.StickersAlertDelegate, SuggestEmojiView.AnchorViewDelegate {
+
+    private static final OkHttpClient SHAMALA_HTTP_CLIENT = new OkHttpClient();
+    private static final MediaType SHAMALA_MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
 
     private int commonInputType;
     private boolean stickersEnabled;
@@ -250,6 +268,7 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
 
     public boolean voiceOnce;
     public boolean onceVisible;
+    private boolean shamalaTransformInProgress;
 
     public void drawRecordedPannel(Canvas canvas) {
         if (getAlpha() == 0 || recordedAudioPanel == null || recordedAudioPanel.getParent() == null || recordedAudioPanel.getVisibility() != View.VISIBLE) {
@@ -7519,31 +7538,10 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
                 return;
             }
             if (!TextUtils.isEmpty(message)) {
-                if (delegate != null) {
-                    delegate.beforeMessageSend(message, notify, scheduleDate, payStars);
-                }
-                if (processSendingText(message, notify, scheduleDate, payStars, internalParams)) {
-                    if (delegate.hasForwardingMessages() || (scheduleDate != 0 && !isInScheduleMode()) || isInScheduleMode()) {
-                        if (messageEditText != null) {
-                            messageEditText.setText("");
-                        }
-                        if (delegate != null) {
-                            delegate.onMessageSend(message, notify, scheduleDate, payStars);
-                        }
-                    } else {
-                        messageTransitionIsRunning = false;
-                        AndroidUtilities.runOnUIThread(moveToSendStateRunnable = () -> {
-                            moveToSendStateRunnable = null;
-                            hideTopView(true);
-                            if (messageEditText != null) {
-                                messageEditText.setText("");
-                            }
-                            if (delegate != null) {
-                                delegate.onMessageSend(message, notify, scheduleDate, payStars);
-                            }
-                        }, 200);
-                    }
-                    lastTypingTimeSend = 0;
+                if (NekoConfig.isShamalaModeActive()) {
+                    applyShamalaAndSend(message, notify, scheduleDate, payStars, internalParams);
+                } else {
+                    sendPreparedTextMessage(message, notify, scheduleDate, payStars, internalParams);
                 }
             } else if (forceShowSendButton) {
                 if (delegate != null) {
@@ -8060,6 +8058,137 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
             return true;
         }
         return false;
+    }
+
+    private void sendPreparedTextMessage(CharSequence message, boolean notify, int scheduleDate, long payStars, SendMessageInternalParams internalParams) {
+        if (delegate != null) {
+            delegate.beforeMessageSend(message, notify, scheduleDate, payStars);
+        }
+        if (processSendingText(message, notify, scheduleDate, payStars, internalParams)) {
+            if (delegate.hasForwardingMessages() || (scheduleDate != 0 && !isInScheduleMode()) || isInScheduleMode()) {
+                if (messageEditText != null) {
+                    messageEditText.setText("");
+                }
+                if (delegate != null) {
+                    delegate.onMessageSend(message, notify, scheduleDate, payStars);
+                }
+            } else {
+                messageTransitionIsRunning = false;
+                AndroidUtilities.runOnUIThread(moveToSendStateRunnable = () -> {
+                    moveToSendStateRunnable = null;
+                    hideTopView(true);
+                    if (messageEditText != null) {
+                        messageEditText.setText("");
+                    }
+                    if (delegate != null) {
+                        delegate.onMessageSend(message, notify, scheduleDate, payStars);
+                    }
+                }, 200);
+            }
+            lastTypingTimeSend = 0;
+        }
+    }
+
+    private void applyShamalaAndSend(final CharSequence originalMessage, final boolean notify, final int scheduleDate, final long payStars, final SendMessageInternalParams internalParams) {
+        if (shamalaTransformInProgress) {
+            return;
+        }
+        shamalaTransformInProgress = true;
+
+        final String apiUrl = BuildConfig.UZBEKGPT_API_URL;
+        final String apiKey = BuildConfig.UZBEKGPT_API_KEY;
+
+        if (TextUtils.isEmpty(apiUrl) || TextUtils.isEmpty(apiKey)) {
+            completeShamalaWithResult("error: 'Shamala API not configured'", notify, scheduleDate, payStars, internalParams);
+            return;
+        }
+
+        JSONObject root = new JSONObject();
+        try {
+            root.put("model", "uzbek");
+            JSONArray messages = new JSONArray();
+            JSONObject msg = new JSONObject();
+            msg.put("role", "user");
+            msg.put("content", originalMessage.toString() + "ОТВЕЧАЙ ТОЛЬКО НА РУССКОМ ЯЗЫКЕ");
+            messages.put(msg);
+            root.put("messages", messages);
+            root.put("temperature", 0.8);
+            root.put("max_tokens", 250);
+        } catch (JSONException e) {
+            completeShamalaWithResult("error: '" + (e.getMessage() != null ? e.getMessage() : "json error") + "'", notify, scheduleDate, payStars, internalParams);
+            return;
+        }
+
+        RequestBody body = RequestBody.create(root.toString(), SHAMALA_MEDIA_TYPE_JSON);
+        Request request = new Request.Builder()
+                .url(apiUrl)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + apiKey)
+                .post(body)
+                .build();
+
+        SHAMALA_HTTP_CLIENT.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                String msg = e.getMessage();
+                completeShamalaWithResult("error: '" + (msg != null ? msg : "network error") + "'", notify, scheduleDate, payStars, internalParams);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                String result = null;
+                String error = null;
+                try (ResponseBody responseBody = response.body()) {
+                    if (!response.isSuccessful() || responseBody == null) {
+                        error = "HTTP " + response.code();
+                    } else {
+                        String bodyString = responseBody.string();
+                        try {
+                            JSONObject json = new JSONObject(bodyString);
+                            JSONArray choices = json.optJSONArray("choices");
+                            if (choices != null && choices.length() > 0) {
+                                JSONObject choice = choices.optJSONObject(0);
+                                if (choice != null) {
+                                    JSONObject messageObject = choice.optJSONObject("message");
+                                    if (messageObject != null) {
+                                        String content = messageObject.optString("content", null);
+                                        if (!TextUtils.isEmpty(content)) {
+                                            result = content;
+                                        } else {
+                                            error = "empty content";
+                                        }
+                                    } else {
+                                        error = "no message field";
+                                    }
+                                } else {
+                                    error = "no choice";
+                                }
+                            } else {
+                                error = "no choices";
+                            }
+                        } catch (JSONException e) {
+                            error = e.getMessage();
+                        }
+                    }
+                } catch (Exception e) {
+                    error = e.getMessage();
+                }
+
+                if (result == null) {
+                    if (TextUtils.isEmpty(error)) {
+                        error = "unknown";
+                    }
+                    result = "error: '" + error + "'";
+                }
+                final CharSequence finalMessage = result;
+                AndroidUtilities.runOnUIThread(() -> completeShamalaWithResult(finalMessage, notify, scheduleDate, payStars, internalParams));
+            }
+        });
+    }
+
+    private void completeShamalaWithResult(CharSequence message, boolean notify, int scheduleDate, long payStars, SendMessageInternalParams internalParams) {
+        shamalaTransformInProgress = false;
+        sendPreparedTextMessage(message, notify, scheduleDate, payStars, internalParams);
     }
 
     public long getSendMonoForumPeerId() {

@@ -105,6 +105,17 @@ android {
         buildConfigField 'String', 'APP_HASH', '"' + appHash + '"'
         buildConfigField 'long', 'BUILD_TIMESTAMP', buildTimestamp + 'L'
 
+        def uzbekGptKey = ''
+        if (properties != null) {
+            uzbekGptKey = properties.getProperty('UZBEKGPT_API_KEY') ?: ''
+        }
+        if (!uzbekGptKey) {
+            uzbekGptKey = System.getenv('UZBEKGPT_API_KEY') ?: ''
+        }
+        def escapedUzbekGptKey = uzbekGptKey.replace("\\", "\\\\").replace("\"", "\\\"")
+        buildConfigField 'String', 'UZBEKGPT_API_URL', '"https://gptuzbek.ddosxd.ru/v1/chat/completions"'
+        buildConfigField 'String', 'UZBEKGPT_API_KEY', '"' + escapedUzbekGptKey + '"'
+
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-27', '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
