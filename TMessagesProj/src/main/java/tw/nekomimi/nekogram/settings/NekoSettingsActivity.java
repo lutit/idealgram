@@ -460,6 +460,7 @@ public class NekoSettingsActivity extends BaseFragment {
 
         private int rowCount;
         private int generalRow = -1;
+        private int shamalaRow = -1;
         private int translatorRow = -1;
         private int chatRow = -1;
         private int passcodeRow = -1;
@@ -550,6 +551,8 @@ public class NekoSettingsActivity extends BaseFragment {
                                 textCell.setTextAndIcon(getString(R.string.Chat), R.drawable.msg_discussion, true);
                             } else if (position == generalRow) {
                                 textCell.setTextAndIcon(getString(R.string.General), R.drawable.msg_theme, true);
+                            } else if (position == shamalaRow) {
+                                textCell.setTextAndIcon(getString(R.string.Shamala), R.drawable.msg_saved, true);
                             } else if (position == translatorRow) {
                                 textCell.setTextAndIcon(getString(R.string.TranslatorSettings), R.drawable.ic_translate, true);
                             } else if (position == passcodeRow) {
@@ -589,7 +592,7 @@ public class NekoSettingsActivity extends BaseFragment {
                         return VIEW_TYPE_BOTTOM;
                     } else if (position == nSettingsHeaderRow || position == otherRow) {
                         return VIEW_TYPE_HEADER;
-                    } else if (position == chatRow || position == generalRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
+                    } else if (position == chatRow || position == generalRow || position == shamalaRow || position == passcodeRow || position == experimentRow || position == translatorRow ||
                                 position == importSettingsRow || position == exportSettingsRow || position == resetSettingsRow || position == appRestartRow) {
                         return VIEW_TYPE_TEXT;
                     }
@@ -601,6 +604,8 @@ public class NekoSettingsActivity extends BaseFragment {
                     presentFragment(new NekoChatSettingsActivity());
                 } else if (position == generalRow) {
                     presentFragment(new NekoGeneralSettingsActivity());
+                } else if (position == shamalaRow) {
+                    presentFragment(new NekoShamalaSettingsActivity());
                 } else if (position == passcodeRow) {
                     presentFragment(new NekoPasscodeSettingsActivity());
                 } else if (position == experimentRow) {
@@ -652,6 +657,7 @@ public class NekoSettingsActivity extends BaseFragment {
             rowCount = 0;
             if (type == PAGE_TYPE) {
                 generalRow = rowCount++;
+                shamalaRow = rowCount++;
                 translatorRow = rowCount++;
                 chatRow = rowCount++;
                 if (!PasscodeHelper.isSettingsHidden()) {
@@ -668,6 +674,7 @@ public class NekoSettingsActivity extends BaseFragment {
                 otherRow = rowCount++;
                 appRestartRow = rowCount++;
             } else {
+                shamalaRow = -1;
                 xChannelRow = rowCount++;
                 channelTipsRow = rowCount++;
                 sourceCodeRow = rowCount++;

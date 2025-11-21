@@ -25,7 +25,6 @@ import org.telegram.messenger.Utilities;
 
 import java.io.File;
 
-import tw.nekomimi.nekogram.settings.NekoExperimentalSettingsActivity;
 import tw.nekomimi.nekogram.utils.AndroidUtil;
 
 public class AyuData {
@@ -117,12 +116,18 @@ public class AyuData {
         return size;
     }
 
-    public static void loadSizes(NekoExperimentalSettingsActivity bf) {
+    public interface SizeLoadListener {
+        void refreshAyuDataSize();
+    }
+
+    public static void loadSizes(SizeLoadListener listener) {
         Utilities.globalQueue.postRunnable(() -> {
             dbSize = getDatabaseSize();
             attachmentsSize = getAttachmentsDirSize();
             totalSize = dbSize + attachmentsSize;
-            AndroidUtilities.runOnUIThread(bf::refreshAyuDataSize, 500);
+            if (listener != null) {
+                AndroidUtilities.runOnUIThread(listener::refreshAyuDataSize, 500);
+            }
         });
     }
 }
