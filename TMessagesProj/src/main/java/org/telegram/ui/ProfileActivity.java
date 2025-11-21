@@ -406,6 +406,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private SharedMediaLayout.SharedMediaPreloader sharedMediaPreloader;
     private boolean preloadedChannelEmojiStatuses;
     private StarRatingView ratingView;
+    private long supporterDialogId;
+    private ViewTreeObserver.OnPreDrawListener supporterBadgePreDrawListener;
+    private final SupporterBadgeView[] supporterBadgeViews = new SupporterBadgeView[2];
 
     private View blurredView;
 

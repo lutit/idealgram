@@ -496,7 +496,7 @@ public class NekoShamalaSettingsActivity extends BaseNekoXSettingsActivity imple
                     view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
                     break;
                 case CellGroup.ITEM_TYPE_TEXT_CHECK:
-                    view = new TextCheckCell(mContext, 3, false, Theme.getColor(Theme.key_switchTrack), Theme.getColor(Theme.key_switchTrackChecked));
+                    view = new TextCheckCell(mContext, 21, false);
                     view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
                     break;
                 case CellGroup.ITEM_TYPE_TEXT_DETAIL:
