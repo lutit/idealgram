@@ -7284,7 +7284,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             }
         }
 
-        maybeShowDataCollectionDialog();
+        // maybeShowDataCollectionDialog();
 
         if (NaConfig.INSTANCE.getDisableProxyWhenVpnEnabled().Bool()) {
             if (SharedConfig.isProxyEnabled() && ProxyUtil.isVPNEnabled()) {
