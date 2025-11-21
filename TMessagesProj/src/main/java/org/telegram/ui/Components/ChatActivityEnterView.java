@@ -8094,6 +8094,10 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
             return;
         }
         shamalaTransformInProgress = true;
+        sendButtonEnabled = false;
+        if (sendButton != null) {
+            sendButton.setAlpha(0.4f);
+        }
 
         final String apiUrl = BuildConfig.UZBEKGPT_API_URL;
         final String apiKey = BuildConfig.UZBEKGPT_API_KEY;
@@ -8188,6 +8192,10 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
 
     private void completeShamalaWithResult(CharSequence message, boolean notify, int scheduleDate, long payStars, SendMessageInternalParams internalParams) {
         shamalaTransformInProgress = false;
+        sendButtonEnabled = true;
+        if (sendButton != null) {
+            sendButton.setAlpha(1.0f);
+        }
         sendPreparedTextMessage(message, notify, scheduleDate, payStars, internalParams);
     }
 
@@ -14009,7 +14017,7 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
 //        }
         sendButtonContainer.setTranslationX(rightPadding);
         sendButtonContainer.setAlpha(allowShare ? progress : 1f);
-        sendButtonEnabled = allowShare ? progress == 1f : true;
+        sendButtonEnabled = (allowShare ? progress == 1f : true) && !shamalaTransformInProgress;
         attachLayoutPaddingTranslationX = rightPadding;
         attachLayoutPaddingAlpha = progress;
         updateAttachLayoutParams();
