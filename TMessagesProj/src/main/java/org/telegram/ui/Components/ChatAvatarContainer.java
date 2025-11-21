@@ -67,6 +67,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import xyz.nextalone.nagram.NaConfig;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
+import tw.nekomimi.nekogram.helpers.SupporterBadgeHelper;
+import tw.nekomimi.nekogram.helpers.SupporterBadgeView;
 
 public class ChatAvatarContainer extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
 
@@ -115,6 +117,9 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
 
     private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable emojiStatusDrawable;
     private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable botVerificationDrawable;
+
+    private final SupporterBadgeView supporterBadgeView;
+    private long supporterDialogId;
 
     protected boolean useAnimatedSubtitle() {
         return false;
@@ -270,6 +275,9 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         titleTextView.setScrollNonFitText(isCentered());
         titleTextView.setPadding(0, dp(6), 0, dp(12));
         addView(titleTextView);
+        supporterBadgeView = new SupporterBadgeView(context);
+        supporterBadgeView.setVisibility(GONE);
+        addView(supporterBadgeView);
 
         if (useAnimatedSubtitle()) {
             animatedSubtitleTextView = new AnimatedTextView(context, true, true, true);
@@ -779,6 +787,26 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         if (subtitleTextLargerCopyView != null) {
             subtitleTextLargerCopyView.layout(l, viewTop + dp(24), l + subtitleTextLargerCopyView.getMeasuredWidth(), viewTop + subtitleTextLargerCopyView.getTextHeight() + dp(24));
         }
+        layoutSupporterBadge();
+    }
+
+    private void layoutSupporterBadge() {
+        if (supporterBadgeView == null || supporterBadgeView.getVisibility() != VISIBLE || titleTextView == null) {
+            return;
+        }
+        int width = supporterBadgeView.getMeasuredWidth();
+        int height = supporterBadgeView.getMeasuredHeight();
+        if (width == 0 || height == 0) {
+            int spec = MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(22), MeasureSpec.EXACTLY);
+            supporterBadgeView.measure(spec, spec);
+            width = supporterBadgeView.getMeasuredWidth();
+            height = supporterBadgeView.getMeasuredHeight();
+        }
+        float textWidth = titleTextView.getTextWidth();
+        float x = titleTextView.getX() + textWidth + dp(6);
+        float y = titleTextView.getY() + (titleTextView.getMeasuredHeight() - height) / 2f;
+        supporterBadgeView.layout((int) x, (int) y, (int) x + width, (int) y + height);
+        supporterBadgeView.setAlpha(titleTextView.getAlpha());
     }
 
     public void setLeftPadding(int value) {
@@ -977,6 +1005,14 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
 
     public SimpleTextView getTitleTextView() {
         return titleTextView;
+    }
+
+    public void setSupporterDialogId(long dialogId) {
+        supporterDialogId = dialogId;
+        if (supporterBadgeView != null) {
+            supporterBadgeView.setDialogId(dialogId);
+        }
+        layoutSupporterBadge();
     }
 
     public View getSubtitleTextView() {

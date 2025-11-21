@@ -366,6 +366,8 @@ import tw.nekomimi.nekogram.utils.ProxyUtil;
 import tw.nekomimi.nekogram.utils.ShareUtil;
 import xyz.nextalone.nagram.NaConfig;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
+import tw.nekomimi.nekogram.helpers.SupporterBadgeHelper;
+import tw.nekomimi.nekogram.helpers.SupporterBadgeView;
 
 public class ProfileActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate, DialogsActivity.DialogsActivityDelegate, SharedMediaLayout.SharedMediaPreloaderDelegate, ImageUpdater.ImageUpdaterDelegate, SharedMediaLayout.Delegate {
     private final static int PHONE_OPTION_CALL = 0,
@@ -2280,6 +2282,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
 
         if (userId != 0) {
+            supporterDialogId = userId;
             TLRPC.User user = getMessagesController().getUser(userId);
 
             if (UserObject.isUserSelf(user)) {
@@ -2338,7 +2341,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             actionsView.mode = ProfileActionsView.MODE_BOT;
         } else if (userId != 0) {
             actionsView.mode = ProfileActionsView.MODE_USER;
+            updateSupporterBadges(supporterDialogId);
         } else if (chatId != 0) {
+            supporterDialogId = -chatId;
             TLRPC.Chat chat = getMessagesController().getChat(chatId);
 
             if (ChatObject.isChannel(chat)) {
@@ -2403,6 +2408,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     @Override
     public void onFragmentDestroy() {
         super.onFragmentDestroy();
+        if (avatarContainer2 != null && supporterBadgePreDrawListener != null) {
+            avatarContainer2.getViewTreeObserver().removeOnPreDrawListener(supporterBadgePreDrawListener);
+            supporterBadgePreDrawListener = null;
+        }
         if (sharedMediaLayout != null) {
             sharedMediaLayout.onDestroy();
         }
@@ -3029,6 +3038,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             did = dialogId;
         } else if (userId != 0) {
             did = userId;
+            updateSupporterBadges(supporterDialogId);
         } else {
             did = -chatId;
         }
@@ -5645,6 +5655,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
 
         avatarsViewPagerIndicatorView = new PagerIndicatorView(context);
         avatarContainer2.addView(avatarsViewPagerIndicatorView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+        supporterBadgePreDrawListener = () -> {
+            updateSupporterBadgeLayouts();
+            return true;
+        };
+        avatarContainer2.getViewTreeObserver().addOnPreDrawListener(supporterBadgePreDrawListener);
 
         frameLayout.addView(actionBar);
 
@@ -5735,6 +5750,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             nameTextView[a].setEllipsizeByGradient(true);
             nameTextView[a].setRightDrawableOutside(a == 0);
             avatarContainer2.addView(nameTextView[a], LayoutHelper.createFrame(a == 0 ? initialTitleWidth : LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 118, -6, (a == 0 ? rightMargin - (hasTitleExpanded ? 10 : 0) : 0), 0));
+            supporterBadgeViews[a] = new SupporterBadgeView(context);
+            supporterBadgeViews[a].setVisibility(View.GONE);
+            avatarContainer2.addView(supporterBadgeViews[a], LayoutHelper.createFrame(24, 24, Gravity.LEFT | Gravity.TOP, 0, 0, 0, 0));
         }
         for (int a = 0; a < onlineTextView.length; a++) {
             if (a == 1) {
@@ -11699,6 +11717,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             onlineTextOverride = null;
         }
 
+        long supporterDialogId = 0;
+
         BaseFragment prevFragment = null;
         if (parentLayout != null && parentLayout.getFragmentStack().size() >= 2) {
             BaseFragment fragment = parentLayout.getFragmentStack().get(parentLayout.getFragmentStack().size() - 2);
@@ -12370,6 +12390,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             updateQrItemVisibility(true);
         }
         needLayout(true);
+        updateSupporterBadges(supporterDialogId);
     }
 
     private void updatedPeerColor() {
@@ -12489,6 +12510,48 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             return Theme.changeColorAccent(getThemedColor(Theme.key_windowBackgroundWhiteBlueIcon), accentColor, color, Theme.isCurrentThemeDark(), accentColor);
         }
         return color;
+    }
+
+    private void updateSupporterBadges(long dialogId) {
+        for (int i = 0; i < supporterBadgeViews.length; i++) {
+            SupporterBadgeView badgeView = supporterBadgeViews[i];
+            if (badgeView != null) {
+                badgeView.setDialogId(dialogId);
+            }
+        }
+        updateSupporterBadgeLayouts();
+    }
+
+    private void updateSupporterBadgeLayouts() {
+        for (int i = 0; i < supporterBadgeViews.length; i++) {
+            layoutSupporterBadge(i);
+        }
+    }
+
+    private void layoutSupporterBadge(int index) {
+        SupporterBadgeView badgeView = supporterBadgeViews[index];
+        SimpleTextView target = nameTextView[index];
+        if (badgeView == null || target == null || badgeView.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        int width = badgeView.getMeasuredWidth();
+        int height = badgeView.getMeasuredHeight();
+        if (width == 0 || height == 0) {
+            int spec = View.MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(22), View.MeasureSpec.EXACTLY);
+            badgeView.measure(spec, spec);
+            width = badgeView.getMeasuredWidth();
+            height = badgeView.getMeasuredHeight();
+        }
+        float scaleX = target.getScaleX();
+        float scaleY = target.getScaleY();
+        float effectiveWidth = target.getTextWidth() * scaleX;
+        float x = target.getX() + effectiveWidth + AndroidUtilities.dp(6);
+        float y = target.getY() + (target.getMeasuredHeight() * scaleY - height) / 2f;
+        badgeView.setTranslationX(x);
+        badgeView.setTranslationY(y);
+        badgeView.setScaleX(scaleX);
+        badgeView.setScaleY(scaleY);
+        badgeView.setAlpha(target.getAlpha());
     }
 
     private void createActionBarMenu(boolean animated) {

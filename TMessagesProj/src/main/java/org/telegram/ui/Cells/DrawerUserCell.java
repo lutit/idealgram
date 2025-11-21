@@ -42,6 +42,8 @@ import org.telegram.ui.Components.GroupCreateCheckBox;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.Premium.PremiumGradient;
 
+import tw.nekomimi.nekogram.helpers.SupporterBadgeView;
+
 public class DrawerUserCell extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
 
     private final SimpleTextView textView;
@@ -50,6 +52,7 @@ public class DrawerUserCell extends FrameLayout implements NotificationCenter.No
     private final GroupCreateCheckBox checkBox;
     private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable botVerification;
     private final AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable status;
+    private final SupporterBadgeView supporterBadgeView;
 
     private int accountNumber;
     private final RectF rect = new RectF();
@@ -74,6 +77,10 @@ public class DrawerUserCell extends FrameLayout implements NotificationCenter.No
         textView.setEllipsizeByGradient(24);
         addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.CENTER_VERTICAL, 72, 0, 14, 0));
 
+        supporterBadgeView = new SupporterBadgeView(context);
+        supporterBadgeView.setVisibility(GONE);
+        addView(supporterBadgeView, LayoutHelper.createFrame(24, 24, Gravity.LEFT | Gravity.TOP, 0, 0, 0, 0));
+
         botVerification = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(textView, dp(18));
         status = new AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable(textView, dp(20));
         textView.setRightDrawable(status);
@@ -91,6 +98,30 @@ public class DrawerUserCell extends FrameLayout implements NotificationCenter.No
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(dp(48), MeasureSpec.EXACTLY));
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        layoutSupporterBadge();
+    }
+
+    private void layoutSupporterBadge() {
+        if (supporterBadgeView.getVisibility() != VISIBLE) {
+            return;
+        }
+        int width = supporterBadgeView.getMeasuredWidth();
+        int height = supporterBadgeView.getMeasuredHeight();
+        if (width == 0 || height == 0) {
+            int spec = MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(22), MeasureSpec.EXACTLY);
+            supporterBadgeView.measure(spec, spec);
+            width = supporterBadgeView.getMeasuredWidth();
+            height = supporterBadgeView.getMeasuredHeight();
+        }
+        int textWidth = textView.getTextWidth();
+        float x = textView.getX() + textWidth + dp(6);
+        float y = textView.getY() + (textView.getMeasuredHeight() - height) / 2f;
+        supporterBadgeView.layout((int) x, (int) y, (int) x + width, (int) y + height);
     }
 
     @Override
@@ -152,6 +183,7 @@ public class DrawerUserCell extends FrameLayout implements NotificationCenter.No
             text = Emoji.replaceEmoji(text, textView.getPaint().getFontMetricsInt(), false);
         } catch (Exception ignore) {}
         textView.setText(text);
+        supporterBadgeView.setDialogId(user.id);
         final Long emojiStatusId = UserObject.getEmojiStatusDocumentId(user);
         if (emojiStatusId != null) {
             textView.setDrawablePadding(dp(4));

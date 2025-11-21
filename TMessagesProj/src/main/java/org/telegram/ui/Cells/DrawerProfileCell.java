@@ -87,6 +87,7 @@ import org.telegram.ui.ThemeActivity;
 import java.util.ArrayList;
 
 import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.helpers.SupporterBadgeView;
 
 
 public class DrawerProfileCell extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
@@ -103,6 +104,7 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
     private Long statusGiftId;
     private AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable status;
     private AnimatedStatusView animatedStatus;
+    private SupporterBadgeView supporterBadgeView;
 
     private Rect srcRect = new Rect();
     private Rect destRect = new Rect();
@@ -188,6 +190,10 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
         avatarImageView = new BackupImageView(context);
         avatarImageView.getImageReceiver().setRoundRadius(AndroidUtilities.dp(32));
         addView(avatarImageView, LayoutHelper.createFrame(64, 64, Gravity.LEFT | Gravity.BOTTOM, 16, 0, 0, 67));
+
+        supporterBadgeView = new SupporterBadgeView(context);
+        supporterBadgeView.setVisibility(GONE);
+        addView(supporterBadgeView, LayoutHelper.createFrame(24, 24, Gravity.LEFT | Gravity.TOP, 0, 0, 0, 0));
 
         nameTextView = new SimpleTextView(context) {
             @Override
@@ -628,6 +634,25 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
             starParticlesDrawable.rect.inset(-AndroidUtilities.dp(20), -AndroidUtilities.dp(20));
             starParticlesDrawable.resetPositions();
         }
+        layoutSupporterBadge();
+    }
+
+    private void layoutSupporterBadge() {
+        if (supporterBadgeView == null || supporterBadgeView.getVisibility() != VISIBLE) {
+            return;
+        }
+        int width = supporterBadgeView.getMeasuredWidth();
+        int height = supporterBadgeView.getMeasuredHeight();
+        if (width == 0 || height == 0) {
+            int spec = MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(22), MeasureSpec.EXACTLY);
+            supporterBadgeView.measure(spec, spec);
+            width = supporterBadgeView.getMeasuredWidth();
+            height = supporterBadgeView.getMeasuredHeight();
+        }
+        int textWidth = nameTextView != null ? nameTextView.getTextWidth() : 0;
+        float x = nameTextView.getX() + textWidth + AndroidUtilities.dp(6);
+        float y = nameTextView.getY() + (nameTextView.getMeasuredHeight() - height) / 2f;
+        supporterBadgeView.layout((int) x, (int) y, (int) x + width, (int) y + height);
     }
 
     @Override
@@ -807,6 +832,9 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
 
         drawPremium = false;//user.premium;
         nameTextView.setText(text);
+        if (supporterBadgeView != null) {
+            supporterBadgeView.setDialogId(user.id);
+        }
         statusGiftId = null;
         Long emojiStatusId = UserObject.getEmojiStatusDocumentId(user);
         if (emojiStatusId != null) {
