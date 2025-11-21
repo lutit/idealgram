@@ -434,6 +434,8 @@ public class ChatActivity extends BaseFragment implements
     private final static int nkbtn_transcriptionRetry = 2038;
     private final static int nkbtn_clearDeleted = 2100;
 
+    private final static int BOTTOM_TAG_MUTE = 200;
+
     public int shareAlertDebugMode = DEBUG_SHARE_ALERT_MODE_NORMAL;
     public boolean shareAlertDebugTopicsSlowMotion;
 
@@ -475,6 +477,7 @@ public class ChatActivity extends BaseFragment implements
     private FrameLayout progressView;
     private View progressView2;
     private FrameLayout bottomOverlay;
+    private BlurredBackgroundWithFadeDrawable fadeDrawable;
     private ChatInputViewsContainer chatInputViewsContainer;
 
     private FrameLayout chatInputBubbleContainer;
@@ -4865,7 +4868,7 @@ public class ChatActivity extends BaseFragment implements
         contentView.needBlurBottom = false;
         contentView.setOccupyStatusBar(!inBubbleMode && !isInsideContainer && !inPreviewMode);
 
-        BlurredBackgroundWithFadeDrawable fadeDrawable = new BlurredBackgroundWithFadeDrawable(
+        fadeDrawable = new BlurredBackgroundWithFadeDrawable(
                 navbarContentDrawableFactory.create(chatInputViewsContainer, null));
         if (!SharedConfig.chatBlurEnabled() || LiteMode.isEnabled(LiteMode.FLAG_LIQUID_GLASS)) {
             fadeDrawable.setFadeHeight(dp(72), true);
@@ -8287,8 +8290,8 @@ public class ChatActivity extends BaseFragment implements
         // left button action start
         boolean noForwards = getMessagesController().isChatNoForwards(currentChat) || currentChat != null && currentChat.noforwards;
         ChatsHelper chatsHelper = ChatsHelper.getInstance(currentAccount);
-        actionsButtonsLayout.setReplyButtonTextAndIcon(ChatsHelper.getLeftButtonText(noForwards), ChatsHelper.getLeftButtonDrawable(noForwards), true);
-        actionsButtonsLayout.setForwardButtonTextAndIcon(LocaleController.getString(R.string.Forward), R.drawable.input_forward, false);
+        actionsButtonsLayout.setReplyButtonTextAndIcon(ChatsHelper.getLeftButtonText(noForwards), ChatsHelper.getLeftButtonDrawable(noForwards));
+        actionsButtonsLayout.setForwardButtonTextAndIcon(LocaleController.getString(R.string.Forward), R.drawable.input_forward, true);
         actionsButtonsLayout.setReplyButtonOnClickListener(v -> {
             chatsHelper.makeReplyButtonClick(this, noForwards);
         });
@@ -9801,8 +9804,7 @@ public class ChatActivity extends BaseFragment implements
         if (actionsButtonsLayout != null) {
             actionsButtonsLayout.setReplyButtonTextAndIcon(
                 ChatsHelper.getLeftButtonText(noForwards),
-                ChatsHelper.getLeftButtonDrawable(noForwards),
-                true
+                ChatsHelper.getLeftButtonDrawable(noForwards)
             );
         }
     }
@@ -10492,7 +10494,7 @@ public class ChatActivity extends BaseFragment implements
             return;
         }
         undoView = new UndoView(getContext(), this, false, themeDelegate);
-        undoView.setAdditionalTranslationY(AndroidUtilities.dp(51));
+        undoView.setAdditionalTranslationY(shouldHideChannelMuteButton() ? 0 : AndroidUtilities.dp(51));
         contentView.addView(undoView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM | Gravity.LEFT, 8, 0, 8, 8));
     }
 
@@ -12484,7 +12486,8 @@ public class ChatActivity extends BaseFragment implements
         if (undoView != null) {
             undoView.setAdditionalTranslationY(
                 windowInsetsStateHolder.getAnimatedMaxBottomInset() + dp(9 + 7)
-                    + chatInputViewsContainer.getInputBubbleHeight());
+                    + chatInputViewsContainer.getInputBubbleHeight()
+                    - (shouldHideChannelMuteButton() ? AndroidUtilities.dp(51) : 0));
         }
         if (messagesSearchListContainer != null) {
             messagesSearchListContainer.setTranslationY(getHashtagTabsHeight() + contentPanTranslation);
@@ -18594,6 +18597,9 @@ public class ChatActivity extends BaseFragment implements
                 } else if (child == chatListView || child == chatListThanosEffect) {
                     int contentWidthSpec = MeasureSpec.makeMeasureSpec(widthSize, MeasureSpec.EXACTLY);
                     int h = heightSize + blurredViewTopOffset + blurredViewBottomOffset + chatListViewPaddingsAnimator.getCurrentAdditionalHeight();
+                    if (shouldHideChannelMuteButton()) {
+                        h += AndroidUtilities.dp(51);
+                    }
                     int contentHeightSpec = MeasureSpec.makeMeasureSpec(
                         Math.max(dp(10), h), View.MeasureSpec.EXACTLY);
                     child.measure(contentWidthSpec, contentHeightSpec);
@@ -27644,6 +27650,32 @@ public class ChatActivity extends BaseFragment implements
         }
     }
 
+    private boolean shouldHideChannelMuteButton() {
+        if (!NaConfig.INSTANCE.getDisableChannelMuteButton().Bool()) {
+            return false;
+        }
+        if (bottomChannelButtonsLayout == null || bottomChannelButtonsLayout.getVisibility() != View.VISIBLE) {
+            return false;
+        }
+        if (bottomOverlayChatText == null || bottomOverlayChatText.getVisibility() != View.VISIBLE) {
+            return false;
+        }
+        if (bottomOverlayStartButton != null && bottomOverlayStartButton.getVisibility() == View.VISIBLE) {
+            return false;
+        }
+        if (bottomOverlayLinksText != null && bottomOverlayLinksText.getVisibility() == View.VISIBLE) {
+            return false;
+        }
+        if (actionBar != null && actionBar.isActionModeShowed()) {
+            return false;
+        }
+        if ((searchItem != null && searchItemVisible) || chatMode == MODE_SEARCH) {
+            return false;
+        }
+        Object tag = bottomOverlayChatText.getTag();
+        return tag instanceof Integer && (Integer) tag == BOTTOM_TAG_MUTE;
+    }
+
     public void updateBottomOverlay() {
         updateBottomOverlay(false);
     }
@@ -27737,9 +27769,11 @@ public class ChatActivity extends BaseFragment implements
             if (!getMessagesController().isDialogMuted(dialog_id, getTopicId())) {
                 bottomOverlayChatText.setText(LocaleController.getString(R.string.ChannelMuteNoCaps), false);
                 bottomOverlayChatText.setEnabled(true);
+                bottomOverlayChatText.setTag(BOTTOM_TAG_MUTE);
             } else {
                 bottomOverlayChatText.setText(LocaleController.getString(R.string.ChannelUnmuteNoCaps), true);
                 bottomOverlayChatText.setEnabled(true);
+                bottomOverlayChatText.setTag(BOTTOM_TAG_MUTE);
             }
             showBottomOverlayProgress(false, bottomOverlayProgress.getTag() != null);
         } else if (currentChat != null) {
@@ -27778,9 +27812,11 @@ public class ChatActivity extends BaseFragment implements
                     if (!getMessagesController().isDialogMuted(dialog_id, getTopicId())) {
                         bottomOverlayChatText.setText(LocaleController.getString(R.string.ChannelMuteNoCaps), false);
                         bottomOverlayChatText.setEnabled(true);
+                        bottomOverlayChatText.setTag(BOTTOM_TAG_MUTE);
                     } else {
                         bottomOverlayChatText.setText(LocaleController.getString(R.string.ChannelUnmuteNoCaps), true);
                         bottomOverlayChatText.setEnabled(true);
+                        bottomOverlayChatText.setTag(BOTTOM_TAG_MUTE);
                     }
                     showBottomOverlayProgress(false, bottomOverlayProgress.getTag() != null);
                     showGiftButton = chatInfo != null && chatInfo.stargifts_available;
@@ -27834,8 +27870,10 @@ public class ChatActivity extends BaseFragment implements
             } else if (UserObject.isReplyUser(currentUser)) {
                 if (!getMessagesController().isDialogMuted(dialog_id, getTopicId())) {
                     bottomOverlayChatText.setText(LocaleController.getString(R.string.ChannelMuteNoCaps), false);
+                    bottomOverlayChatText.setTag(BOTTOM_TAG_MUTE);
                 } else {
                     bottomOverlayChatText.setText(LocaleController.getString(R.string.ChannelUnmuteNoCaps), true);
+                    bottomOverlayChatText.setTag(BOTTOM_TAG_MUTE);
                 }
                 showBottomOverlayProgress(false, true);
             } else if (botUser != null && currentUser.bot && !UserObject.isDeleted(currentUser) && !UserObject.isBotForum(currentUser)) {
@@ -28022,9 +28060,22 @@ public class ChatActivity extends BaseFragment implements
         bottomChannelButtonsLayout.setCenterAccentBackground(accentTextButton, animated);
         bottomChannelButtonsLayout.showButton(ChatActivityChannelButtonsLayout.BUTTON_SEARCH, showSearchButton && bottomChannelButtonsLayout.getVisibility() == View.VISIBLE, animated);
         bottomChannelButtonsLayout.showButton(ChatActivityChannelButtonsLayout.BUTTON_DIRECT, showSuggestButton && bottomChannelButtonsLayout.getVisibility() == View.VISIBLE, animated);
-        bottomChannelButtonsLayout.showButton(ChatActivityChannelButtonsLayout.BUTTON_GIFT, showSuggestButton ? false : showGiftButton && bottomChannelButtonsLayout.getVisibility() == View.VISIBLE, animated);
+        bottomChannelButtonsLayout.showButton(ChatActivityChannelButtonsLayout.BUTTON_GIFT, !showSuggestButton && showGiftButton && bottomChannelButtonsLayout.getVisibility() == View.VISIBLE, animated);
         bottomChannelButtonsLayout.showButton(ChatActivityChannelButtonsLayout.BUTTON_GIGA_GROUP_INFO, showGigaGroupButton && bottomChannelButtonsLayout.getVisibility() == View.VISIBLE, animated);
 
+        if (shouldHideChannelMuteButton()) {
+            chatInputViewsContainer.setVisibility(View.GONE);
+            chatInputViewsContainer.setBackgroundWithFadeDrawable(null);
+            chatInputViewsContainer.getFadeView().invalidate();
+        } else {
+            chatInputViewsContainer.setVisibility(View.VISIBLE);
+            chatInputViewsContainer.setBackgroundWithFadeDrawable(fadeDrawable);
+            chatInputViewsContainer.getFadeView().invalidate();
+        }
+
+        if (channelDmItem != null) {
+            channelDmItem.setVisibility(showSuggestButton);
+        }
         checkRaiseSensors();
     }
 
@@ -30967,6 +31018,7 @@ public class ChatActivity extends BaseFragment implements
             }
             bottomViewsVisibilityController.setViewVisible(MESSAGE_ACTION_CONTAINER, false, true);
             actionBar.hideActionMode();
+            updateBottomOverlay();
         }
         cantDeleteMessagesCount = 0;
         canEditMessagesCount = 0;
@@ -32622,6 +32674,7 @@ public class ChatActivity extends BaseFragment implements
         } else {
             actionBar.showActionMode(true, null, null, null, null, null, 0);
         }
+        updateBottomOverlay();
         closeMenu();
         chatLayoutManager.setCanScrollVertically(true);
         updatePinnedMessageView(true);
