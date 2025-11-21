@@ -124,6 +124,12 @@
     <string name="GhostModeEnabled">Режим призрака включён</string>
     <string name="GhostModeDisabled">Режим призрака выключен</string>
     <string name="GhostModeInDrawer">Показывать в боковом меню</string>
+    <string name="ShamalaMode">Shamala mode</string>
+    <string name="EnableShamalaMode">Включить Shamala mode</string>
+    <string name="DisableShamalaMode">Выключить Shamala mode</string>
+    <string name="ShamalaModeEnabled">Shamala mode включён</string>
+    <string name="ShamalaModeDisabled">Shamala mode выключен</string>
+    <string name="ShamalaModeRandom">Shamala творит какую-то дичь\u2026</string>
     <string name="DontSendReadMessagePackets">Не читать сообщения</string>
     <string name="DontReadStoriesPackets">Не читать истории</string>
     <string name="DontSendOnlinePackets">Не отправлять онлайн-статус</string>

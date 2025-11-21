@@ -196,6 +196,7 @@ public class NekoConfig {
     public static ConfigItem sendOfflinePacketAfterOnline = addConfig("sendOfflinePacketAfterOnline", configTypeBool, false);
     public static ConfigItem markReadAfterSend = addConfig("markReadAfterSend", configTypeBool, true);
     public static ConfigItem showGhostInDrawer = addConfig("showGhostInDrawer", configTypeBool, false);
+    public static ConfigItem shamalaMode = addConfig("shamalaMode", configTypeBool, false);
 
     // --- Locked Status ---
     public static ConfigItem sendReadMessagePacketsLocked = addConfig("sendReadMessagePacketsLocked", configTypeBool, false);
@@ -353,6 +354,16 @@ public class NekoConfig {
             new Pair<>(sendOfflinePacketAfterOnline, sendOfflinePacketAfterOnlineLocked)
     );
     // --- Ghost Mode ---
+
+    // --- Shamala Mode ---
+    public static boolean isShamalaModeActive() {
+        return shamalaMode.Bool();
+    }
+
+    public static void toggleShamalaMode() {
+        shamalaMode.toggleConfigBool();
+    }
+    // --- Shamala Mode ---
 
     public static Set<String> getAllKeys() {
         synchronized (sync) {

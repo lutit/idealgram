@@ -339,6 +339,57 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private FrameLayout sideMenuContainer;
     private View rippleAbove;
     private IUpdateLayout updateLayout;
+
+    private boolean shamalaModeScheduled;
+    private final Runnable shamalaModeRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!NekoConfig.isShamalaModeActive() || !isResumed) {
+                shamalaModeScheduled = false;
+                return;
+            }
+
+            BaseFragment fragment = getLastFragment();
+            int effect = (int) (Math.random() * 3);
+            if (effect == 0 && fireworksOverlay != null) {
+                fireworksOverlay.start(true);
+            } else if (effect == 1 && drawerLayoutContainer != null) {
+                float shift = AndroidUtilities.dp(8);
+                drawerLayoutContainer.animate().translationX(shift).setDuration(80).withEndAction(() ->
+                        drawerLayoutContainer.animate().translationX(0).setDuration(80).start()
+                ).start();
+            } else if (fragment != null) {
+                BulletinFactory.of(fragment).createSimpleBulletin(
+                        R.raw.chats_infotip,
+                        LocaleController.getString(R.string.ShamalaModeRandom)
+                ).show();
+            }
+
+            scheduleNextShamalaTick();
+        }
+    };
+
+    private void scheduleNextShamalaTick() {
+        if (!NekoConfig.isShamalaModeActive() || !isResumed) {
+            shamalaModeScheduled = false;
+            return;
+        }
+        shamalaModeScheduled = true;
+        long delay = 7000 + (long) (Math.random() * 8000);
+        AndroidUtilities.runOnUIThread(shamalaModeRunnable, delay);
+    }
+
+    private void startShamalaModeEffects() {
+        if (shamalaModeScheduled || !isResumed) {
+            return;
+        }
+        scheduleNextShamalaTick();
+    }
+
+    private void stopShamalaModeEffects() {
+        shamalaModeScheduled = false;
+        AndroidUtilities.cancelRunOnUIThread(shamalaModeRunnable);
+    }
     public Dialog getVisibleDialog() {
         for (int i = visibleDialogs.size() - 1; i >= 0; --i) {
             Dialog dialog = visibleDialogs.get(i);
@@ -845,6 +896,20 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                             : LocaleController.getString(R.string.GhostModeEnabled);
                     NekoConfig.toggleGhostMode();
                     BulletinFactory.of(getLastFragment()).createSuccessBulletin(msg).show();
+                    drawerLayoutContainer.closeDrawer(false);
+                    NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                } else if (id == DrawerLayoutAdapter.nkbtnShamalaMode) {
+                    boolean willEnable = !NekoConfig.isShamalaModeActive();
+                    NekoConfig.toggleShamalaMode();
+                    CharSequence msg = LocaleController.getString(
+                            willEnable ? R.string.ShamalaModeEnabled : R.string.ShamalaModeDisabled
+                    );
+                    BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, msg).show();
+                    if (willEnable) {
+                        startShamalaModeEffects();
+                    } else {
+                        stopShamalaModeEffects();
+                    }
                     drawerLayoutContainer.closeDrawer(false);
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
                 } else if (id == DrawerLayoutAdapter.nkbtnSessions) {
@@ -7038,6 +7103,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     protected void onPause() {
         super.onPause();
         isResumed = false;
+        stopShamalaModeEffects();
         pipActivityHandler.onPause();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 4096);
         ApplicationLoader.mainInterfacePaused = true;
@@ -7235,6 +7301,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     protected void onResume() {
         super.onResume();
         isResumed = true;
+        if (NekoConfig.isShamalaModeActive()) {
+            startShamalaModeEffects();
+        }
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
             onResumeStaticCallback.run();

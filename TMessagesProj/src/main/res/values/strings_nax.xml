@@ -132,6 +132,12 @@
     <string name="GhostModeEnabled">Ghost mode turned on</string>
     <string name="GhostModeDisabled">Ghost mode turned off</string>
     <string name="GhostModeInDrawer">Show in Drawer</string>
+    <string name="ShamalaMode">Shamala mode</string>
+    <string name="EnableShamalaMode">Enable Shamala mode</string>
+    <string name="DisableShamalaMode">Disable Shamala mode</string>
+    <string name="ShamalaModeEnabled">Shamala mode unleashed</string>
+    <string name="ShamalaModeDisabled">Shamala mode contained</string>
+    <string name="ShamalaModeRandom">Shamala is doing something weird\u2026</string>
     <string name="DontSendReadMessagePackets">Don\'t Read Messages</string>
     <string name="DontReadStoriesPackets">Don\'t Read Stories</string>
     <string name="DontSendOnlinePackets">Don\'t Send Online</string>

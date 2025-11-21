@@ -65,6 +65,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnSessions = 1007;
     public static int nkbtnOpenQuran = 1008;
     public static int nkbtnOpenBible = 1009;
+    public static int nkbtnShamalaMode = 1010;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -337,14 +338,24 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
 
         boolean showGhostInDrawer = NekoConfig.showGhostInDrawer.Bool();
         // --- Ghost Mode ---
-       if (showGhostInDrawer) {
+        if (showGhostInDrawer) {
             var msg = NekoConfig.isGhostModeActive()
                     ? LocaleController.getString(R.string.DisableGhostMode)
                     : LocaleController.getString(R.string.EnableGhostMode);
             items.add(new Item(nkbtnGhostMode, msg, R.drawable.ayu_ghost));
             items.add(null);
         }
-       // --- Ghost Mode ---
+        // --- Ghost Mode ---
+
+        // --- Shamala Mode ---
+        if (NaConfig.INSTANCE.getDrawerItemShamala().Bool()) {
+            CharSequence shamalaLabel = NekoConfig.isShamalaModeActive()
+                    ? LocaleController.getString(R.string.DisableShamalaMode)
+                    : LocaleController.getString(R.string.EnableShamalaMode);
+            items.add(new Item(nkbtnShamalaMode, shamalaLabel, R.drawable.ayu_ghost));
+            items.add(null);
+        }
+        // --- Shamala Mode ---
 
         UserConfig me = UserConfig.getInstance(UserConfig.selectedAccount);
         boolean showDivider = false;

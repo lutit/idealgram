@@ -882,6 +882,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val drawerItemShamala =
+        addConfig(
+            "DrawerItemShamala",
+            ConfigItem.configTypeBool,
+            true
+        )
     val hideArchive =
         addConfig(
             "HideArchive",
