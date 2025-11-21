@@ -41,6 +41,8 @@ public class LauncherIconController {
         IDEALGRAM_FILLED_BLACK("IdealgramIconFilledBlack", R.mipmap.ic_launcher_idealgram_filled_black, R.mipmap.ic_launcher_idealgram_filled_black_foreground, R.string.AppIconIdealgramFilledBlack),
         IDEALGRAM_FILLED_WHITE("IdealgramIconFilledWhite", R.mipmap.ic_launcher_idealgram_filled_white, R.mipmap.ic_launcher_idealgram_filled_white_foreground, R.string.AppIconIdealgramFilledWhite),
         IDEALGRAM_UZBEK("IdealgramIconUzbek", R.mipmap.ic_launcher_idealgram_uzbek, R.mipmap.ic_launcher_idealgram_uzbek_foreground, R.string.AppIconIdealgramUzbek),
+        UZBEKGRAM("UzbekgramIcon", R.mipmap.ic_launcher_uzbekgram, R.mipmap.ic_launcher_uzbekgram_foreground, R.string.AppIconUzbekgram),
+        UZBEKGRAM_LEGACY("UzbekgramLegacyIcon", R.mipmap.ic_launcher_uzbekgram_legacy, R.mipmap.ic_launcher_uzbekgram_legacy_foreground, R.string.AppIconUzbekgramLegacy),
         GOOGLE("GoogleIcon", R.mipmap.icon_background_google, R.mipmap.icon_foreground_google, R.string.AppIconGoogle),
         COLORFUL("ColorfulIcon", R.mipmap.icon_background_colorful, R.mipmap.icon_foreground_colorful, R.string.AppIconColorful),
         DARKGREEN("DarkGreenIcon", R.mipmap.icon_background_darkgreen, R.mipmap.icon_foreground_darkgreen, R.string.AppIconDarkGreen),

@@ -5510,6 +5510,8 @@
     <string name="AppIconIdealgramFilledBlack">Idealgram Filled (Black)</string>
     <string name="AppIconIdealgramFilledWhite">Idealgram Filled (White)</string>
     <string name="AppIconIdealgramUzbek">Idealgram Uzbek</string>
+    <string name="AppIconUzbekgram">Uzbekgram</string>
+    <string name="AppIconUzbekgramLegacy">Uzbekgram Legacy</string>
     <string name="AppIconVintage">Vintage</string>
     <string name="AppIconAqua">Aqua</string>
     <string name="AppIconPremium">Premium</string>
