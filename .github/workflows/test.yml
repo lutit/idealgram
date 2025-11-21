@@ -24,8 +24,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: "temurin"
+          java-version: "21"
 
       - name: Set up Ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -84,28 +84,31 @@ jobs:
       - name: Print Kotlin diagnostics
         if: failure()
         run: |
-          if [ -f gradle-build.log ]; then
-            echo "::group::Gradle build log tail"
-            tail -n 400 gradle-build.log
-            echo "::endgroup::"
-          fi
+          echo "================= TAIL BUILD LOG ================="
+          [ -f gradle-build.log ] && tail -n 400 gradle-build.log
 
+          echo "================= PROBLEMS REPORT ================="
           if [ -f build/reports/problems/problems-report.html ]; then
-            echo "::group::Gradle problems report (HTML stripped)"
             sed -e 's/<[^>]*>//g' build/reports/problems/problems-report.html
-            echo "::endgroup::"
           fi
 
+          echo "================= KOTLIN REPORTS ================="
           mapfile -t kotlin_reports < <(find . -path "*build/reports/kotlin*" -type f 2>/dev/null || true)
           if [ "${#kotlin_reports[@]}" -gt 0 ]; then
             for file in "${kotlin_reports[@]}"; do
-              echo "::group::Kotlin report: ${file}"
+              echo "--- ${file} ---"
               cat "$file"
-              echo "::endgroup::"
             done
-          else
-            echo "No explicit Kotlin reports were found."
           fi
+
+          echo "================= .kotlin_error FILES ================="
+          find . -name "*.kotlin_error" -print -exec cat {} \; 2>/dev/null || true
+
+          echo "================= kotlin-compiler LOGS ================="
+          find . -type f -name "kotlin-compiler*.log" -print -exec cat {} \; 2>/dev/null || true
+
+          echo "================= ALL .log FILES ================="
+          find . -type f -name "*.log" -print
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
