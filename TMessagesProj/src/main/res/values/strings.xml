@@ -5692,8 +5692,8 @@
     <string name="TopicClosedByAdmin">The topic is closed</string>
     <string name="AlmostDone">Almost done</string>
     <string name="TopicEmptyViewDescription">Send first message to start the topic</string>
-    <string name="NotificationTopicExceptionsDesctription_one">%s, %d exception</string>
-    <string name="NotificationTopicExceptionsDesctription_other">%s, %d exceptions</string>
+    <string name="NotificationTopicExceptionsDesctription_one">%1$s, %2$d exception</string>
+    <string name="NotificationTopicExceptionsDesctription_other">%1$s, %2$d exceptions</string>
     <string name="FloatingDebugEnable">Enable floating debug</string>
     <string name="FloatingDebugDisable">Disable floating debug</string>
     <string name="DebugClearLocalDatabaseSuccess">Cleared local database.</string>
@@ -6348,10 +6348,10 @@
     <string name="StorySave">Save to profile</string>
     <string name="StorySavedTitle_one">%d story saved to your profile</string>
     <string name="StorySavedTitle_other">%d stories saved to your profile</string>
-    <string name="StoryAddedToAlbumTitle_one">%d story saved to **%s**</string>
-    <string name="StoryAddedToAlbumTitle_other">%d stories saved to **%s**</string>
-    <string name="StoryRemovedFromAlbumTitle_one">%d story removed from **%s**</string>
-    <string name="StoryRemovedFromAlbumTitle_other">%d stories removed from**%s**</string>
+    <string name="StoryAddedToAlbumTitle_one">%1$d story saved to **%2$s**</string>
+    <string name="StoryAddedToAlbumTitle_other">%1$d stories saved to **%2$s**</string>
+    <string name="StoryRemovedFromAlbumTitle_one">%1$d story removed from **%2$s**</string>
+    <string name="StoryRemovedFromAlbumTitle_other">%1$d stories removed from **%2$s**</string>
     <string name="StorySavedSubtitle">Saved stories can be viewed by others on your profile until you remove them.</string>
     <string name="StoryArchived_one">%d story is hidden from your profile</string>
     <string name="StoryArchived_other">%d stories are hidden from your profile</string>
@@ -7016,8 +7016,8 @@
     <string name="UnconfirmedAuthSingle">We detected a new login to your account from %s. Is it you?</string>
     <string name="UnconfirmedAuthMultiple_one">We detected new %d login to your account. Is it you?</string>
     <string name="UnconfirmedAuthMultiple_other">We detected new %d logins to your account. Is it you?</string>
-    <string name="UnconfirmedAuthMultipleFrom_one">We detected new %d login to your account from %s. Is it you?</string>
-    <string name="UnconfirmedAuthMultipleFrom_other">We detected new %d logins to your account from %s. Is it you?</string>
+    <string name="UnconfirmedAuthMultipleFrom_one">We detected new %1$d login to your account from %2$s. Is it you?</string>
+    <string name="UnconfirmedAuthMultipleFrom_other">We detected new %1$d logins to your account from %2$s. Is it you?</string>
     <string name="UnconfirmedAuthDeniedTitle_one">New Login Prevented</string>
     <string name="UnconfirmedAuthDeniedTitle_other">New Logins Prevented</string>
     <string name="UnconfirmedAuthDeniedMessageSingle">We have terminated the login attempt from %s.</string>
@@ -8645,8 +8645,8 @@
     <string name="Gift2InfoConverted_other">You converted this gift to **%d** Stars.</string>
     <string name="Gift2InfoChannelConverted_one">Your channel converted this gift to **%d** Star.</string>
     <string name="Gift2InfoChannelConverted_other">Your channel converted this gift to **%d** Stars.</string>
-    <string name="Gift2InfoOutConverted_one">%2$s converted this gift to **%d** Star.</string>
-    <string name="Gift2InfoOutConverted_other">%2$s converted this gift to **%d** Stars.</string>
+    <string name="Gift2InfoOutConverted_one">%2$s converted this gift to **%1$d** Star.</string>
+    <string name="Gift2InfoOutConverted_other">%2$s converted this gift to **%1$d** Stars.</string>
     <string name="Gift2InfoOutPinned">%1$s kept this gift in your Profile.</string>
     <string name="Gift2InSenderHidden2">Only you can see the senderʼs name.</string>
     <string name="Gift2InSenderMessageHidden2">Only you can see the senderʼs name and message.</string>
@@ -9454,30 +9454,30 @@
     <string name="SuggestAPostBelowHint">Tap here to suggest a post for %s</string>
     <string name="SuggestAPostBelowSubtitle">Tap to offer a price for publishing</string>
     <string name="SuggestAPostBelowSubtitleStars">⭐️ %s for publishing anytime</string>
-    <string name="SuggestAPostBelowSubtitleStarsAndTime">⭐️ %s %s</string>
+    <string name="SuggestAPostBelowSubtitleStarsAndTime">⭐️ %1$s %2$s</string>
     <string name="SuggestAPostTooMuch">You can offer maximum %s</string>
     <string name="SuggestAPostTooSmall">You must offer minimum %s</string>
 
     <string name="SuggestionAgreementReached">🤝 **Agreement Reached!**</string>
 
-    <string name="SuggestionAgreementReachedUser1">📆 Your post will be automatically published on **%s** **%s**</string>
+    <string name="SuggestionAgreementReachedUser1">📆 Your post will be automatically published on **%1$s** **%2$s**</string>
     <string name="SuggestionAgreementReachedUser1PresentPerfect">📆 Your post has been published on **%s**</string>
-    <string name="SuggestionAgreementReachedUser1PastSimple">📆 Your post was automatically published on **%s** **%s**</string>
-    <string name="SuggestionAgreementReachedAdmin1">📆 This post will be automatically published **%s** **%s**</string>
+    <string name="SuggestionAgreementReachedUser1PastSimple">📆 Your post was automatically published on **%1$s** **%2$s**</string>
+    <string name="SuggestionAgreementReachedAdmin1">📆 This post will be automatically published **%1$s** **%2$s**</string>
     <string name="SuggestionAgreementReachedAdmin1PresentPerfect">📆 This post has been published on **%s**</string>
-    <string name="SuggestionAgreementReachedAdmin1PastSimple">📆 This post was automatically published on **%s** **%s**</string>
+    <string name="SuggestionAgreementReachedAdmin1PastSimple">📆 This post was automatically published on **%1$s** **%2$s**</string>
 
     <string name="SuggestionAgreementReachedUser2">💰 You have been charged ⭐️ **%s**.</string>
-    <string name="SuggestionAgreementReachedAdmin2">💰 **%s** has been charged ⭐️ **%s**.</string>
-    <string name="SuggestionAgreementReachedUser3Stars">⏳ **%s** will receive your **Stars** once the post has been live for **%d** hours.</string>
-    <string name="SuggestionAgreementReachedAdmin3Stars">⏳ **%s** will receive the **Stars** once the post has been live for **%d** hours.</string>
-    <string name="SuggestionAgreementReachedUser4Stars">🔁 If **%s** removes the post before it has been live for **%d** hours, your **Stars** will be refunded.</string>
-    <string name="SuggestionAgreementReachedAdmin4Stars">🔁 If **%s** removes the post before it has been live for **%d** hours, **Stars** will be refunded to user.</string>
+    <string name="SuggestionAgreementReachedAdmin2">💰 **%1$s** has been charged ⭐️ **%2$s**.</string>
+    <string name="SuggestionAgreementReachedUser3Stars">⏳ **%1$s** will receive your **Stars** once the post has been live for **%2$d** hours.</string>
+    <string name="SuggestionAgreementReachedAdmin3Stars">⏳ **%1$s** will receive the **Stars** once the post has been live for **%2$d** hours.</string>
+    <string name="SuggestionAgreementReachedUser4Stars">🔁 If **%1$s** removes the post before it has been live for **%2$d** hours, your **Stars** will be refunded.</string>
+    <string name="SuggestionAgreementReachedAdmin4Stars">🔁 If **%1$s** removes the post before it has been live for **%2$d** hours, **Stars** will be refunded to user.</string>
 
-    <string name="SuggestionAgreementReachedUser3TON">⏳ **%s** will receive your **TON** once the post has been live for **%d** hours.</string>
-    <string name="SuggestionAgreementReachedAdmin3TON">⏳ **%s** will receive the **TON** once the post has been live for **%d** hours.</string>
-    <string name="SuggestionAgreementReachedUser4TON">🔁 If **%s** removes the post before it has been live for **%d** hours, your **TON** will be refunded.</string>
-    <string name="SuggestionAgreementReachedAdmin4TON">🔁 If **%s** removes the post before it has been live for **%d** hours, **TON** will be refunded to user.</string>
+    <string name="SuggestionAgreementReachedUser3TON">⏳ **%1$s** will receive your **TON** once the post has been live for **%2$d** hours.</string>
+    <string name="SuggestionAgreementReachedAdmin3TON">⏳ **%1$s** will receive the **TON** once the post has been live for **%2$d** hours.</string>
+    <string name="SuggestionAgreementReachedUser4TON">🔁 If **%1$s** removes the post before it has been live for **%2$d** hours, your **TON** will be refunded.</string>
+    <string name="SuggestionAgreementReachedAdmin4TON">🔁 If **%1$s** removes the post before it has been live for **%2$d** hours, **TON** will be refunded to user.</string>
 
     <string name="SuggestionAgreementDeclinedYou">❌ **%s** rejected your message.</string>
     <string name="SuggestionAgreementDeclinedThis">❌ **%s** rejected this message.</string>
@@ -9677,11 +9677,11 @@
     <string name="StarRatingDescription">This rating reflects **%s\'s** activity\non Telegram. What affects it:</string>
     <string name="StarRatingSelfDescription">This rating reflects your activity\non Telegram. What affects it:</string>
     <string name="StarRatingTitle1">Gifts from Telegram</string>
-    <string name="StarRatingDescription1">%s 100% of the Stars spent on gifts purchased from Telegram.</string>
+    <string name="StarRatingDescription1">%1$s 100%% of the Stars spent on gifts purchased from Telegram.</string>
     <string name="StarRatingTitle2">Gifts and Posts from Users</string>
-    <string name="StarRatingDescription2">%s 20% of the Stars spent on resold gifts, paid messages and channel posts.</string>
+    <string name="StarRatingDescription2">%1$s 20%% of the Stars spent on resold gifts, paid messages and channel posts.</string>
     <string name="StarRatingTitle3">Refunds and Conversions</string>
-    <string name="StarRatingDescription3">%s 10x of refunded Stars and 85% of bought gifts converted to Stars.</string>
+    <string name="StarRatingDescription3">%1$s 10x of refunded Stars and 85%% of bought gifts converted to Stars.</string>
     <string name="StarRatingButtonUnderstood">Understood</string>
     <string name="StoriesAlbum">Album</string>
     <string name="StoriesAlbumCreateNew">Create a New Album</string>
