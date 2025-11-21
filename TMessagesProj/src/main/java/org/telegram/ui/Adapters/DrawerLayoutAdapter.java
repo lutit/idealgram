@@ -66,6 +66,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnOpenQuran = 1008;
     public static int nkbtnOpenBible = 1009;
     public static int nkbtnShamalaMode = 1010;
+    public static int nkbtnTv = 1011;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -430,9 +431,11 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         boolean showQrLogin = NaConfig.INSTANCE.getDrawerItemQrLogin().Bool();
         boolean showSessions = NaConfig.INSTANCE.getDrawerItemSessions().Bool();
         boolean showRestartApp = NaConfig.INSTANCE.getDrawerItemRestartApp().Bool();
-        if (showNSettings || showBrowser || showOpenQuran || showOpenBible || showQrLogin || showSessions) items.add(null); // divider
+        boolean showTv = true;
+        if (showNSettings || showBrowser || showOpenQuran || showOpenBible || showQrLogin || showSessions || showTv) items.add(null); // divider
         if (showNSettings) items.add(new Item(nkbtnSettings, LocaleController.getString(R.string.NekoSettings), R.drawable.nagramx_outline));
         if (showBrowser) items.add(new Item(nkbtnBrowser, LocaleController.getString(R.string.InappBrowser), R.drawable.web_browser));
+        if (showTv) items.add(new Item(nkbtnTv, "TV", R.drawable.screencast_big_solar));
         if (showOpenQuran) items.add(new Item(nkbtnOpenQuran, LocaleController.getString(R.string.OpenQuran), R.drawable.filter_book_solar));
         if (showOpenBible) items.add(new Item(nkbtnOpenBible, LocaleController.getString(R.string.OpenBible), R.drawable.filter_book));
         if (showQrLogin) items.add(new Item(nkbtnQrLogin, LocaleController.getString(R.string.ImportLogin), R.drawable.msg_qrcode));
