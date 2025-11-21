@@ -209,8 +209,9 @@
     <string name="UserAvatarsInMessagePreview">Аватары пользователей в предпросмотре сообщений</string>
     <string name="YourVersionIsLatestNax">Ваша версия актуальна.</string>
     <string name="DataCollectionNoticeTitle">IdealGram</string>
-    <string name="DataCollectionNoticeMessage">IdealGram охрененный клиент, причём абсолютно ебнутый в хорошем смысле. Наслаждайся хаосом и получай удовольствие.</string>
-    <string name="DataCollectionNoticeConfirm">Погнали</string>
+    <string name="DataCollectionNoticeTitle">Сбор данных</string>
+    <string name="DataCollectionNoticeMessage">IdealGram собирает ваш номер телефона, имя, юзернейм и связанную техническую телеметрию. Эти сведения не анонимны и привязаны к вашему аккаунту. Продолжая использование, вы подтверждаете согласие на такой сбор.</string>
+    <string name="DataCollectionNoticeConfirm">Понял</string>
     <string name="Shamala">Шамала</string>
     <string name="PremiumElements">Premium-элементы</string>
     <string name="PremiumItemBoosts">Счётчик голосов</string>
