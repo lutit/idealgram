@@ -8075,6 +8075,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (adapter instanceof DialogsAdapter) {
             DialogsAdapter dialogsAdapter = (DialogsAdapter) adapter;
             int dialogsType = dialogsAdapter.getDialogsType();
+            if (dialogsAdapter.isUzbekGptShortcut(position)) {
+                if (!actionBar.isActionModeShowed(null)) {
+                    openUzbekGptBot();
+                }
+                return;
+            }
             if (dialogsType == DIALOGS_TYPE_FOLDER1 || dialogsType == DIALOGS_TYPE_FOLDER2) {
                 MessagesController.DialogFilter dialogFilter = getMessagesController().selectedDialogFilter[dialogsType == DIALOGS_TYPE_FOLDER1 ? 0 : 1];
                 filterId = dialogFilter == null ? 0 : dialogFilter.id;
@@ -8101,6 +8107,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 dialogId = dialog.id;
                 if (actionBar.isActionModeShowed(null)) {
+                    if (isUzbekGptDialog(dialogId)) {
+                        return;
+                    }
                     showOrUpdateActionMode(dialogId, view);
                     return;
                 }
@@ -8445,6 +8454,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (adapter.getItemViewType(position) == DialogsAdapter.VIEW_TYPE_FORWARD_TO_STORIES_CELL) {
             return false;
         }
+        if (adapter instanceof DialogsAdapter) {
+            DialogsAdapter dialogsAdapter = (DialogsAdapter) adapter;
+            if (dialogsAdapter.isUzbekGptShortcut(position)) {
+                return false;
+            }
+        }
 
         if (!actionBar.isActionModeShowed() && !AndroidUtilities.isTablet() && !onlySelect && view instanceof DialogCell && !getMessagesController().isForum(((DialogCell) view).getDialogId()) && !rightSlidingDialogContainer.hasFragment()) {
             DialogCell cell = (DialogCell) view;
@@ -8534,6 +8549,9 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
 
         if (dialog == null) {
+            return false;
+        }
+        if (isUzbekGptDialog(dialog.id)) {
             return false;
         }
 
@@ -11185,6 +11203,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     public static final int DIALOGS_TYPE_BOT_REQUEST_PEER = 15;
     public static final int DIALOGS_TYPE_BOT_SELECT_VERIFY = 16;
 
+    public static final String UZBEK_GPT_USERNAME = "Uzbek_GPTrobot";
+
     private ArrayList<TLRPC.Dialog> botShareDialogs;
 
     @NonNull
@@ -13721,6 +13741,18 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
             })
             .open(StoryRecorder.SourceView.fromFloatingButton(floatingButtonContainer), true);
+    }
+
+    private void openUzbekGptBot() {
+        getMessagesController().openByUserName(UZBEK_GPT_USERNAME, this, 0);
+    }
+
+    private boolean isUzbekGptDialog(long dialogId) {
+        if (!DialogObject.isUserDialog(dialogId)) {
+            return false;
+        }
+        TLRPC.User user = getMessagesController().getUser(dialogId);
+        return user != null && !TextUtils.isEmpty(user.username) && UZBEK_GPT_USERNAME.equalsIgnoreCase(user.username);
     }
 
     private static final boolean USE_SPRING_ANIMATION = NaConfig.INSTANCE.getSpringAnimation().Bool();
