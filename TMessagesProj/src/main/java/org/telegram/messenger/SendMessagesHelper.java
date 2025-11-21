@@ -3898,6 +3898,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
 
         boolean canSendGames = sendMessageParams.canSendGames;
         boolean canUsePangu = sendMessageParams.canUsePangu == null ? NaConfig.INSTANCE.getEnablePanguOnSending().Bool() : sendMessageParams.canUsePangu;
+        String shamalaOriginalText = sendMessageParams.shamalaOriginalText;
         if (user != null && user.phone == null) {
             return;
         }
@@ -4657,6 +4658,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                 reply = null;
             }
             newMsgObj = new MessageObject(currentAccount, newMsg, reply, true, true);
+            if (!TextUtils.isEmpty(shamalaOriginalText) && !TextUtils.isEmpty(newMsg.message)) {
+                newMsgObj.messageText = shamalaOriginalText;
+            }
             newMsgObj.sendAnimationData = sendAnimationData;
             newMsgObj.wasJustSent = true;
             newMsgObj.sentHighQuality = sendMessageParams.sendingHighQuality;
@@ -10576,6 +10580,9 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         public long monoForumPeer;
         public boolean sendingHighQuality;
         public MessageSuggestionParams suggestionParams;
+
+        // used by Shamala mode to keep what user actually typed
+        public String shamalaOriginalText;
 
         public boolean canSendGames = true;
         public Boolean canUsePangu = null;

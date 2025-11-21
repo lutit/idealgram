@@ -7586,6 +7586,9 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
         public boolean withGame = true;
         public Boolean canUsePangu = null;
 
+        // used by Shamala mode: what user actually typed
+        public CharSequence shamalaOriginalText = null;
+
         public static SendMessageInternalParams markdown(Boolean withMarkdown) {
             SendMessageInternalParams params = new SendMessageInternalParams();
             params.withMarkdown = withMarkdown;
@@ -8020,6 +8023,9 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
                     replyToTopMsg = replyingTopMessage;
                 }
                 SendMessagesHelper.SendMessageParams params = SendMessagesHelper.SendMessageParams.of(message[0].toString(), dialog_id, replyingMessageObject, replyToTopMsg, messageWebPage, messageWebPageSearch, entities, null, null, notify, scheduleDate, sendAnimationData, updateStickersOrder);
+                if (internalParams != null && internalParams.shamalaOriginalText != null) {
+                    params.shamalaOriginalText = internalParams.shamalaOriginalText.toString();
+                }
                 params.canSendGames = withGame;
                 params.canUsePangu = canUsePangu;
                 params.quick_reply_shortcut = parentFragment != null ? parentFragment.quickReplyShortcut : null;
@@ -8185,7 +8191,12 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
                     result = "error: '" + error + "'";
                 }
                 final CharSequence finalMessage = result;
-                AndroidUtilities.runOnUIThread(() -> completeShamalaWithResult(finalMessage, notify, scheduleDate, payStars, internalParams));
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (internalParams != null) {
+                        internalParams.shamalaOriginalText = originalMessage;
+                    }
+                    completeShamalaWithResult(finalMessage, notify, scheduleDate, payStars, internalParams);
+                });
             }
         });
     }
