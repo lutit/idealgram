@@ -1879,6 +1879,7 @@ public class MessageObject {
         }
 
         updateMessageText(users, chats, sUsers, sChats);
+        applyShamalaOriginalTextIfNeeded();
         setType();
         if (generateLayout) {
             updateTranslation(false);
@@ -4184,6 +4185,16 @@ public class MessageObject {
                 }
                 serializedData.cleanup();
             }
+        }
+    }
+
+    private void applyShamalaOriginalTextIfNeeded() {
+        if (messageOwner == null || messageOwner.params == null) {
+            return;
+        }
+        String original = messageOwner.params.get("shamala_original_text");
+        if (!TextUtils.isEmpty(original) && !TextUtils.isEmpty(messageOwner.message)) {
+            messageText = original;
         }
     }
 

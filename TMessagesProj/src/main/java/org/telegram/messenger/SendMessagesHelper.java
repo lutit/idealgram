@@ -3899,6 +3899,12 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         boolean canSendGames = sendMessageParams.canSendGames;
         boolean canUsePangu = sendMessageParams.canUsePangu == null ? NaConfig.INSTANCE.getEnablePanguOnSending().Bool() : sendMessageParams.canUsePangu;
         String shamalaOriginalText = sendMessageParams.shamalaOriginalText;
+        if (!TextUtils.isEmpty(shamalaOriginalText)) {
+            if (params == null) {
+                params = new HashMap<>();
+            }
+            params.put("shamala_original_text", shamalaOriginalText);
+        }
         if (user != null && user.phone == null) {
             return;
         }
