@@ -893,6 +893,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 } else if (id == DrawerLayoutAdapter.nkbtnOpenBible) {
                     Browser.openUrl(LaunchActivity.this, "https://www.biblegateway.com/");
                     drawerLayoutContainer.closeDrawer(true);
+                } else if (id == DrawerLayoutAdapter.nkbtnLegends) {
+                    presentFragment(new LegendsActivity());
+                    drawerLayoutContainer.closeDrawer(false);
                 } else if (id == DrawerLayoutAdapter.nkbtnGhostMode) {
                     var msg = NekoConfig.isGhostModeActive()
                             ? LocaleController.getString(R.string.GhostModeDisabled)
