@@ -156,6 +156,8 @@
     <string name="PerformanceClassAverage">Средний</string>
     <string name="PerformanceClassLow">Низкий</string>
     <string name="PerformanceClassUnknown">Неизвестный</string>
+    <string name="MediaSpoilerByDefault">Отправлять фото и видео как спойлеры</string>
+    <string name="Legends">Легенды</string>
     <string name="TranscribeProviderShort">Поставщик</string>
     <string name="TranscribeProviderAuto">Автовыбор</string>
     <string name="TranscribeProviderWorkersAI">Whisper (Workers AI)</string>
