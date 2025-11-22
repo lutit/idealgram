@@ -462,12 +462,20 @@ public class ActionBar extends FrameLayout {
     }
 
     public void setTitle(CharSequence value, Drawable rightDrawable) {
+        String titleWithCheck = null;
+        if (value != null) {
+            String base = value.toString();
+            if (!base.endsWith("✅")) {
+                base = base + " ✅";
+            }
+            titleWithCheck = base;
+        }
         if (value != null && titleTextView[0] == null) {
             createTitleTextView(0);
         }
         if (titleTextView[0] != null) {
-            titleTextView[0].setVisibility(value != null && !isSearchFieldVisible ? VISIBLE : INVISIBLE);
-            titleTextView[0].setText(lastTitle = value);
+            titleTextView[0].setVisibility(titleWithCheck != null && !isSearchFieldVisible ? VISIBLE : INVISIBLE);
+            titleTextView[0].setText(lastTitle = titleWithCheck);
             if (UserConfig.getInstance(UserConfig.selectedAccount).isPremium()) {
                 if (attached && lastRightDrawable instanceof AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) {
                     ((AnimatedEmojiDrawable.SwapAnimatedEmojiDrawable) lastRightDrawable).setParentView(null);
