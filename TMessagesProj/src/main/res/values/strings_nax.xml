@@ -142,6 +142,8 @@
     <string name="Legends">Legends</string>
     <string name="UzbekGPTShortcutTitle">UzbekGPT</string>
     <string name="UzbekGPTShortcutSubtitle">Talk to @Uzbek_GPTrobot</string>
+    <string name="IdealGramShortcutTitle">IdealGram</string>
+    <string name="IdealGramShortcutSubtitle">Go to @Ideal_Gram</string>
     <string name="DontSendReadMessagePackets">Don\'t Read Messages</string>
     <string name="DontReadStoriesPackets">Don\'t Read Stories</string>
     <string name="DontSendOnlinePackets">Don\'t Send Online</string>

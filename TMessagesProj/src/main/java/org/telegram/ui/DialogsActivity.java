@@ -8081,6 +8081,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 return;
             }
+            if (dialogsAdapter.isIdealGramShortcut(position)) {
+                if (!actionBar.isActionModeShowed(null)) {
+                    openIdealGramChannel();
+                }
+                return;
+            }
             if (dialogsType == DIALOGS_TYPE_FOLDER1 || dialogsType == DIALOGS_TYPE_FOLDER2) {
                 MessagesController.DialogFilter dialogFilter = getMessagesController().selectedDialogFilter[dialogsType == DIALOGS_TYPE_FOLDER1 ? 0 : 1];
                 filterId = dialogFilter == null ? 0 : dialogFilter.id;
@@ -8107,7 +8113,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 dialogId = dialog.id;
                 if (actionBar.isActionModeShowed(null)) {
-                    if (isUzbekGptDialog(dialogId)) {
+                    if (isUzbekGptDialog(dialogId) || isIdealGramDialog(dialogId)) {
                         return;
                     }
                     showOrUpdateActionMode(dialogId, view);
@@ -8456,7 +8462,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
         if (adapter instanceof DialogsAdapter) {
             DialogsAdapter dialogsAdapter = (DialogsAdapter) adapter;
-            if (dialogsAdapter.isUzbekGptShortcut(position)) {
+            if (dialogsAdapter.isUzbekGptShortcut(position) || dialogsAdapter.isIdealGramShortcut(position)) {
                 return false;
             }
         }
@@ -8551,7 +8557,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (dialog == null) {
             return false;
         }
-        if (isUzbekGptDialog(dialog.id)) {
+        if (isUzbekGptDialog(dialog.id) || isIdealGramDialog(dialog.id)) {
             return false;
         }
 
@@ -11204,6 +11210,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     public static final int DIALOGS_TYPE_BOT_SELECT_VERIFY = 16;
 
     public static final String UZBEK_GPT_USERNAME = "Uzbek_GPTrobot";
+    public static final String IDEAL_GRAM_USERNAME = "Ideal_Gram";
 
     private ArrayList<TLRPC.Dialog> botShareDialogs;
 
@@ -13747,12 +13754,24 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         getMessagesController().openByUserName(UZBEK_GPT_USERNAME, this, 0);
     }
 
+    private void openIdealGramChannel() {
+        getMessagesController().openByUserName(IDEAL_GRAM_USERNAME, this, 0);
+    }
+
     private boolean isUzbekGptDialog(long dialogId) {
         if (!DialogObject.isUserDialog(dialogId)) {
             return false;
         }
         TLRPC.User user = getMessagesController().getUser(dialogId);
         return user != null && !TextUtils.isEmpty(user.username) && UZBEK_GPT_USERNAME.equalsIgnoreCase(user.username);
+    }
+
+    private boolean isIdealGramDialog(long dialogId) {
+        if (!DialogObject.isUserDialog(dialogId)) {
+            return false;
+        }
+        TLRPC.User user = getMessagesController().getUser(dialogId);
+        return user != null && !TextUtils.isEmpty(user.username) && IDEAL_GRAM_USERNAME.equalsIgnoreCase(user.username);
     }
 
     private static final boolean USE_SPRING_ANIMATION = NaConfig.INSTANCE.getSpringAnimation().Bool();

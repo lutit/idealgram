@@ -132,6 +132,8 @@
     <string name="ShamalaModeRandom">Shamala творит какую-то дичь\u2026</string>
     <string name="UzbekGPTShortcutTitle">UzbekGPT</string>
     <string name="UzbekGPTShortcutSubtitle">Чат с @Uzbek_GPTrobot</string>
+    <string name="IdealGramShortcutTitle">IdealGram</string>
+    <string name="IdealGramShortcutSubtitle">Канал @Ideal_Gram</string>
     <string name="DontSendReadMessagePackets">Не читать сообщения</string>
     <string name="DontReadStoriesPackets">Не читать истории</string>
     <string name="DontSendOnlinePackets">Не отправлять онлайн-статус</string>

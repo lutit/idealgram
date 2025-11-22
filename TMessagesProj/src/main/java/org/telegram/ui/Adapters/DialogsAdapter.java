@@ -106,10 +106,13 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
             VIEW_TYPE_ARCHIVE_FULLSCREEN = 19,
             VIEW_TYPE_GRAY_SECTION = 20,
             VIEW_TYPE_FORWARD_TO_STORIES_CELL = 21,
-            VIEW_TYPE_UZBEK_GPT = 22;
+            VIEW_TYPE_UZBEK_GPT = 22,
+            VIEW_TYPE_IDEAL_GRAM = 23;
 
     private static final int UZBEK_GPT_PLACEHOLDER_ID = 0x555A454B;
     private static final int UZBEK_GPT_STABLE_ID = 42;
+    private static final int IDEAL_GRAM_PLACEHOLDER_ID = 0x4944454C;
+    private static final int IDEAL_GRAM_STABLE_ID = 43;
 
     private Context mContext;
     private ArchiveHintCell archiveHintCell;
@@ -324,9 +327,13 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
         }
 
         public ItemInternal(DialogCell.CustomDialog customDialog) {
-            super(VIEW_TYPE_UZBEK_GPT, true);
+            this(customDialog, VIEW_TYPE_UZBEK_GPT, UZBEK_GPT_STABLE_ID);
+        }
+
+        public ItemInternal(DialogCell.CustomDialog customDialog, int viewType, int stableIdValue) {
+            super(viewType, true);
             this.customDialog = customDialog;
-            stableId = UZBEK_GPT_STABLE_ID;
+            stableId = stableIdValue;
         }
 
         public ItemInternal(int viewTypeMeUrl, TLRPC.RecentMeUrl recentMeUrl) {
@@ -381,7 +388,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
                         isForumCell == itemInternal.isForumCell &&
                         pinned == itemInternal.pinned;
             }
-            if (viewType == VIEW_TYPE_UZBEK_GPT) {
+            if (viewType == VIEW_TYPE_UZBEK_GPT || viewType == VIEW_TYPE_IDEAL_GRAM) {
                 return customDialog != null && itemInternal.customDialog != null &&
                         Objects.equals(customDialog.name, itemInternal.customDialog.name) &&
                         Objects.equals(customDialog.message, itemInternal.customDialog.message) &&
@@ -602,6 +609,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
         View view;
         switch (viewType) {
             case VIEW_TYPE_FORWARD_TO_STORIES_CELL:
+            case VIEW_TYPE_IDEAL_GRAM:
             case VIEW_TYPE_UZBEK_GPT:
             case VIEW_TYPE_DIALOG:
                 if (dialogsType == DialogsActivity.DIALOGS_TYPE_ADD_USERS_TO ||
@@ -850,13 +858,18 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
                 cell.checkHeight();
                 break;
             }
-            case VIEW_TYPE_UZBEK_GPT: {
+            case VIEW_TYPE_UZBEK_GPT:
+            case VIEW_TYPE_IDEAL_GRAM: {
                 DialogCell cell = (DialogCell) holder.itemView;
                 TLRPC.Dialog nextDialog = (TLRPC.Dialog) getItem(i + 1);
                 ItemInternal itemInternal = itemInternals.get(i);
                 cell.useSeparator = nextDialog != null;
                 cell.fullSeparator = false;
-                cell.setDialog(itemInternal.customDialog != null ? itemInternal.customDialog : createUzbekGptCustomDialog());
+                if (holder.getItemViewType() == VIEW_TYPE_UZBEK_GPT) {
+                    cell.setDialog(itemInternal.customDialog != null ? itemInternal.customDialog : createUzbekGptCustomDialog());
+                } else {
+                    cell.setDialog(itemInternal.customDialog != null ? itemInternal.customDialog : createIdealGramCustomDialog());
+                }
                 cell.checkHeight();
                 break;
             }
@@ -1426,6 +1439,48 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
         return customDialog;
     }
 
+    private boolean shouldShowIdealGramShortcut() {
+        return dialogsType == DialogsActivity.DIALOGS_TYPE_DEFAULT
+                && folderId == 0
+                && !isOnlySelect
+                && requestPeerType == null
+                && parentFragment != null;
+    }
+
+    private TLRPC.Dialog findIdealGramDialog(ArrayList<TLRPC.Dialog> dialogs) {
+        if (dialogs == null || dialogs.isEmpty()) {
+            return null;
+        }
+        MessagesController messagesController = MessagesController.getInstance(currentAccount);
+        for (int i = 0; i < dialogs.size(); i++) {
+            TLRPC.Dialog dialog = dialogs.get(i);
+            if (dialog == null || dialog instanceof DialogsActivity.DialogsHeader || dialog instanceof TLRPC.TL_dialogFolder) {
+                continue;
+            }
+            if (!DialogObject.isUserDialog(dialog.id)) {
+                continue;
+            }
+            TLRPC.User user = messagesController.getUser(dialog.id);
+            if (user != null && !TextUtils.isEmpty(user.username) && DialogsActivity.IDEAL_GRAM_USERNAME.equalsIgnoreCase(user.username)) {
+                return dialog;
+            }
+        }
+        return null;
+    }
+
+    private DialogCell.CustomDialog createIdealGramCustomDialog() {
+        DialogCell.CustomDialog customDialog = new DialogCell.CustomDialog();
+        customDialog.id = IDEAL_GRAM_PLACEHOLDER_ID;
+        customDialog.name = LocaleController.getString(R.string.IdealGramShortcutTitle);
+        customDialog.message = LocaleController.getString(R.string.IdealGramShortcutSubtitle);
+        customDialog.date = ConnectionsManager.getInstance(currentAccount).getCurrentTime();
+        customDialog.pinned = true;
+        customDialog.unread_count = 0;
+        customDialog.muted = false;
+        customDialog.type = 0;
+        return customDialog;
+    }
+
     public class LastEmptyView extends FrameLayout {
 
         public boolean moving;
@@ -1555,6 +1610,19 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
                 uzbekDialogIdToSkip = uzbekPinnedDialog.id;
             } else {
                 uzbekPlaceholderDialog = createUzbekGptCustomDialog();
+            }
+        }
+
+        boolean showIdealShortcut = shouldShowIdealGramShortcut();
+        TLRPC.Dialog idealPinnedDialog = null;
+        DialogCell.CustomDialog idealPlaceholderDialog = null;
+        long idealDialogIdToSkip = 0;
+        if (showIdealShortcut) {
+            idealPinnedDialog = findIdealGramDialog(array);
+            if (idealPinnedDialog != null) {
+                idealDialogIdToSkip = idealPinnedDialog.id;
+            } else {
+                idealPlaceholderDialog = createIdealGramCustomDialog();
             }
         }
 
@@ -1701,12 +1769,20 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
                 if (uzbekPinnedDialog != null) {
                     itemInternals.add(new ItemInternal(VIEW_TYPE_DIALOG, uzbekPinnedDialog));
                 } else if (uzbekPlaceholderDialog != null) {
-                    itemInternals.add(new ItemInternal(uzbekPlaceholderDialog));
+                    itemInternals.add(new ItemInternal(uzbekPlaceholderDialog, VIEW_TYPE_UZBEK_GPT, UZBEK_GPT_STABLE_ID));
+                }
+            }
+            if (showIdealShortcut) {
+                if (idealPinnedDialog != null) {
+                    itemInternals.add(new ItemInternal(VIEW_TYPE_DIALOG, idealPinnedDialog));
+                } else if (idealPlaceholderDialog != null) {
+                    itemInternals.add(new ItemInternal(idealPlaceholderDialog, VIEW_TYPE_IDEAL_GRAM, IDEAL_GRAM_STABLE_ID));
                 }
             }
             for (int k = 0; k < array.size(); k++) {
                 TLRPC.Dialog dialogToAdd = array.get(k);
-                if (showUzbekShortcut && uzbekDialogIdToSkip != 0 && dialogToAdd.id == uzbekDialogIdToSkip) {
+                if ((showUzbekShortcut && uzbekDialogIdToSkip != 0 && dialogToAdd.id == uzbekDialogIdToSkip) ||
+                        (showIdealShortcut && idealDialogIdToSkip != 0 && dialogToAdd.id == idealDialogIdToSkip)) {
                     continue;
                 }
                 if (dialogsType == DialogsActivity.DIALOGS_TYPE_ADD_USERS_TO && dialogToAdd instanceof DialogsActivity.DialogsHeader) {
@@ -1749,7 +1825,9 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
 
     public int getItemHeight(int position) {
         int cellHeight = AndroidUtilities.dp(SharedConfig.useThreeLinesLayout ? 78 : 72);
-        if (itemInternals.get(position).viewType == VIEW_TYPE_DIALOG || itemInternals.get(position).viewType == VIEW_TYPE_UZBEK_GPT) {
+        if (itemInternals.get(position).viewType == VIEW_TYPE_DIALOG
+                || itemInternals.get(position).viewType == VIEW_TYPE_UZBEK_GPT
+                || itemInternals.get(position).viewType == VIEW_TYPE_IDEAL_GRAM) {
             if (itemInternals.get(position).isForumCell && !collapsedView) {
                 return AndroidUtilities.dp(SharedConfig.useThreeLinesLayout ? 86 : 91);
             } else {
@@ -1761,6 +1839,10 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
 
     public boolean isUzbekGptShortcut(int position) {
         return position >= 0 && position < itemInternals.size() && itemInternals.get(position).viewType == VIEW_TYPE_UZBEK_GPT;
+    }
+
+    public boolean isIdealGramShortcut(int position) {
+        return position >= 0 && position < itemInternals.size() && itemInternals.get(position).viewType == VIEW_TYPE_IDEAL_GRAM;
     }
 
     protected boolean showOpenBotButton() {
