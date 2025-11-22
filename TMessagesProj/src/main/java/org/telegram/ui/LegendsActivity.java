@@ -69,6 +69,10 @@ public class LegendsActivity extends BaseFragment {
         return fragmentView;
     }
 
+    private void openUsername(String username) {
+        getMessagesController().openByUserName(username, this, 0);
+    }
+
     private class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         @Override
