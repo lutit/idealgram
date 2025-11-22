@@ -336,6 +336,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private View rippleAbove;
     private IUpdateLayout updateLayout;
 
+    private boolean loginWowPlayed;
     private boolean shamalaModeScheduled;
     private final Runnable shamalaModeRunnable = new Runnable() {
         @Override
@@ -455,6 +456,36 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private void stopUltraShamalaModeEffects() {
         ultraShamalaModeScheduled = false;
         AndroidUtilities.cancelRunOnUIThread(ultraShamalaModeRunnable);
+    }
+
+    private void maybePlayLoginWowEffect() {
+        if (loginWowPlayed || fireworksOverlay == null) {
+            return;
+        }
+        BaseFragment fragment = getLastFragment();
+        if (!(fragment instanceof LoginActivity) && !(fragment instanceof IntroActivity)) {
+            return;
+        }
+        if (UserConfig.getActivatedAccountsCount() > 0) {
+            return;
+        }
+        loginWowPlayed = true;
+
+        AndroidUtilities.runOnUIThread(() -> {
+            if (fireworksOverlay != null) {
+                fireworksOverlay.start(true);
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (fireworksOverlay != null) {
+                        fireworksOverlay.start(true);
+                    }
+                }, 500);
+            }
+            Point size = AndroidUtilities.displaySize;
+            float cx = size.x / 2f;
+            float cy = size.y / 3f;
+            LaunchActivity.makeRipple(cx, cy, 1.4f);
+            AndroidUtilities.runOnUIThread(() -> LaunchActivity.makeRipple(cx, size.y * 0.8f, 1.0f), 300);
+        }, 900);
     }
     public Dialog getVisibleDialog() {
         for (int i = visibleDialogs.size() - 1; i >= 0; --i) {
@@ -7412,6 +7443,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 overlay.onResume();
             }
         }
+
+        maybePlayLoginWowEffect();
 
         if (NaConfig.INSTANCE.getDisableProxyWhenVpnEnabled().Bool()) {
             if (SharedConfig.isProxyEnabled() && ProxyUtil.isVPNEnabled()) {
