@@ -403,6 +403,14 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
     private final static int nkbtn_transcriptionRetry = 2038;
     private final static int nkbtn_clearDeleted = 2100;
 
+    private static final int[] SEND_STARS_EFFECT_ASSETS = new int[] {
+            R.raw.star_reaction_effect1,
+            R.raw.star_reaction_effect2,
+            R.raw.star_reaction_effect3,
+            R.raw.star_reaction_effect4,
+            R.raw.star_reaction_effect5
+    };
+
     public int shareAlertDebugMode = DEBUG_SHARE_ALERT_MODE_NORMAL;
     public boolean shareAlertDebugTopicsSlowMotion;
 
@@ -2155,6 +2163,8 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     }
                 }
             }
+
+            playSendStarsEffect();
         }
 
         // NekoX
@@ -45454,6 +45464,58 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
             starReactionsOverlay.bringToFront();
         }
         return starReactionsOverlay;
+    }
+
+    private RLottieImageView sendStarsEffectView;
+    private void playSendStarsEffect() {
+        if (chatActivityEnterView == null || fragmentView == null) {
+            return;
+        }
+        FrameLayout parent = getLayoutContainer();
+        if (parent == null) {
+            return;
+        }
+        View sendButton = chatActivityEnterView.getSendButton();
+        if (sendButton == null || sendButton.getVisibility() != View.VISIBLE) {
+            return;
+        }
+
+        if (sendStarsEffectView == null) {
+            sendStarsEffectView = new RLottieImageView(getContext());
+            sendStarsEffectView.setScaleType(ImageView.ScaleType.CENTER);
+            parent.addView(sendStarsEffectView, LayoutHelper.createFrame(AndroidUtilities.dp(90), AndroidUtilities.dp(90), Gravity.TOP | Gravity.LEFT));
+        }
+
+        int[] parentLocation = new int[2];
+        int[] buttonLocation = new int[2];
+        parent.getLocationInWindow(parentLocation);
+        sendButton.getLocationInWindow(buttonLocation);
+
+        int size = AndroidUtilities.dp(90);
+        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) sendStarsEffectView.getLayoutParams();
+        if (layoutParams == null) {
+            layoutParams = new FrameLayout.LayoutParams(size, size);
+        } else {
+            layoutParams.width = size;
+            layoutParams.height = size;
+        }
+        layoutParams.leftMargin = buttonLocation[0] - parentLocation[0] + sendButton.getWidth() / 2 - size / 2;
+        layoutParams.topMargin = buttonLocation[1] - parentLocation[1] + sendButton.getHeight() / 2 - size / 2;
+        sendStarsEffectView.setLayoutParams(layoutParams);
+
+        int asset = SEND_STARS_EFFECT_ASSETS[Utilities.fastRandom.nextInt(SEND_STARS_EFFECT_ASSETS.length)];
+        sendStarsEffectView.setAnimation(asset, 90, 90);
+        RLottieDrawable drawable = sendStarsEffectView.getAnimatedDrawable();
+        if (drawable != null) {
+            drawable.setAutoRepeat(0);
+            drawable.setOnAnimationEndListener(() -> sendStarsEffectView.setVisibility(View.GONE));
+        }
+        sendStarsEffectView.setVisibility(View.VISIBLE);
+        sendStarsEffectView.playAnimation();
+
+        float cx = buttonLocation[0] + sendButton.getWidth() / 2f;
+        float cy = buttonLocation[1] + sendButton.getHeight() / 2f;
+        LaunchActivity.makeRipple(cx, cy, 0.9f);
     }
 
     private void checkGroupMessagesOrder() {
