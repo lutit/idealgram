@@ -1,0 +1,114 @@
+name: Push Quick Test Build
+
+on:
+  push:
+    branches:
+      - "idealgram"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Quick Gradle Build (Push)
+    runs-on: ubuntu-latest
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_HARDLINK: "true"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_MAXSIZE: "10G"
+      NATIVE_TARGET: "SKIP"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Set up Ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          append-timestamp: false
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Cache Native Build Artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/native
+            TMessagesProj/.cxx
+          key: native-${{ runner.os }}-${{ env.NATIVE_TARGET }}-${{ hashFiles('TMessagesProj/jni/**', 'TMessagesProj/jni/CMakeLists.txt') }}
+          restore-keys: |
+            native-${{ runner.os }}-${{ env.NATIVE_TARGET }}-
+
+      - name: Set up Android SDK Tools
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "build-tools;36.0.0 ndk;27.2.12479018 platforms;android-36"
+
+      - name: Configure Android SDK Path
+        run: echo "sdk.dir=${ANDROID_HOME}" >> local.properties
+
+      - name: Optimize Gradle JVM Args
+        run: |
+          MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+          MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
+          echo "Detected memory size: ${MEMORY_GB}GB"
+          if [ $MEMORY_GB -ge 12 ]; then
+            sed -i '/^org\.gradle\.jvmargs=/d' gradle.properties
+            echo "org.gradle.jvmargs=-Xmx8G -XX:+UseParallelGC -Dfile.encoding=UTF-8" >> gradle.properties
+          fi
+
+      - name: Build (Debug, JNI skipped)
+        run: |
+          set -o pipefail
+          export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
+          ./gradlew TMessagesProj:assembleDebug --no-daemon --parallel --configure-on-demand --stacktrace --warning-mode all --console=plain | tee gradle-build.log
+
+      - name: Print Kotlin diagnostics
+        if: failure()
+        run: |
+          echo "================= TAIL BUILD LOG ================="
+          [ -f gradle-build.log ] && tail -n 400 gradle-build.log
+
+          echo "================= PROBLEMS REPORT ================="
+          if [ -f build/reports/problems/problems-report.html ]; then
+            sed -e 's/<[^>]*>//g' build/reports/problems/problems-report.html
+          fi
+
+          echo "================= KOTLIN REPORTS ================="
+          mapfile -t kotlin_reports < <(find . -path "*build/reports/kotlin*" -type f 2>/dev/null || true)
+          if [ "${#kotlin_reports[@]}" -gt 0 ]; then
+            for file in "${kotlin_reports[@]}"; do
+              echo "--- ${file} ---"
+              cat "$file"
+            done
+          fi
+
+          echo "================= .kotlin_error FILES ================="
+          find . -name "*.kotlin_error" -print -exec cat {} \; 2>/dev/null || true
+
+          echo "================= kotlin-compiler LOGS ================="
+          find . -type f -name "kotlin-compiler*.log" -print -exec cat {} \; 2>/dev/null || true
+
+          echo "================= ALL .log FILES ================="
+          find . -type f -name "*.log" -print
+
