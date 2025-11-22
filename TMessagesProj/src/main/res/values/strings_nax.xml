@@ -139,6 +139,12 @@
     <string name="ShamalaModeEnabled">Shamala mode unleashed</string>
     <string name="ShamalaModeDisabled">Shamala mode contained</string>
     <string name="ShamalaModeRandom">Shamala is doing something weird\u2026</string>
+    <string name="UltraShamalaMode">ULTRA SHALAMA MODE</string>
+    <string name="EnableUltraShamalaMode">Enable ULTRA SHALAMA MODE</string>
+    <string name="DisableUltraShamalaMode">Disable ULTRA SHALAMA MODE</string>
+    <string name="UltraShamalaModeEnabled">ULTRA SHALAMA MODE unleashed</string>
+    <string name="UltraShamalaModeDisabled">ULTRA SHALAMA MODE contained</string>
+    <string name="UltraShamalaModeRandom">Ultra Shamala goes absolutely wild\u2026</string>
     <string name="Legends">Legends</string>
     <string name="UzbekGPTShortcutTitle">UzbekGPT</string>
     <string name="UzbekGPTShortcutSubtitle">Talk to @Uzbek_GPTrobot</string>

@@ -7538,7 +7538,7 @@ public class ChatActivityEnterView extends BlurredFrameLayout implements Notific
                 return;
             }
             if (!TextUtils.isEmpty(message)) {
-                if (NekoConfig.isShamalaModeActive()) {
+                if (NekoConfig.isShamalaModeActive() || NekoConfig.isUltraShamalaModeActive()) {
                     applyShamalaAndSend(message, notify, scheduleDate, payStars, internalParams);
                 } else {
                     sendPreparedTextMessage(message, notify, scheduleDate, payStars, internalParams);

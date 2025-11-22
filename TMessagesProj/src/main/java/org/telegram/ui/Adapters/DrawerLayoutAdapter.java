@@ -68,6 +68,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnShamalaMode = 1010;
     public static int nkbtnTv = 1011;
     public static int nkbtnLegends = 1012;
+    public static int nkbtnUltraShamalaMode = 1013;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -355,6 +356,12 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
                     ? LocaleController.getString(R.string.DisableShamalaMode)
                     : LocaleController.getString(R.string.EnableShamalaMode);
             items.add(new Item(nkbtnShamalaMode, shamalaLabel, R.drawable.ayu_ghost));
+
+            CharSequence ultraShamalaLabel = NekoConfig.isUltraShamalaModeActive()
+                    ? LocaleController.getString(R.string.DisableUltraShamalaMode)
+                    : LocaleController.getString(R.string.EnableUltraShamalaMode);
+            items.add(new Item(nkbtnUltraShamalaMode, ultraShamalaLabel, R.drawable.ayu_ghost));
+
             items.add(null);
         }
         // --- Shamala Mode ---

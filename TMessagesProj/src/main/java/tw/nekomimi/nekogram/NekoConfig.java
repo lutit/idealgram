@@ -197,6 +197,7 @@ public class NekoConfig {
     public static ConfigItem markReadAfterSend = addConfig("markReadAfterSend", configTypeBool, true);
     public static ConfigItem showGhostInDrawer = addConfig("showGhostInDrawer", configTypeBool, false);
     public static ConfigItem shamalaMode = addConfig("shamalaMode", configTypeBool, true);
+    public static ConfigItem ultraShamalaMode = addConfig("ultraShamalaMode", configTypeBool, false);
 
     // --- Locked Status ---
     public static ConfigItem sendReadMessagePacketsLocked = addConfig("sendReadMessagePacketsLocked", configTypeBool, false);
@@ -364,6 +365,16 @@ public class NekoConfig {
         shamalaMode.toggleConfigBool();
     }
     // --- Shamala Mode ---
+
+    // --- Ultra Shamala Mode ---
+    public static boolean isUltraShamalaModeActive() {
+        return ultraShamalaMode.Bool();
+    }
+
+    public static void toggleUltraShamalaMode() {
+        ultraShamalaMode.toggleConfigBool();
+    }
+    // --- Ultra Shamala Mode ---
 
     public static Set<String> getAllKeys() {
         synchronized (sync) {

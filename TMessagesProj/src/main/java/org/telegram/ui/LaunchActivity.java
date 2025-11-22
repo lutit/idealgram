@@ -369,6 +369,54 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
     };
 
+    private boolean ultraShamalaModeScheduled;
+    private final Runnable ultraShamalaModeRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!NekoConfig.isUltraShamalaModeActive() || !isResumed) {
+                ultraShamalaModeScheduled = false;
+                return;
+            }
+
+            BaseFragment fragment = getLastFragment();
+            int effect = (int) (Math.random() * 5);
+            if (effect == 0 && fireworksOverlay != null) {
+                fireworksOverlay.start(true);
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (fireworksOverlay != null) {
+                        fireworksOverlay.start(true);
+                    }
+                }, 400);
+            } else if (effect == 1 && drawerLayoutContainer != null) {
+                float shiftX = AndroidUtilities.dp(16);
+                float shiftY = AndroidUtilities.dp(6);
+                drawerLayoutContainer.animate().translationX(shiftX).translationY(-shiftY).setDuration(60).withEndAction(() ->
+                        drawerLayoutContainer.animate().translationX(-shiftX).translationY(shiftY).setDuration(60).withEndAction(() ->
+                                drawerLayoutContainer.animate().translationX(0).translationY(0).setDuration(60).start()
+                        ).start()
+                ).start();
+            } else if (effect == 2) {
+                Point size = AndroidUtilities.displaySize;
+                float x = (float) (Math.random() * size.x);
+                float y = (float) (Math.random() * size.y);
+                LaunchActivity.makeRipple(x, y, 1.2f);
+            } else if (effect == 3 && fragment != null) {
+                BulletinFactory.of(fragment).createSimpleBulletin(
+                        R.raw.stars_send,
+                        LocaleController.getString(R.string.UltraShamalaModeRandom)
+                ).show();
+            } else if (effect == 4) {
+                Point size = AndroidUtilities.displaySize;
+                if (fireworksOverlay != null) {
+                    fireworksOverlay.start(true);
+                }
+                LaunchActivity.makeRipple(size.x / 2f, size.y / 2f, 1.5f);
+            }
+
+            scheduleNextUltraShamalaTick();
+        }
+    };
+
     private void scheduleNextShamalaTick() {
         if (!NekoConfig.isShamalaModeActive() || !isResumed) {
             shamalaModeScheduled = false;
@@ -389,6 +437,28 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private void stopShamalaModeEffects() {
         shamalaModeScheduled = false;
         AndroidUtilities.cancelRunOnUIThread(shamalaModeRunnable);
+    }
+
+    private void scheduleNextUltraShamalaTick() {
+        if (!NekoConfig.isUltraShamalaModeActive() || !isResumed) {
+            ultraShamalaModeScheduled = false;
+            return;
+        }
+        ultraShamalaModeScheduled = true;
+        long delay = 3000 + (long) (Math.random() * 4000);
+        AndroidUtilities.runOnUIThread(ultraShamalaModeRunnable, delay);
+    }
+
+    private void startUltraShamalaModeEffects() {
+        if (ultraShamalaModeScheduled || !isResumed) {
+            return;
+        }
+        scheduleNextUltraShamalaTick();
+    }
+
+    private void stopUltraShamalaModeEffects() {
+        ultraShamalaModeScheduled = false;
+        AndroidUtilities.cancelRunOnUIThread(ultraShamalaModeRunnable);
     }
     public Dialog getVisibleDialog() {
         for (int i = visibleDialogs.size() - 1; i >= 0; --i) {
@@ -915,6 +985,20 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         startShamalaModeEffects();
                     } else {
                         stopShamalaModeEffects();
+                    }
+                    drawerLayoutContainer.closeDrawer(false);
+                    NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                } else if (id == DrawerLayoutAdapter.nkbtnUltraShamalaMode) {
+                    boolean willEnable = !NekoConfig.isUltraShamalaModeActive();
+                    NekoConfig.toggleUltraShamalaMode();
+                    CharSequence msg = LocaleController.getString(
+                            willEnable ? R.string.UltraShamalaModeEnabled : R.string.UltraShamalaModeDisabled
+                    );
+                    BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, msg).show();
+                    if (willEnable) {
+                        startUltraShamalaModeEffects();
+                    } else {
+                        stopUltraShamalaModeEffects();
                     }
                     drawerLayoutContainer.closeDrawer(false);
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
@@ -7110,6 +7194,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         super.onPause();
         isResumed = false;
         stopShamalaModeEffects();
+        stopUltraShamalaModeEffects();
         pipActivityHandler.onPause();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 4096);
         ApplicationLoader.mainInterfacePaused = true;
@@ -7309,6 +7394,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         isResumed = true;
         if (NekoConfig.isShamalaModeActive()) {
             startShamalaModeEffects();
+        }
+        if (NekoConfig.isUltraShamalaModeActive()) {
+            startUltraShamalaModeEffects();
         }
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
