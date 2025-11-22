@@ -924,6 +924,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
+    val mediaSpoilerByDefault =
+        addConfig(
+            "MediaSpoilerByDefault",
+            ConfigItem.configTypeBool,
+            false
+        )
     val silentMessageByDefault =
         addConfig(
             "SilentMessageByDefault",

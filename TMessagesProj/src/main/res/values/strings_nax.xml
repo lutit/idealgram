@@ -97,6 +97,7 @@
     <string name="TranslatorMinimized">Translator bar has been minimized for this chat.</string>
     <string name="UseDeletedIcon">Show Icon Instead of \"deleted\"</string>
     <string name="UseEditedIcon">Show Icon Instead of \"edited\"</string>
+    <string name="MediaSpoilerByDefault">Send photos and videos as spoilers</string>
     <string name="SilentMessageByDefault">Send without Sound</string>
     <string name="FolderNameAsTitle">Use Folder Name as Title</string>
     <string name="SaveDeletedMessageForBotUser">Save Bot Messages</string>

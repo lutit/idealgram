@@ -3896,6 +3896,10 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         int quick_reply_shortcut_id = sendMessageParams.quick_reply_shortcut_id;
         long stars = sendMessageParams.stars;
 
+        if (!hasMediaSpoilers && (photo != null || (document != null && (MessageObject.isVideoDocument(document) || MessageObject.isGifDocument(document))))) {
+            hasMediaSpoilers = NaConfig.INSTANCE.getMediaSpoilerByDefault().Bool();
+        }
+
         boolean canSendGames = sendMessageParams.canSendGames;
         boolean canUsePangu = sendMessageParams.canUsePangu == null ? NaConfig.INSTANCE.getEnablePanguOnSending().Bool() : sendMessageParams.canUsePangu;
         String shamalaOriginalText = sendMessageParams.shamalaOriginalText;
