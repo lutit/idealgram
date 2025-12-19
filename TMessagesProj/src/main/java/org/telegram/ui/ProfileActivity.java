@@ -14128,7 +14128,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     } else if (position == numberRow) {
                         TLRPC.User user = UserConfig.getInstance(currentAccount).getCurrentUser();
                         String value = getString(R.string.NumberUnknown);
-                        if (!NekoConfig.hidePhone.Bool()) {
+                        if (NekoConfig.hidePhone.Bool() && user != null && user.id == getUserConfig().getClientUserId()) {
+                            value = NekoConfig.getPeekPhoneNumberFormatted(currentAccount);
+                        } else if (!NekoConfig.hidePhone.Bool()) {
                             if (user != null && user.phone != null && user.phone.length() != 0) {
                                 value = PhoneFormat.getInstance().format("+" + user.phone);
                             }

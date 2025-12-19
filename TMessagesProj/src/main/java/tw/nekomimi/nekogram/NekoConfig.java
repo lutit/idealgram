@@ -17,6 +17,8 @@ import android.util.Pair;
 import com.radolyn.ayugram.utils.AyuGhostUtils;
 
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.UserConfig;
+import org.telegram.PhoneFormat.PhoneFormat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
@@ -61,6 +63,29 @@ public class NekoConfig {
     public static final SharedPreferences preferences = ApplicationLoader.applicationContext.getSharedPreferences("nkmrcfg", Context.MODE_PRIVATE);
     public static final Object sync = new Object();
     public static final String channelAliasPrefix = "channelAliasPrefix_";
+    private static final String peekPhoneNumberPrefix = "peekPhoneNumber_";
+
+    private static final String[] PEEK_PHONE_NUMBERS = new String[] {
+        "+998712911928",
+        "+998712911814",
+        "+998712915825",
+        "+998712672072",
+        "+998703672072",
+        "+998712375135",
+        "+998712553015",
+        "+998742233547",
+        "+998652231089",
+        "+998732321175",
+        "+998662313183",
+        "+998692250331",
+        "+998772221956",
+        "+998752234421",
+        "+998722252814",
+        "+998672251230",
+        "+998622223397",
+        "+998612552061",
+        "+998712894412"
+    };
 
     private static boolean configLoaded = false;
     private static final ArrayList<ConfigItem> configs = new ArrayList<>();
@@ -208,6 +233,20 @@ public class NekoConfig {
     static {
         loadConfig(false);
         checkMigration();
+    }
+
+    public static String getPeekPhoneNumberFormatted(int account) {
+        synchronized (sync) {
+            String key = peekPhoneNumberPrefix + account;
+            String stored = preferences.getString(key, null);
+            if (stored == null) {
+                long id = UserConfig.getInstance(account).getClientUserId();
+                int index = (int) Math.floorMod(id, (long) PEEK_PHONE_NUMBERS.length);
+                stored = PEEK_PHONE_NUMBERS[index];
+                preferences.edit().putString(key, stored).commit();
+            }
+            return PhoneFormat.getInstance().format(stored);
+        }
     }
 
     public static ConfigItem addConfig(String k, int t, Object d) {
