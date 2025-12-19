@@ -114,10 +114,11 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     private boolean dragging;
     private int startDragX;
     private final String[] chaosBadgeLines = new String[]{
-            "IDEALGRAM // CHAOS BUILD",
+            "UZBEKGRAM // CHAOS BUILD",
             "NONSTANDARD MODE: ON",
             "BLESSED + CURSED UI CORE",
             "TANZIL × BIBLE FUSION READY",
+            "DURKA PHONE NUMBER",
             "RESIST THE VANILLA CLIENT"
     };
     private int chaosBadgeIndex;

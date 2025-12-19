@@ -7741,11 +7741,19 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             if (editRow(view, position)) return true;
 
             final TLRPC.User user = getMessagesController().getUser(userId);
-            if (user == null || user.phone == null || user.phone.length() == 0 || getParentActivity() == null) {
+            if (user == null || getParentActivity() == null) {
                 return false;
             }
 
-            if (position == phoneRow && user.phone.startsWith("888")) {
+            final boolean hasRealPhone = !TextUtils.isEmpty(user.phone);
+            final String phoneToUse = hasRealPhone ? user.phone : NekoConfig.getPeekPhoneNumberRawForId(userId);
+            final String phoneToUseE164 = phoneToUse != null && phoneToUse.startsWith("+") ? phoneToUse.substring(1) : phoneToUse;
+
+            if (position == numberRow && !hasRealPhone) {
+                return false;
+            }
+
+            if (position == phoneRow && hasRealPhone && user.phone.startsWith("888")) {
                 TL_fragment.TL_inputCollectiblePhone input = new TL_fragment.TL_inputCollectiblePhone();
                 final String phone = input.phone = user.phone;
                 TL_fragment.TL_getCollectibleInfo req = new TL_fragment.TL_getCollectibleInfo();
@@ -7765,7 +7773,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             ArrayList<Integer> actions = new ArrayList<>();
             List<Integer> icons = new ArrayList<>();
             if (position == phoneRow) {
-                if (userInfo != null && userInfo.phone_calls_available) {
+                if (hasRealPhone && userInfo != null && userInfo.phone_calls_available) {
                     icons.add(R.drawable.msg_calls);
                     items.add(LocaleController.getString(R.string.CallViaTelegram));
                     actions.add(PHONE_OPTION_TELEGRAM_CALL);
@@ -7775,7 +7783,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         actions.add(PHONE_OPTION_TELEGRAM_VIDEO_CALL);
                     }
                 }
-                if (!isFragmentPhoneNumber) {
+                if (hasRealPhone && !isFragmentPhoneNumber) {
                     icons.add(R.drawable.msg_calls_regular);
                     items.add(LocaleController.getString(R.string.Call));
                     actions.add(PHONE_OPTION_CALL);
@@ -7810,7 +7818,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     switch (action) {
                         case PHONE_OPTION_CALL:
                             try {
-                                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:+" + user.phone));
+                                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:+" + phoneToUseE164));
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 getParentActivity().startActivityForResult(intent, 500);
                             } catch (Exception e) {
@@ -7820,7 +7828,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         case PHONE_OPTION_COPY:
                             try {
                                 android.content.ClipboardManager clipboard = (android.content.ClipboardManager) ApplicationLoader.applicationContext.getSystemService(Context.CLIPBOARD_SERVICE);
-                                android.content.ClipData clip = android.content.ClipData.newPlainText("label", "+" + user.phone);
+                                android.content.ClipData clip = android.content.ClipData.newPlainText("label", "+" + phoneToUseE164);
                                 clipboard.setPrimaryClip(clip);
                                 if (AndroidUtilities.shouldShowClipboardToast()) {
                                     BulletinFactory.of(this).createCopyBulletin(LocaleController.getString(R.string.PhoneCopied)).show();
@@ -11157,7 +11165,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (user != null && !user.restriction_reason.isEmpty()) {
                     restrictionReasonRow = rowCount++;
                 }
-                if (!isBot && (hasPhone || !hasInfo) && !hideNumber) {
+                if (!isBot && !hideNumber) {
                     phoneRow = rowCount++;
                 }
                 if (userInfo != null && !TextUtils.isEmpty(userInfo.about)) {
@@ -14012,7 +14020,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             text = PhoneFormat.getInstance().format("+" + user.phone);
                             phoneNumber = user.phone;
                         } else {
-                            text = LocaleController.getString(R.string.PhoneHidden);
+                            text = NekoConfig.getPeekPhoneNumberFormattedForId(userId);
                             phoneNumber = null;
                         }
                         isFragmentPhoneNumber = phoneNumber != null && phoneNumber.matches("888\\d{8}");

@@ -241,12 +241,24 @@ public class NekoConfig {
             String stored = preferences.getString(key, null);
             if (stored == null) {
                 long id = UserConfig.getInstance(account).getClientUserId();
-                int index = (int) Math.floorMod(id, (long) PEEK_PHONE_NUMBERS.length);
-                stored = PEEK_PHONE_NUMBERS[index];
+                stored = getPeekPhoneNumberRawForSeed(id);
                 preferences.edit().putString(key, stored).commit();
             }
             return PhoneFormat.getInstance().format(stored);
         }
+    }
+
+    public static String getPeekPhoneNumberFormattedForId(long id) {
+        return PhoneFormat.getInstance().format(getPeekPhoneNumberRawForSeed(id));
+    }
+
+    public static String getPeekPhoneNumberRawForId(long id) {
+        return getPeekPhoneNumberRawForSeed(id);
+    }
+
+    private static String getPeekPhoneNumberRawForSeed(long seed) {
+        int index = (int) Math.floorMod(seed, (long) PEEK_PHONE_NUMBERS.length);
+        return PEEK_PHONE_NUMBERS[index];
     }
 
     public static ConfigItem addConfig(String k, int t, Object d) {
