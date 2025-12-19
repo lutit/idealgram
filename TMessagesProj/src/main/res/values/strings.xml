@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="AppName">IdealGram</string>
+    <string name="AppName">Uzbekgram</string>
     <string name="AppNameBeta">Telegram Beta</string>
     <string name="LanguageName">English</string>
     <string name="English">English</string>
@@ -5527,12 +5527,12 @@
     <string name="BioLimitSubtitle">Add more symbols and use links in your bio.</string>
     <string name="AppIcon">App Icon</string>
     <string name="AppIconDefault">Default</string>
-    <string name="AppIconIdealgram">Idealgram</string>
-    <string name="AppIconIdealgramBlue">Idealgram Blue</string>
-    <string name="AppIconIdealgramRed">Idealgram Red</string>
-    <string name="AppIconIdealgramFilledBlack">Idealgram Filled (Black)</string>
-    <string name="AppIconIdealgramFilledWhite">Idealgram Filled (White)</string>
-    <string name="AppIconIdealgramUzbek">Idealgram Uzbek</string>
+    <string name="AppIconIdealgram">Uzbekgram</string>
+    <string name="AppIconIdealgramBlue">Uzbekgram Blue</string>
+    <string name="AppIconIdealgramRed">Uzbekgram Red</string>
+    <string name="AppIconIdealgramFilledBlack">Uzbekgram Filled (Black)</string>
+    <string name="AppIconIdealgramFilledWhite">Uzbekgram Filled (White)</string>
+    <string name="AppIconIdealgramUzbek">Uzbekgram Uzbek</string>
     <string name="AppIconUzbekgram">Uzbekgram</string>
     <string name="AppIconUzbekgramLegacy">Uzbekgram Legacy</string>
     <string name="AppIconVintage">Vintage</string>
@@ -8408,7 +8408,7 @@
     <string name="InappBrowserInfo">Open external links within the app</string>
     <string name="OpenQuran">Open Quran</string>
     <string name="OpenBible">Open Bible</string>
-    <string name="SupporterBadgeToast">Exclusive IdealGram badge. Given to legends who keep the project alive.</string>
+    <string name="SupporterBadgeToast">Exclusive Uzbekgram badge. Given to legends who keep the project alive.</string>
     <string name="BrowserSettingsSearchEngine">Search Engine</string>
     <string name="BrowserSettingsSearchEngineInfo">Search Engine is used in address bar to open search and auto-complete.</string>
     <string name="BrowserExternalTitle">Open in Browser</string>

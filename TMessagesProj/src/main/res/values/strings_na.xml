@@ -10,7 +10,7 @@
     <string name="SendReactions">Send Reactions</string>
     <string name="ShowReactions">Show Reactions</string>
     <string name="CustomTitle">Custom Title</string>
-    <string name="CustomTitleHint">Leave blank to use IdealGram</string>
+    <string name="CustomTitleHint">Leave blank to use Uzbekgram</string>
     <string name="CreateMono">Create Monospace</string>
     <string name="CreateMonoLanguage">Code Language</string>
     <string name="CopyPhoto">Copy Photo</string>
@@ -45,7 +45,7 @@
     <string name="IconDecoration">Icon Decoration</string>
     <string name="NotificationIcon">Notification Icon</string>
     <string name="Official">Official</string>
-    <string name="Nagram" translatable="false">IdealGram</string>
+    <string name="Nagram" translatable="false">Uzbekgram</string>
     <string name="HalloWeen">HalloWeen</string>
     <string name="ShowOnlineStatus">Show Online Status</string>
     <string name="ShowOnlineStatusNotice">Show the online status of other people next to their profile photo in groups.</string>
@@ -57,7 +57,7 @@
     <string name="CheckAllForum">Add forum</string>
     <string name="DecorationNone">None</string>
     <string name="ChatDecoration">Chat Decoration</string>
-    <string name="NeedChangeNekoSettings">You need to change IdealGram Settings</string>
+    <string name="NeedChangeNekoSettings">You need to change Uzbekgram Settings</string>
     <string name="DoNotUnarchiveBySwipe">Disable Swipe to Unarchive</string>
     <string name="DefaultDeleteMenu">Default Delete Menu</string>
     <string name="DisableStories">Disable Stories</string>

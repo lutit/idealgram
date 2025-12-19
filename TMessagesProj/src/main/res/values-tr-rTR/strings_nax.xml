@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="XChannel">IdealGram Kanalı</string>
+    <string name="XChannel">Uzbekgram Kanalı</string>
     <string name="EnableSaveDeletedMessages">Silinen Mesajları Kaydet</string>
     <string name="DeletedMessage">silindi</string>
     <string name="EnableSaveEditsHistory">Düzenleme Geçmişini Kaydet</string>

@@ -73,7 +73,7 @@
     <string name="CallTo">¿Llamar a **%1$s**?</string>
     <string name="DisableNumberRounding">Desactivar redondeo numérico</string>
     <string name="Categories">Categorías</string>
-    <string name="OfficialChannel">Canal de IdealGram</string>
+    <string name="OfficialChannel">Canal de Uzbekgram</string>
     <string name="About">Acerca de</string>
     <string name="IgnoreBlockedAbout">Ya no verás mensajes de usuarios bloqueados en grupos.</string>
     <string name="SourceCode">Código Fuente</string>
@@ -121,7 +121,7 @@
     <string name="enhancedFileLoader">Aumento de velocidad de descarga</string>
     <string name="mapDriftingFixForGoogleMaps">Corregir la deriva de Google Maps en China</string>
     <string name="useOSMDroidMap">Usar mapa OSMDroid</string>
-    <string name="UnknownNekoSettingsOption">No existe tal opción en IdealGram Settings.</string>
+    <string name="UnknownNekoSettingsOption">No existe tal opción en Uzbekgram Settings.</string>
     <string name="PasscodeNeeded">Tienes que activar primero el código de acceso</string>
     <string name="PasscodeNeko">Código de acceso</string>
     <string name="PasscodeShowInSettings">Mostrar en N-Ajustes</string>

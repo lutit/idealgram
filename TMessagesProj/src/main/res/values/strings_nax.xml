@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="NagramX" translatable="false">IdealGram</string>
-    <string name="XChannel">IdealGram Channel</string>
+    <string name="NagramX" translatable="false">Uzbekgram</string>
+    <string name="XChannel">Uzbekgram Channel</string>
     <string name="EnableSaveDeletedMessages">Save Deleted Messages</string>
     <string name="DeletedMessage">deleted</string>
     <string name="EnableSaveEditsHistory">Save Edits History</string>
@@ -108,7 +108,7 @@
     <string name="Other">Other</string>
     <string name="RestartApp">Restart App</string>
     <string name="ResetSettings">Reset Settings</string>
-    <string name="ResetSettingsAlert">Are you sure you want to reset all IdealGram Settings?</string>
+    <string name="ResetSettingsAlert">Are you sure you want to reset all Uzbekgram Settings?</string>
     <string name="DontAutoPlayNextVoice">Don\'t Auto Play Next Voice Message</string>
     <string name="SaveToChatSubfolder">Save Attachments by Chat Name</string>
     <string name="MessageColoredBackground">Colorful Message Backgrounds</string>
@@ -147,7 +147,7 @@
     <string name="Legends">Legends</string>
     <string name="UzbekGPTShortcutTitle">UzbekGPT</string>
     <string name="UzbekGPTShortcutSubtitle">Talk to @Uzbek_GPTrobot</string>
-    <string name="IdealGramShortcutTitle">IdealGram</string>
+    <string name="IdealGramShortcutTitle">Uzbekgram</string>
     <string name="IdealGramShortcutSubtitle">Go to @Ideal_Gram</string>
     <string name="DontSendReadMessagePackets">Don\'t Read Messages</string>
     <string name="DontReadStoriesPackets">Don\'t Read Stories</string>

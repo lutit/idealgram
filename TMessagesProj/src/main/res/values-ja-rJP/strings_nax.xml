@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="XChannel">IdealGram チャンネル</string>
+    <string name="XChannel">Uzbekgram チャンネル</string>
     <string name="EnableSaveDeletedMessages">削除済みメッセージを保存</string>
     <string name="DeletedMessage">削除済み</string>
     <string name="EnableSaveEditsHistory">編集履歴を保存</string>

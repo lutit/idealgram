@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="N_Config">Konfiguracja-IdealGram</string>
+    <string name="N_Config">Konfiguracja-Uzbekgram</string>
     <string name="ForceCopy">Wymuś kopię</string>
     <string name="CombineMessage">Połącz wiadomości</string>
     <string name="TextStyle">Styl tekstu</string>
@@ -10,7 +10,7 @@
     <string name="SendReactions">Wyślij reakcje</string>
     <string name="ShowReactions">Pokaż reakcje</string>
     <string name="CustomTitle">Tytuł niestandardowy</string>
-    <string name="CustomTitleHint">Pozostaw puste, aby użyć IdealGram</string>
+    <string name="CustomTitleHint">Pozostaw puste, aby użyć Uzbekgram</string>
     <string name="CreateMono">Utwórz przestrzeń mono</string>
     <string name="CreateMonoLanguage">Kod języka</string>
     <string name="CopyPhoto">Kopiuj zdjęcie</string>
