@@ -39,6 +39,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.graphics.ColorUtils;
 
+import com.radolyn.ayugram.AyuConstants;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.telegram.DispatchQueuePriority;
@@ -88,6 +90,8 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
+
+import xyz.nextalone.nagram.NaConfig;
 
 /**
  * image filter types
@@ -823,7 +827,8 @@ public class ImageLoader {
                         imgView.setImageBitmapByKey(bitmapDrawable, kf, ImageReceiver.TYPE_IMAGE, false, finalImageReceiverGuidsArray.get(a));
                     }
 
-                    memCache.put(kf, bitmapDrawable);
+                    if (!kf.contains("nocache"))
+                        memCache.put(kf, bitmapDrawable);
                 });
             } catch (Throwable e) {
                 FileLog.e(e);
@@ -1693,6 +1698,16 @@ public class ImageLoader {
 
         private void onPostExecute(final Drawable drawable) {
             AndroidUtilities.runOnUIThread(() -> {
+                // save deleted media from cache
+                if (NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool() && cacheImage.finalFilePath != null && cacheImage.parentObject instanceof MessageObject messageObject) {
+                    if (messageObject.messageOwner != null && messageObject.messageOwner.ayuDeleted) {
+                        String fileName = cacheImage.finalFilePath.getName();
+                        if (fileName.endsWith(".jpg") || fileName.endsWith(".mp4")) {
+                            NotificationCenter.getInstance(cacheImage.currentAccount).postNotificationName(AyuConstants.DELETED_MEDIA_LOADED_NOTIFICATION, fileName, cacheImage.finalFilePath);
+                        }
+                    }
+                }
+
                 Drawable toSet = null;
                 String decrementKey = null;
                 if (drawable instanceof RLottieDrawable) {
@@ -1731,9 +1746,9 @@ public class ImageLoader {
                         if (cacheImage.key.endsWith("_f")) {
                             wallpaperMemCache.put(cacheImage.key, bitmapDrawable);
                             incrementUseCount = false;
-                        } else if (!cacheImage.key.endsWith("_isc") && bitmapDrawable.getBitmap().getWidth() <= 80 * AndroidUtilities.density && bitmapDrawable.getBitmap().getHeight() <= 80 * AndroidUtilities.density) {
+                        } else if (!cacheImage.key.endsWith("_isc") && !cacheImage.key.endsWith("_nocache") && bitmapDrawable.getBitmap().getWidth() <= 80 * AndroidUtilities.density && bitmapDrawable.getBitmap().getHeight() <= 80 * AndroidUtilities.density) {
                             smallImagesMemCache.put(cacheImage.key, bitmapDrawable);
-                        } else {
+                        } else if (!cacheImage.key.endsWith("_nocache")) {
                             memCache.put(cacheImage.key, bitmapDrawable);
                         }
                         toSet = bitmapDrawable;
@@ -2196,12 +2211,14 @@ public class ImageLoader {
                 public void fileDidLoaded(final String location, final File finalFile, Object parentObject, final int type) {
                     fileProgresses.remove(location);
                     AndroidUtilities.runOnUIThread(() -> {
+                        boolean ayuDeleted = false;
                         if (finalFile != null && (location.endsWith(".mp4") || location.endsWith(".jpg"))) {
                             FilePathDatabase.FileMeta meta = FileLoader.getFileMetadataFromParent(currentAccount, parentObject);
                             if (meta != null) {
                                 MessageObject messageObject = null;
                                 if (parentObject instanceof MessageObject) {
                                     messageObject = (MessageObject) parentObject;
+                                    ayuDeleted = messageObject.messageOwner != null && messageObject.messageOwner.ayuDeleted;
                                 }
                                 long dialogId = meta.dialogId;
                                 int flag;
@@ -2220,6 +2237,9 @@ public class ImageLoader {
                             }
                         }
                         NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.fileLoaded, location, finalFile);
+                        if (NaConfig.INSTANCE.getEnableSaveDeletedMessages().Bool() && ayuDeleted) {
+                            NotificationCenter.getInstance(currentAccount).postNotificationName(AyuConstants.DELETED_MEDIA_LOADED_NOTIFICATION, location, finalFile);
+                        }
                         ImageLoader.this.fileDidLoaded(location, finalFile, type);
                     });
                 }
@@ -2940,6 +2960,7 @@ public class ImageLoader {
     }
 
     public void putImageToCache(BitmapDrawable bitmap, String key, boolean smallImage) {
+        if (key.endsWith("_nocache")) return;
         if (smallImage) {
             smallImagesMemCache.put(key, bitmap);
         } else {

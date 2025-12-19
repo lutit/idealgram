@@ -59,7 +59,6 @@
     <string name="RegexFiltersExportError">Не вдалося експортувати фільтри.</string>
     <string name="botCommandConfirmTitle">Надіслати команду</string>
     <string name="botCommandConfirmText">Ви хочете відправити цю команду? \n\n%s</string>
-    <string name="DisableScreenshotDetection">Вимкнути виявлення скріншотів</string>
     <string name="MessageSavingSaveMedia">Зберегти медіа</string>
     <string name="MessageSavingSaveMediaHint">Натисніть, щоб побачити більше.</string>
     <string name="MessageSavingSaveMediaInPrivateChats">… у приватних чатах</string>
@@ -174,6 +173,7 @@
     <string name="DebugMenuCleanAppUpdate">Очистити оновлення програми</string>
     <string name="DebugMenuMakeMemoryDump">Зробити дамп пам\'яті</string>
     <string name="TranslateMessageLLM">Перекладач AI</string>
+    <string name="EditLocalNameOverride">Редагування локального імені.</string>
     <string name="ResetChatNameOverrides">Скинути змінені назви чатів</string>
     <string name="ResetChatNameNotification">Змінені назви чатів очищені.</string>
     <string name="TabStyle">Стиль вкладок</string>
@@ -250,4 +250,19 @@
     <string name="ExportSettingsIncludeApiKeys">Включити ключі API</string>
     <string name="DisableInAppBrowserGestures">Вимкнути жести</string>
     <string name="HowToObtain">Як отримати?</string>
+    <string name="BlockChannel">Заблокувати канал</string>
+    <string name="UnblockChannel">Розблокувати канал</string>
+    <string name="BlockedChannels">Заблоковані канали</string>
+    <string name="BlockedChannelsCount_one">%1$d заблокований канал</string>
+    <string name="BlockedChannelsCount_other">%1$d заблокованих каналів</string>
+    <string name="BlockedChannelsInfo">Ви можете приховувати повідомлення із заблокованих каналів у групах. %s</string>
+    <string name="ChannelBlocked">Канал заблоковано.</string>
+    <string name="ChannelUnblocked">Канал розблоковано.</string>
+    <string name="BlockedChannelsEmpty">Поки що немає заблокованих каналів</string>
+    <string name="UnblockAllChannelsWarn">Ви впевнені, що хочете розблокувати **всі канали**?</string>
+    <string name="BlockChannelsUnavailable">Деякі канали тимчасово недоступні.</string>
+    <string name="FixLinkPreview">Виправити прев’ю посилань</string>
+    <string name="NoQuoteForwardShort">Без цитати</string>
+    <string name="ForceEdgeToEdge">Примусово на весь екран</string>
+    <string name="ViewDeleted">Переглянути видалені</string>
 </resources>

@@ -41,7 +41,6 @@
     <string name="SendAsEmoji">Enviar como emoji</string>
     <string name="CustomArtworkApi">API Artwork Personalizada</string>
     <string name="CustomEditedMessage">Marca Editada Personalizada</string>
-    <string name="DisableEmojiDrawLimit">Desativar Limite de Desenho de Emoji</string>
     <string name="IconDecoration">Decoração do Ícone</string>
     <string name="NotificationIcon">Ícone de Notificação</string>
     <string name="Official">Oficial</string>
@@ -58,9 +57,7 @@
     <string name="ChatDecoration">Decoração do Chat</string>
     <string name="NeedChangeNekoSettings">Você precisa alterar as N-Configurações</string>
     <string name="DoNotUnarchiveBySwipe">Desativar Deslizar para Desarquivar</string>
-    <string name="DoNotShareMyPhoneNumber">Não Compartilhar Meu Número de Telefone</string>
     <string name="DefaultDeleteMenu">Menu de Exclusão Padrão</string>
-    <string name="DisableSuggestionView">Desativar sugestão de configurações de perfil</string>
     <string name="DisableStories">Desativar Stories</string>
     <string name="CopyPhotoAsSticker">Copiar como Sticker</string>
     <string name="ProviderTranSmartTranslate">TranSmart Tradutor</string>
@@ -103,7 +100,6 @@
     <string name="ShowTimeHint">Toque no Horário para Ver Detalhes</string>
     <string name="SearchHashtagDefaultPageChannel">Página de busca de hashtag padrão nos canais</string>
     <string name="SearchHashtagDefaultPageChat">Página de busca de Hashtag padrão nos Chats</string>
-    <string name="LocaleToDBC">Texto de localidade usando DBC Case</string>
     <string name="EnablePanguOnSending">Ativar Pangu no Envio</string>
     <string name="PanguInfo">Espaçamento de texto paranóico para boa leitura, para inserir automaticamente espaço em branco entre CJK (Chinês, Japonês, Coreano), inglês de meia largura, dígito e símbolo de caracteres.</string>
     <string name="SendWithPangu">Enviar com Pangu</string>

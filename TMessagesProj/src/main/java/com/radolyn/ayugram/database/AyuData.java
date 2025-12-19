@@ -51,6 +51,29 @@ public class AyuData {
         }
     };
 
+    private static final Migration MIGRATION_22_23 = new Migration(22, 23) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE DeletedMessage ADD COLUMN replyQuote INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE DeletedMessage ADD COLUMN replyQuoteText TEXT");
+            database.execSQL("ALTER TABLE DeletedMessage ADD COLUMN replyQuoteEntities BLOB");
+            database.execSQL("ALTER TABLE DeletedMessage ADD COLUMN replyFromSerialized BLOB");
+
+            database.execSQL("ALTER TABLE EditedMessage ADD COLUMN replyQuote INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE EditedMessage ADD COLUMN replyQuoteText TEXT");
+            database.execSQL("ALTER TABLE EditedMessage ADD COLUMN replyQuoteEntities BLOB");
+            database.execSQL("ALTER TABLE EditedMessage ADD COLUMN replyFromSerialized BLOB");
+        }
+    };
+
+    private static final Migration MIGRATION_23_24 = new Migration(23, 24) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE DeletedMessage ADD COLUMN replyMarkupSerialized BLOB");
+            database.execSQL("ALTER TABLE EditedMessage ADD COLUMN replyMarkupSerialized BLOB");
+        }
+    };
+
     static {
         create();
     }
@@ -59,7 +82,7 @@ public class AyuData {
         database = Room.databaseBuilder(ApplicationLoader.applicationContext, AyuDatabase.class, AyuConstants.AYU_DATABASE)
                 .allowMainThreadQueries()
                 .fallbackToDestructiveMigrationOnDowngrade()
-                .addMigrations(MIGRATION_21_22)
+                .addMigrations(MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24)
                 .build();
 
         editedMessageDao = database.editedMessageDao();

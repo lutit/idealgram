@@ -59,7 +59,6 @@
     <string name="RegexFiltersExportError">导出过滤器失败。</string>
     <string name="botCommandConfirmTitle">确认发送</string>
     <string name="botCommandConfirmText">您确定要发送此指令吗？\n\n%s</string>
-    <string name="DisableScreenshotDetection">禁用截屏检测</string>
     <string name="MessageSavingSaveMedia">保存媒体</string>
     <string name="MessageSavingSaveMediaHint">点击查看更多选项。</string>
     <string name="MessageSavingSaveMediaInPrivateChats">私聊</string>
@@ -174,6 +173,7 @@
     <string name="DebugMenuCleanAppUpdate">清除应用更新</string>
     <string name="DebugMenuMakeMemoryDump">内存转储</string>
     <string name="TranslateMessageLLM">AI 翻译</string>
+    <string name="EditLocalNameOverride">正在编辑本地聊天名称覆盖。</string>
     <string name="ResetChatNameOverrides">重置聊天名称覆盖</string>
     <string name="ResetChatNameNotification">聊天名称覆盖已清除。</string>
     <string name="TabStyle">文件夹标签样式</string>
@@ -262,4 +262,7 @@
     <string name="UnblockAllChannelsWarn">您确定要解除屏蔽**所有频道**？</string>
     <string name="BlockChannelsUnavailable">某些频道暂时无法显示。</string>
     <string name="FixLinkPreview">修复链接预览</string>
+    <string name="NoQuoteForwardShort">无引用</string>
+    <string name="ForceEdgeToEdge">强制无边框显示</string>
+    <string name="ViewDeleted">查看已删除消息</string>
 </resources>

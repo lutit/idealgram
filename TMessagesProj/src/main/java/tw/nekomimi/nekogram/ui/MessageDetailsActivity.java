@@ -88,8 +88,8 @@ public class MessageDetailsActivity extends BaseFragment implements Notification
     private ListAdapter listAdapter;
     private TLRPC.Chat fromChat;
     private TLRPC.User fromUser;
-    private String filePath;
     private String fileName;
+    private String filePath;
     private int width;
     private int height;
     private String video_codec;
@@ -131,28 +131,6 @@ public class MessageDetailsActivity extends BaseFragment implements Notification
         if (messageObject.messageOwner.from_id.user_id != 0) {
             fromUser = getMessagesController().getUser(messageObject.messageOwner.from_id.user_id);
         }
-        filePath = messageObject.messageOwner.attachPath;
-        if (!TextUtils.isEmpty(filePath)) {
-            File temp = new File(filePath);
-            if (!temp.exists()) {
-                filePath = null;
-            }
-        }
-        if (TextUtils.isEmpty(filePath)) {
-            filePath = FileLoader.getInstance(currentAccount).getPathToMessage(messageObject.messageOwner).toString();
-            File temp = new File(filePath);
-            if (!temp.exists()) {
-                filePath = null;
-            }
-        }
-        if (TextUtils.isEmpty(filePath)) {
-            filePath = FileLoader.getInstance(currentAccount).getPathToAttach(messageObject.getDocument(), true).toString();
-            File temp = new File(filePath);
-            if (!temp.isFile()) {
-                filePath = null;
-            }
-        }
-
         var media = MessageObject.getMedia(messageObject.messageOwner);
         if (media != null) {
             filePath = MessageHelper.getPathToMessage(messageObject);
@@ -186,6 +164,7 @@ public class MessageDetailsActivity extends BaseFragment implements Notification
     @Override
     public boolean onFragmentCreate() {
         super.onFragmentCreate();
+        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.emojiLoaded);
         updateRows();
         return true;
     }
@@ -416,11 +395,17 @@ public class MessageDetailsActivity extends BaseFragment implements Notification
 
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
+        if (id == NotificationCenter.emojiLoaded) {
+            if (listView != null) {
+                listView.invalidateViews();
+            }
+        }
     }
 
     @Override
     public void onFragmentDestroy() {
         super.onFragmentDestroy();
+        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
     }
 
     private static class ByteArrayToBase64TypeAdapter implements JsonSerializer<byte[]>, JsonDeserializer<byte[]> {
@@ -477,14 +462,14 @@ public class MessageDetailsActivity extends BaseFragment implements Notification
                     if (position == idRow) {
                         textCell.setTextAndValue("ID", String.valueOf(messageObject.messageOwner.id), divider);
                     } else if (position == messageRow) {
-                        textCell.setTextAndValue("Message", messageObject.messageText, divider);
+                        textCell.setTextAndValue("Message", messageObject.messageText.toString(), divider);
                     } else if (position == captionRow) {
                         if (!TextUtils.isEmpty(messageObject.caption)) {
-                            textCell.setTextAndValue("Caption", messageObject.caption, divider);
+                            textCell.setTextAndValue("Caption", messageObject.caption.toString(), divider);
                         } else if (messageGroup != null) {
                             MessageObject captionMessageObject = messageGroup.findCaptionMessageObject();
                             if (!TextUtils.isEmpty(captionMessageObject.caption)) {
-                                textCell.setTextAndValue("Caption", captionMessageObject.caption, divider);
+                                textCell.setTextAndValue("Caption", captionMessageObject.caption.toString(), divider);
                             }
                         }
                     } else if (position == channelRow || position == groupRow) {

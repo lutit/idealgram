@@ -59,7 +59,6 @@
     <string name="RegexFiltersExportError">Falha ao exportar filtros.</string>
     <string name="botCommandConfirmTitle">Enviar Comando</string>
     <string name="botCommandConfirmText">Você quer enviar este comando?\n\n%s</string>
-    <string name="DisableScreenshotDetection">Desativar Detecção de Captura de Tela</string>
     <string name="MessageSavingSaveMedia">Salvar Mídia</string>
     <string name="MessageSavingSaveMediaHint">Clique para Mais.</string>
     <string name="MessageSavingSaveMediaInPrivateChats">… em Chats Privados</string>
@@ -262,4 +261,7 @@
     <string name="UnblockAllChannelsWarn">Você tem certeza de que deseja desbloquear **todos os canais**?</string>
     <string name="BlockChannelsUnavailable">Alguns canais estão temporariamente indisponíveis.</string>
     <string name="FixLinkPreview">Corrigir Prévia de Link</string>
+    <string name="NoQuoteForwardShort">Sem Citar</string>
+    <string name="ForceEdgeToEdge">Forçar exibição de ponto a ponta</string>
+    <string name="ViewDeleted">Ver excluído</string>
 </resources>

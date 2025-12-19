@@ -401,6 +401,7 @@ public class ConnectionsManager extends BaseController {
                     int responseSize = 0;
                     if (response != 0) {
                         NativeByteBuffer buff = NativeByteBuffer.wrap(response);
+                        buff.setDataSourceType(TLDataSourceType.NETWORK);
                         buff.reused = true;
                         responseSize = buff.limit();
                         int magic = buff.readInt32(true);
@@ -779,6 +780,7 @@ public class ConnectionsManager extends BaseController {
     public static void onUnparsedMessageReceived(long address, final int currentAccount, long messageId) {
         try {
             NativeByteBuffer buff = NativeByteBuffer.wrap(address);
+            buff.setDataSourceType(TLDataSourceType.NETWORK);
             buff.reused = true;
             int constructor = buff.readInt32(true);
             final TLObject message = TLClassStore.Instance().TLdeserialize(buff, constructor, true);
@@ -1095,9 +1097,9 @@ public class ConnectionsManager extends BaseController {
                 }
             }
             if (hasIpv6) {
-                if (!hasIpv4 || forceTryIpV6) {
+                if (!hasIpv4 || forceTryIpV6 || NekoConfig.useIPv6.Bool()) {
                     return USE_IPV6_ONLY;
-                } else if (hasStrangeIpv4 || NekoConfig.useIPv6.Bool()) {
+                } else if (hasStrangeIpv4) {
                     return USE_IPV4_IPV6_RANDOM;
                 } else {
                     return USE_IPV4_ONLY;

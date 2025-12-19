@@ -41,7 +41,6 @@
     <string name="SendAsEmoji">Enviar como emoji</string>
     <string name="CustomArtworkApi">API de Artwork personalizada</string>
     <string name="CustomEditedMessage">Marca personalizada editada</string>
-    <string name="DisableEmojiDrawLimit">Desactivar el límite de dibujo de emoji</string>
     <string name="IconDecoration">Decoración de icono</string>
     <string name="NotificationIcon">Icono de la notificación</string>
     <string name="Official">Oficial</string>
@@ -58,9 +57,7 @@
     <string name="ChatDecoration">Decoración del chat</string>
     <string name="NeedChangeNekoSettings">Necesitas cambiar N-Ajustes</string>
     <string name="DoNotUnarchiveBySwipe">Deshabilitar Deslizar para Desarchivar</string>
-    <string name="DoNotShareMyPhoneNumber">No compartir mi número de teléfono</string>
     <string name="DefaultDeleteMenu">Menú de eliminación predeterminado</string>
-    <string name="DisableSuggestionView">Desactivar la sugerencia de configuración del perfil</string>
     <string name="DisableStories">Deshabilitar historias</string>
     <string name="CopyPhotoAsSticker">Copiar como sticker</string>
     <string name="ProviderTranSmartTranslate">Traductor TranSmart</string>
@@ -100,7 +97,6 @@ También puede utilizar texto sin formato, pero no olvide escapar los paréntesi
     <string name="ShowTimeHint">Toca la hora para ver los detalles</string>
     <string name="SearchHashtagDefaultPageChannel">Página de búsqueda por defecto de Hashtag en canales</string>
     <string name="SearchHashtagDefaultPageChat">Página de búsqueda por defecto de Hashtag en Chats</string>
-    <string name="LocaleToDBC">Texto local usando caso DBC</string>
     <string name="EnablePanguOnSending">Activar Pangu al enviar</string>
     <string name="PanguInfo">Espaciado de texto paranoide para una buena legibilidad, para insertar automáticamente espacios en blanco entre CJK (chino, japonés, coreano), Inglés de medio ancho, dígitos y caracteres de símbolos.</string>
     <string name="SendWithPangu">Enviar con Pangu</string>

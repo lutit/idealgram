@@ -233,12 +233,6 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
-    val disableEmojiDrawLimit =
-        addConfig(
-            "DisableEmojiDrawLimit",
-            ConfigItem.configTypeBool,
-            false
-        )
     val iconDecoration =
         addConfig(
             "IconDecoration",
@@ -299,12 +293,6 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
-    val doNotShareMyPhoneNumber =
-        addConfig(
-            "DoNotShareMyPhoneNumber",
-            ConfigItem.configTypeBool,
-            false
-        )
     val defaultDeleteMenu =
         addConfig(
             "DefaultDeleteMenu",
@@ -337,12 +325,6 @@ object NaConfig {
             "DoActionsInCommonGroups",
             defaultDeleteMenu,
             0,
-            false
-        )
-    val disableSuggestionView =
-        addConfig(
-            "DisableSuggestionView",
-            ConfigItem.configTypeBool,
             false
         )
     val disableStories =
@@ -762,12 +744,6 @@ object NaConfig {
             ConfigItem.configTypeString,
             "ja, zh"
         )
-    val disableScreenshotDetection =
-        addConfig(
-            "DisableScreenshotDetection",
-            ConfigItem.configTypeBool,
-            false
-        )
     val telegramUIAutoTranslate =
         addConfig(
             "TelegramUIAutoTranslate",
@@ -1005,6 +981,12 @@ object NaConfig {
     val chatMenuItemHideTitle =
         addConfig(
             "ChatMenuItemHideTitle",
+            ConfigItem.configTypeBool,
+            true
+        )
+    val chatMenuItemViewDeleted =
+        addConfig(
+            "ChatMenuItemViewDeleted",
             ConfigItem.configTypeBool,
             true
         )
@@ -1386,6 +1368,12 @@ object NaConfig {
             ConfigItem.configTypeBool,
             true
         )
+   val forceEdgeToEdge =
+        addConfig(
+            "ForceEdgeToEdge",
+            ConfigItem.configTypeBool,
+            false
+        )
 
     val preferredTranslateTargetLangList = ArrayList<String>()
     fun updatePreferredTranslateTargetLangList() {
@@ -1432,9 +1420,6 @@ object NaConfig {
     private fun fixConfig() {
         if (translatorMode.Int() > 1) {
             translatorMode.setConfigInt(1)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            pushServiceTypeInAppDialog.setConfigBool(false)
         }
         if (!preferences.getBoolean("ShowIdAndDc", true)) {
             idDcType.setConfigInt(0)

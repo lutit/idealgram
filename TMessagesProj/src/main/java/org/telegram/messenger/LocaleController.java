@@ -9,6 +9,7 @@
 package org.telegram.messenger;
 
 import static org.telegram.messenger.AndroidUtilities.dp;
+import static org.telegram.messenger.AndroidUtilities.formatWholeNumber;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -58,9 +59,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.parts.LocFiltersKt;
 import tw.nekomimi.nekogram.shamsicalendar.PersianDate;
-import tw.nekomimi.nekogram.utils.FileUtil;
 
 public class LocaleController {
 
@@ -1396,8 +1395,6 @@ public class LocaleController {
         }
         if (value == null) {
             value = "LOC_ERR:" + key;
-        } else if (NekoConfig.localeToDBC.Bool()) {
-            value = LocFiltersKt.filter(value);
         }
         return value;
     }
@@ -1590,6 +1587,14 @@ public class LocaleController {
             stringBuilder.insert(a, symbol);
         }
         return stringBuilder.toString();
+    }
+
+    public static String formatNumberWithMillion(long count, char symbol) {
+        if (count < 1_000_000) {
+            return formatNumber(count, symbol);
+        }
+
+        return formatWholeNumber((int) count, 1_000_000);
     }
 
     public static String formatString(@StringRes int res, Object... args) {

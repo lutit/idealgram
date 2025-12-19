@@ -41,7 +41,6 @@
     <string name="SendAsEmoji">以 Emoji 发送</string>
     <string name="CustomArtworkApi">自定义音乐封面 API</string>
     <string name="CustomEditedMessage">自定义已编辑消息标记</string>
-    <string name="DisableEmojiDrawLimit">解除 Emoji 渲染上限</string>
     <string name="IconDecoration">图标装饰</string>
     <string name="NotificationIcon">通知图标样式</string>
     <string name="Official">官方</string>
@@ -58,9 +57,7 @@
     <string name="ChatDecoration">聊天框装饰</string>
     <string name="NeedChangeNekoSettings">此设置已被 N-设置 覆盖，无法修改</string>
     <string name="DoNotUnarchiveBySwipe">禁用滑动取消归档</string>
-    <string name="DoNotShareMyPhoneNumber">禁用分享我的手机号码</string>
     <string name="DefaultDeleteMenu">默认删除菜单</string>
-    <string name="DisableSuggestionView">禁用修改手机号码的建议</string>
     <string name="DisableStories">禁用动态功能</string>
     <string name="CopyPhotoAsSticker">复制为贴纸</string>
     <string name="ProviderTranSmartTranslate">腾讯交互翻译</string>
@@ -103,7 +100,6 @@
     <string name="ShowTimeHint">点击时间显示详细信息</string>
     <string name="SearchHashtagDefaultPageChannel">在频道中点击标签时默认的搜索页面</string>
     <string name="SearchHashtagDefaultPageChat">在聊天中点击标签时默认的搜索页面</string>
-    <string name="LocaleToDBC">界面文本使用半角符号</string>
     <string name="EnablePanguOnSending">发送消息 Pangu 化</string>
     <string name="PanguInfo">使文字更具可读性。在 CJK（中文、日文、韩文）、半宽英文、数字和符号字符之间的间隔中自动插入空格。</string>
     <string name="SendWithPangu">使用 Pangu 发送</string>

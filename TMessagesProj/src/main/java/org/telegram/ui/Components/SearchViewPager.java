@@ -932,7 +932,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
                     for (int a = 0; a < dids.size(); a++) {
                         long did = dids.get(a).dialogId;
                         if (message != null) {
-                            AccountInstance.getInstance(currentAccount).getSendMessagesHelper().sendMessage(SendMessagesHelper.SendMessageParams.of(message.toString(), did, null, null, null, true, null, null, null, !NaConfig.INSTANCE.getSilentMessageByDefault().Bool(), 0, null, false));
+                            AccountInstance.getInstance(currentAccount).getSendMessagesHelper().sendMessage(SendMessagesHelper.SendMessageParams.of(message.toString(), did, null, null, null, true, null, null, null, !NaConfig.INSTANCE.getSilentMessageByDefault().Bool(), 0, 0, null, false));
                         }
                         AccountInstance.getInstance(currentAccount).getSendMessagesHelper().sendMessage(fmessages, did, false,false, !NaConfig.INSTANCE.getSilentMessageByDefault().Bool(), 0, 0);
                     }
@@ -1351,7 +1351,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
     }
 
     public void showDownloads() {
-        setPosition((expandedPublicPosts ? 1 : 0) + (UserConfig.getInstance(currentAccount).isRealPremium() ? 5 : 4));
+        setPosition((expandedPublicPosts ? 1 : 0) + (UserConfig.getInstance(currentAccount).isPremium() ? 5 : 4));
     }
 
     public int getPositionForType(int initialSearchType) {
@@ -1387,7 +1387,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
             }
             items.add(new Item(CHANNELS_TYPE));
             items.add(new Item(BOTS_TYPE));
-            if (UserConfig.getInstance(currentAccount).isRealPremium()) items.add(new Item(POSTS_TYPE));
+            if (UserConfig.getInstance(currentAccount).isPremium()) items.add(new Item(POSTS_TYPE));
             if (!showOnlyDialogsAdapter) {
                 Item item = new Item(FILTER_TYPE);
                 item.filterIndex = 0;
@@ -1459,7 +1459,7 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
                 });
                 downloadsContainer.setUiCallback(SearchViewPager.this);
                 return downloadsContainer;
-            } else if (viewType == 6 && UserConfig.getInstance(currentAccount).isRealPremium()) {
+            } else if (viewType == 6 && UserConfig.getInstance(currentAccount).isPremium()) {
                 return postsSearchContainer;
             } else {
                 FilteredSearchView filteredSearchView = new FilteredSearchView(parent);

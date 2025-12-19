@@ -763,7 +763,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
 
             button = new ButtonWithCounterView(getContext(), getResourceProvider());
             button.text.setHacks(true, true, true);
-            button.setText(isChannel ? buttonUnlocked : (!getUserConfig().isPremium() ? buttonLocked : (selectedEmojiCollectible != null ? buttonCollectible : buttonUnlocked)), false);
+            button.setText(isChannel ? buttonUnlocked : (!getUserConfig().isPremiumOrLocal() ? buttonLocked : (selectedEmojiCollectible != null ? buttonCollectible : buttonUnlocked)), false);
             button.setOnClickListener(v -> buttonClick());
             buttonContainer.addView(button, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.FILL, 14, 14.66f, 14, 14));
 
@@ -1199,7 +1199,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                     button.setSubText(null, animated);
                 }
             } else {
-                button.setText(!getUserConfig().isPremium() && !isChannel ? buttonLocked : (selectedEmojiCollectible != null ? buttonCollectible : buttonUnlocked), animated);
+                button.setText(!getUserConfig().isPremiumOrLocal() && !isChannel ? buttonLocked : (selectedEmojiCollectible != null ? buttonCollectible : buttonUnlocked), animated);
                 button.setSubText(null, animated);
             }
         }
@@ -1647,7 +1647,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
 
     @Override
     public boolean onBackPressed() {
-        if (!isChannel && hasUnsavedChanged() && getUserConfig().isPremium()) {
+        if (!isChannel && hasUnsavedChanged() && getUserConfig().isPremiumOrLocal()) {
             showUnsavedAlert();
             return false;
         }
@@ -1656,7 +1656,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
 
     @Override
     public boolean isSwipeBackEnabled(MotionEvent event) {
-        if (!isChannel && hasUnsavedChanged() && getUserConfig().isPremium()) {
+        if (!isChannel && hasUnsavedChanged() && getUserConfig().isPremiumOrLocal()) {
             return false;
         }
         return super.isSwipeBackEnabled(event);
@@ -1687,7 +1687,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
         if (isChannel) {
             finishFragment();
         } else {
-            if (!getUserConfig().isPremium()) {
+            if (!getUserConfig().isPremiumOrLocal()) {
                 showDialog(new PremiumFeatureBottomSheet(PeerColorActivity.this, PremiumPreviewFragment.PREMIUM_FEATURE_NAME_COLOR, true));
                 return;
             }
@@ -1754,7 +1754,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
     private boolean applyingName, applyingProfile;
     private boolean applying;
     private void apply() {
-        if (applying || !isChannel && !getUserConfig().isPremium()) {
+        if (applying || !isChannel && !getUserConfig().isPremiumOrLocal()) {
             return;
         }
 
@@ -1785,7 +1785,10 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 } else {
                     req.flags |= 4;
                     req.color = new TLRPC.TL_peerColor();
-                    req.color.color = me.color.color = namePage.selectedColor;
+                    req.color.flags |= 1;
+                    req.color.color = namePage.selectedColor;
+                    me.color.flags |= 1;
+                    me.color.color = namePage.selectedColor;
                     if (namePage.selectedEmoji != 0) {
                         req.flags |= 1;
                         me.color.flags |= 2;
@@ -1796,7 +1799,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                         me.color.background_emoji_id = 0;
                     }
                 }
-                if (getUserConfig().isRealPremium()) getConnectionsManager().sendRequest(req, null);
+                if (getUserConfig().isPremium()) getConnectionsManager().sendRequest(req, null);
             }
             if (
                 profilePage.selectedColor != UserObject.getProfileColorId(me) ||
@@ -1805,7 +1808,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
             ) {
                 applyingProfile = true;
                 if (me.profile_color == null) {
-                    me.profile_color = new TLRPC.PeerColor();
+                    me.profile_color = new TLRPC.TL_peerColor();
                 }
                 TL_account.updateColor req = new TL_account.updateColor();
                 req.for_profile = true;
@@ -1813,13 +1816,14 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 if (profilePage.selectedColor < 0) {
                     me.profile_color.flags &=~ 1;
                 } else {
-                    me.profile_color.flags |= 1;
                     if (req.color == null) {
                         req.flags |= 4;
                         req.color = new TLRPC.TL_peerColor();
                     }
                     req.color.flags |= 1;
-                    req.color.color = me.profile_color.color = profilePage.selectedColor;
+                    req.color.color = profilePage.selectedColor;
+                    me.profile_color.flags |= 1;
+                    me.profile_color.color = profilePage.selectedColor;
                 }
                 if (profilePage.selectedEmoji != 0) {
                     req.flags |= 1;
@@ -1834,7 +1838,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                     me.profile_color.flags &=~ 2;
                     me.profile_color.background_emoji_id = 0;
                 }
-                if (getUserConfig().isRealPremium()) getConnectionsManager().sendRequest(req, null);
+                if (getUserConfig().isPremium()) getConnectionsManager().sendRequest(req, null);
             }
             if (!eq(me.emoji_status, profilePage.selectedEmojiCollectible) && (profilePage.selectedEmojiCollectible != null || DialogObject.isEmojiStatusCollectible(me.emoji_status))) {
                 TLRPC.EmojiStatus new_emoji_status = new TLRPC.TL_emojiStatusEmpty();

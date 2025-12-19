@@ -41,7 +41,6 @@
     <string name="SendAsEmoji">Wyślij jako emoji</string>
     <string name="CustomArtworkApi">Niestandardowe API grafiki</string>
     <string name="CustomEditedMessage">Niestandardowy edytowany znak</string>
-    <string name="DisableEmojiDrawLimit">Wyłącz limit rysowania emoji</string>
     <string name="IconDecoration">Ikona Dekoracyjna</string>
     <string name="NotificationIcon">Ikona powiadomienia</string>
     <string name="Official">Oficjalny</string>
@@ -58,9 +57,7 @@
     <string name="ChatDecoration">Dekoracja czatu</string>
     <string name="NeedChangeNekoSettings">Musisz zmienić ustawieniach-N</string>
     <string name="DoNotUnarchiveBySwipe">Wyłącz funkcję Przesuń, aby przywrócić z archiwum</string>
-    <string name="DoNotShareMyPhoneNumber">Nie udostępniaj mojego numeru telefonu</string>
     <string name="DefaultDeleteMenu">Domyślne menu usuwania</string>
-    <string name="DisableSuggestionView">Wyłącz sugestię ustawień profilu</string>
     <string name="DisableStories">Wyłącz historię</string>
     <string name="CopyPhotoAsSticker">Skopiuj jako naklejkę</string>
     <string name="ProviderTranSmartTranslate">Tłumacz TranSmart</string>
@@ -102,7 +99,6 @@
     <string name="ShowTimeHint">Kliknij Czas, aby poznać szczegóły</string>
     <string name="SearchHashtagDefaultPageChannel">Domyślna strona wyszukiwania hashtagów w kanałach</string>
     <string name="SearchHashtagDefaultPageChat">Domyślna strona wyszukiwania hashtagów w czatach</string>
-    <string name="LocaleToDBC">Tekst ustawień regionalnych z użyciem wielkości liter DBC</string>
     <string name="EnablePanguOnSending">Włącz Pangu podczas wysyłania</string>
     <string name="PanguInfo">Paranoiczne odstępy w tekście w celu zapewnienia lepszej czytelności, aby automatycznie wstawiać odstępy między znakami CJK (chiński, japoński, koreański), znakami o połowie szerokości języka angielskiego, cyframi i symbolami.</string>
     <string name="SendWithPangu">Wyślij z Pangu</string>
