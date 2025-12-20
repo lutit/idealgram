@@ -303,15 +303,11 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             AbstractConfigCell a = cellGroup.rows.get(position);
             if (a instanceof ConfigCellTextCheck) {
                 if (position == cellGroup.rows.indexOf(useTelegramUIAutoTranslateRow)) {
-                    int provider = NekoConfig.translationProvider.Int();
-                    boolean isAutoTranslateEnabled = NaConfig.INSTANCE.getTelegramUIAutoTranslate().Bool();
-                    boolean isRealPremium = UserConfig.getInstance(currentAccount).isPremium();
-                    if (provider == Translator.providerTelegram && !isAutoTranslateEnabled && !isRealPremium) {
-                        BulletinFactory.of(this).createSimpleBulletin(R.raw.info, getString(R.string.LoginEmailResetPremiumRequiredTitle)).show();
-                        BotWebViewVibrationEffect.APP_ERROR.vibrate();
-                        AndroidUtilities.shakeViewSpring(view, -4);
-                        return;
-                    }
+                    NaConfig.INSTANCE.getTelegramUIAutoTranslate().setConfigBool(true);
+                    listAdapter.notifyItemChanged(position);
+                    BotWebViewVibrationEffect.APP_ERROR.vibrate();
+                    AndroidUtilities.shakeViewSpring(view, -4);
+                    return;
                 }
                 ((ConfigCellTextCheck) a).onClick((TextCheckCell) view);
             } else if (a instanceof ConfigCellSelectBox) {
@@ -330,20 +326,18 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                 if (position == cellGroup.rows.indexOf(translationProviderRow)) {
                     showProviderSelectionPopup(view, NekoConfig.translationProvider, () -> {
                         if (NekoConfig.translationProvider.Int() == Translator.providerTelegram) {
-                            boolean isAutoTranslateEnabled = NaConfig.INSTANCE.getTelegramUIAutoTranslate().Bool();
                             boolean isRealPremium = UserConfig.getInstance(currentAccount).isPremium();
-                            if (isAutoTranslateEnabled && !isRealPremium) {
-                                NaConfig.INSTANCE.getTelegramUIAutoTranslate().setConfigBool(false);
-                                listAdapter.notifyItemChanged(cellGroup.rows.indexOf(useTelegramUIAutoTranslateRow));
+                            if (!isRealPremium) {
+                                NekoConfig.translationProvider.setConfigInt(Translator.providerLLMTranslator);
+                                listAdapter.notifyItemChanged(position);
                                 BulletinFactory.of(this).createSimpleBulletin(R.raw.info, getString(R.string.LoginEmailResetPremiumRequiredTitle)).show();
                                 BotWebViewVibrationEffect.APP_ERROR.vibrate();
                                 View useTelegramUIAutoTranslateView = ((ConfigCellTextCheck) useTelegramUIAutoTranslateRow).cell;
                                 AndroidUtilities.shakeViewSpring(useTelegramUIAutoTranslateView, -4);
                             }
-                        } else {
-                            NaConfig.INSTANCE.getTelegramUIAutoTranslate().setConfigBool(isAutoTranslateEnabled);
-                            listAdapter.notifyItemChanged(cellGroup.rows.indexOf(useTelegramUIAutoTranslateRow));
                         }
+                        NaConfig.INSTANCE.getTelegramUIAutoTranslate().setConfigBool(true);
+                        listAdapter.notifyItemChanged(cellGroup.rows.indexOf(useTelegramUIAutoTranslateRow));
                         listAdapter.notifyItemChanged(position);
                     });
                 } else if (position == cellGroup.rows.indexOf(translateToLangRow)) {

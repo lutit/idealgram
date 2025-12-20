@@ -1425,6 +1425,9 @@ object NaConfig {
         if (!preferences.getBoolean("ShowIdAndDc", true)) {
             idDcType.setConfigInt(0)
         }
+        if (!telegramUIAutoTranslate.Bool()) {
+            telegramUIAutoTranslate.setConfigBool(true)
+        }
     }
 
     private fun addConfig(
