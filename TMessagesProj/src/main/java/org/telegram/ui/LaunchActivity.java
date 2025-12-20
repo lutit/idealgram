@@ -36,8 +36,12 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.location.Location;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -180,6 +184,7 @@ import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.Easings;
 import org.telegram.ui.Components.EmbedBottomSheet;
 import org.telegram.ui.Components.EmojiPacksAlert;
+import org.telegram.ui.Components.ChaosOverlay;
 import org.telegram.ui.Components.FireworksOverlay;
 import org.telegram.ui.Components.FloatingDebug.FloatingDebugController;
 import org.telegram.ui.Components.FolderBottomSheet;
@@ -327,6 +332,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private SizeNotifierFrameLayout backgroundTablet;
     public FrameLayout frameLayout;
     private FireworksOverlay fireworksOverlay;
+    private ChaosOverlay chaosOverlay;
     private BottomSheetTabsOverlay bottomSheetTabsOverlay;
     public DrawerLayoutContainer drawerLayoutContainer;
     private DrawerLayoutAdapter drawerLayoutAdapter;
@@ -463,6 +469,101 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private void stopUltraShamalaModeEffects() {
         ultraShamalaModeScheduled = false;
         AndroidUtilities.cancelRunOnUIThread(ultraShamalaModeRunnable);
+    }
+
+    private boolean hyperShamalaModeScheduled;
+    private final Runnable hyperShamalaModeRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!NekoConfig.isHyperShamalaModeActive() || !isResumed) {
+                hyperShamalaModeScheduled = false;
+                return;
+            }
+
+            BaseFragment fragment = getLastFragment();
+            int effect = (int) (Math.random() * 6);
+            if (effect <= 2 && fireworksOverlay != null) {
+                fireworksOverlay.start(true);
+                if (effect == 2) {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        if (fireworksOverlay != null) {
+                            fireworksOverlay.start(true);
+                        }
+                    }, 350);
+                }
+            } else if (effect == 3) {
+                Point size = AndroidUtilities.displaySize;
+                LaunchActivity.makeRipple(size.x / 2f, size.y / 2f, 1.8f);
+            } else if (effect == 4 && drawerLayoutContainer != null) {
+                float shiftX = AndroidUtilities.dp(22);
+                float shiftY = AndroidUtilities.dp(10);
+                drawerLayoutContainer.animate()
+                        .translationX((float) (Math.random() > 0.5 ? shiftX : -shiftX))
+                        .translationY((float) (Math.random() > 0.5 ? shiftY : -shiftY))
+                        .setDuration(55)
+                        .withEndAction(() -> drawerLayoutContainer.animate().translationX(0).translationY(0).setDuration(90).start())
+                        .start();
+            } else if (effect == 5 && fragment != null) {
+                BulletinFactory.of(fragment).createSimpleBulletin(
+                        R.raw.stars_send,
+                        LocaleController.getString(R.string.HyperShamalaModeRandom)
+                ).show();
+            }
+
+            scheduleNextHyperShamalaTick();
+        }
+    };
+
+    private void scheduleNextHyperShamalaTick() {
+        if (!NekoConfig.isHyperShamalaModeActive() || !isResumed) {
+            hyperShamalaModeScheduled = false;
+            return;
+        }
+        hyperShamalaModeScheduled = true;
+        long delay = 900 + (long) (Math.random() * 700);
+        AndroidUtilities.runOnUIThread(hyperShamalaModeRunnable, delay);
+    }
+
+    private void startHyperShamalaModeEffects() {
+        if (hyperShamalaModeScheduled || !isResumed) {
+            return;
+        }
+        if (chaosOverlay != null) {
+            chaosOverlay.start();
+        }
+        updateHyperShamalaRenderEffect(true);
+        scheduleNextHyperShamalaTick();
+    }
+
+    private void stopHyperShamalaModeEffects() {
+        hyperShamalaModeScheduled = false;
+        AndroidUtilities.cancelRunOnUIThread(hyperShamalaModeRunnable);
+        updateHyperShamalaRenderEffect(false);
+        if (chaosOverlay != null) {
+            chaosOverlay.stop();
+        }
+    }
+
+    private void updateHyperShamalaRenderEffect(boolean enabled) {
+        if (drawerLayoutContainer == null || Build.VERSION.SDK_INT < 31) {
+            return;
+        }
+        if (!enabled) {
+            drawerLayoutContainer.setRenderEffect(null);
+            return;
+        }
+        ColorMatrix cm = new ColorMatrix();
+        cm.setSaturation(1.9f);
+        ColorMatrix lift = new ColorMatrix(new float[]{
+                1.15f, 0.00f, 0.00f, 0.00f, 18f,
+                0.00f, 1.15f, 0.00f, 0.00f, 18f,
+                0.00f, 0.00f, 1.35f, 0.00f, 28f,
+                0.00f, 0.00f, 0.00f, 1.00f, 0f
+        });
+        cm.postConcat(lift);
+        RenderEffect color = RenderEffect.createColorFilterEffect(new ColorMatrixColorFilter(cm));
+        RenderEffect blur = RenderEffect.createBlurEffect(AndroidUtilities.dp(1.6f), AndroidUtilities.dp(1.6f), Shader.TileMode.CLAMP);
+        drawerLayoutContainer.setRenderEffect(RenderEffect.createChainEffect(blur, color));
     }
 
     private void maybePlayLoginWowEffect() {
@@ -720,6 +821,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         frameLayout.addView(themeSwitchSunView, LayoutHelper.createFrame(48, 48));
         themeSwitchSunView.setVisibility(View.GONE);
         frameLayout.addView(bottomSheetTabsOverlay = new BottomSheetTabsOverlay(this));
+        frameLayout.addView(chaosOverlay = new ChaosOverlay(this));
         frameLayout.addView(fireworksOverlay = new FireworksOverlay(this) {
             {
                 setVisibility(GONE);
@@ -1035,6 +1137,20 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         startUltraShamalaModeEffects();
                     } else {
                         stopUltraShamalaModeEffects();
+                    }
+                    drawerLayoutContainer.closeDrawer(false);
+                    NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                } else if (id == DrawerLayoutAdapter.nkbtnHyperShamalaMode) {
+                    boolean willEnable = !NekoConfig.isHyperShamalaModeActive();
+                    NekoConfig.toggleHyperShamalaMode();
+                    CharSequence msg = LocaleController.getString(
+                            willEnable ? R.string.HyperShamalaModeEnabled : R.string.HyperShamalaModeDisabled
+                    );
+                    BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, msg).show();
+                    if (willEnable) {
+                        startHyperShamalaModeEffects();
+                    } else {
+                        stopHyperShamalaModeEffects();
                     }
                     drawerLayoutContainer.closeDrawer(false);
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
@@ -7343,6 +7459,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         isResumed = false;
         stopShamalaModeEffects();
         stopUltraShamalaModeEffects();
+        stopHyperShamalaModeEffects();
         pipActivityHandler.onPause();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 4096);
         ApplicationLoader.mainInterfacePaused = true;
@@ -7548,6 +7665,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         if (NekoConfig.isUltraShamalaModeActive()) {
             startUltraShamalaModeEffects();
+        }
+        if (NekoConfig.isHyperShamalaModeActive()) {
+            startHyperShamalaModeEffects();
         }
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
