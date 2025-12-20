@@ -46,30 +46,28 @@ jobs:
           MEMORY_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
           MEMORY_GB=$((MEMORY_KB / 1024 / 1024))
           echo "Detected memory size: ${MEMORY_GB}GB"
-	          if [ $MEMORY_GB -ge 12 ]; then
-	            sed -i '/^org\.gradle\.jvmargs=/d' gradle.properties
-	            echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> gradle.properties
-	          fi
-	          cat gradle.properties
-	
-	      - name: Enable Optimization
-	        run: |
-	          sed -i 's/^-dontoptimize$/#-dontoptimize/' TMessagesProj/proguard-rules.pro
-	          echo "ProGuard optimization enabled for CI build"
-	          grep -n "dontoptimize" TMessagesProj/proguard-rules.pro || echo "No dontoptimize rules found"
-	
-	      - name: Release Build (${{ matrix.arch }})
-	        id: release_build_step
-	        run: |
-	          export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
-	          export BUILD_TIMESTAMP=$(date +%s)
-	          echo "build_timestamp=$BUILD_TIMESTAMP" >> "$GITHUB_OUTPUT"
+          if [ "$MEMORY_GB" -ge 12 ]; then
+            sed -i '/^org\.gradle\.jvmargs=/d' gradle.properties
+            echo "org.gradle.jvmargs=-Xmx8G -XX:MaxMetaspaceSize=2G -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> gradle.properties
+          fi
+          cat gradle.properties
 
+      - name: Enable Optimization
+        run: |
+          sed -i 's/^-dontoptimize$/#-dontoptimize/' TMessagesProj/proguard-rules.pro
+          echo "ProGuard optimization enabled for CI build"
+          grep -n "dontoptimize" TMessagesProj/proguard-rules.pro || echo "No dontoptimize rules found"
+
+      - name: Release Build (${{ matrix.arch }})
+        id: release_build_step
+        run: |
+          export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
+          export BUILD_TIMESTAMP=$(date +%s)
+          echo "build_timestamp=$BUILD_TIMESTAMP" >> "$GITHUB_OUTPUT"
           echo "Building for architecture: $NATIVE_TARGET"
           ./gradlew TMessagesProj:assembleRelease -PNATIVE_TARGET=$NATIVE_TARGET
-
-          APK_DIR=$(find TMessagesProj/build/outputs/apk -type d -name "release")
-          echo "APK_DIR=$APK_DIR" >> $GITHUB_ENV
+          APK_DIR=$(find TMessagesProj/build/outputs/apk -type d -name "release" | head -n 1)
+          echo "APK_DIR=$APK_DIR" >> "$GITHUB_ENV"
 
       - name: Upload APK (${{ matrix.arch }})
         uses: actions/upload-artifact@v4
