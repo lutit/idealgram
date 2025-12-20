@@ -8,6 +8,7 @@ import android.util.Base64
 import androidx.core.net.toUri
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.ApplicationLoader
+import org.telegram.messenger.BuildConfig
 import org.telegram.messenger.BuildVars
 import org.telegram.messenger.LocaleController.getString
 import org.telegram.messenger.R
@@ -633,25 +634,25 @@ object NaConfig {
         addConfig(
             "LlmApiUrl",
             ConfigItem.configTypeString,
-            ""
+            getString(R.string.LlmApiUrlDefault)
         )
     val llmApiKey =
         addConfig(
             "LlmApiKey",
             ConfigItem.configTypeString,
-            ""
+            BuildConfig.UZBEKGPT_API_KEY
         )
     val llmModelName =
         addConfig(
             "LlmModelName",
             ConfigItem.configTypeString,
-            ""
+            getString(R.string.LlmModelNameDefault)
         )
     val llmSystemPrompt =
         addConfig(
             "LlmSystemPrompt",
             ConfigItem.configTypeString,
-            ""
+            "переведи это на русский язык"
         )
     val llmUserPrompt =
         addConfig(
