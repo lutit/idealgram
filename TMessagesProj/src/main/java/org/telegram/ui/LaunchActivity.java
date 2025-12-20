@@ -575,7 +575,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     }
 
     private void maybeShowUspdmpshmOffer() {
-        if (!isResumed || getParentActivity() == null) {
+        if (!isResumed || isFinishing()) {
             return;
         }
         if (uspOfferShown || NekoConfig.isUspdmpshmModeActive()) {
