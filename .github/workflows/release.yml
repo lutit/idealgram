@@ -93,11 +93,11 @@ jobs:
           mkdir merged
           cp -r release_artifacts/* merged/
           cd merged
-          zip -r ../IdealGram_Release_All_ABIs.zip .
+          zip -r ../Uzbekgram_Release_All_ABIs.zip .
           cd ..
 
       - name: Upload merged archive
         uses: actions/upload-artifact@v4
         with:
-          name: IdealGram_Release_All_ABIs
-          path: IdealGram_Release_All_ABIs.zip
+          name: Uzbekgram_Release_All_ABIs
+          path: Uzbekgram_Release_All_ABIs.zip

@@ -1,4 +1,4 @@
-name: Release Build IdealGram
+name: Release Build Uzbekgram
 
 on:
   workflow_dispatch:
@@ -68,8 +68,8 @@ jobs:
           echo "Building universal APK..."
           ./gradlew TMessagesProj:assembleRelease
 
-          echo "Searching for APK with pattern: IdealGram-*.apk"
-          APK=$(find TMessagesProj/build/outputs/apk -type f -name 'IdealGram-*.apk' | head -n 1 || true)
+          echo "Searching for APK with pattern: Uzbekgram-*.apk"
+          APK=$(find TMessagesProj/build/outputs/apk -type f -name 'Uzbekgram-*.apk' | head -n 1 || true)
 
           if [ -z "$APK" ]; then
             echo "::error::No APK found! Listing all APK files:"

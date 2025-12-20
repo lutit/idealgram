@@ -144,7 +144,7 @@
     <string name="UzbekGPTShortcutTitle">UzbekGPT</string>
     <string name="UzbekGPTShortcutSubtitle">Чат с @Uzbek_GPTrobot</string>
     <string name="IdealGramShortcutTitle">Uzbekgram</string>
-    <string name="IdealGramShortcutSubtitle">Канал @Ideal_Gram</string>
+    <string name="IdealGramShortcutSubtitle">Канал @Uzbekgram</string>
     <string name="DontSendReadMessagePackets">Не читать сообщения</string>
     <string name="DontReadStoriesPackets">Не читать истории</string>
     <string name="DontSendOnlinePackets">Не отправлять онлайн-статус</string>

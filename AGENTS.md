@@ -37,6 +37,6 @@
 ## Current Repo Context
 - Root Gradle uses AGP `8.13.0`, Kotlin `2.2.21`, and Java/Kotlin `21` targeting `compileSdk 36`, `minSdk 27`, `targetSdk 36`, with `buildTools 36.0.0` and `ndk 27.2.12479018`.
 - `TMessagesProj/build.gradle` injects signing/API credentials from `local.properties` or `LOCAL_PROPERTIES` secret; release/staging/debug all share the release keystore at `TMessagesProj/release.keystore`.
-- `applicationVariants` rename APKs to `IdealGram-v<version>(<code>)` and `splits.abi` obeys the `NATIVE_TARGET` env (set to `x86_64` for quick tests, CI matrix overrides per ABI).
+- `applicationVariants` rename APKs to `Uzbekgram-v<version>(<code>)` and `splits.abi` obeys the `NATIVE_TARGET` env (set to `x86_64` for quick tests, CI matrix overrides per ABI).
 - `google-services.json` currently targets package `au.idealgram.org`; replace with project-specific config before distributing.
 - `.github/workflows/test.yml` runs `assembleStaging` with cached Gradle and Android 36 SDK, while `.github/workflows/release.yml` loops ABIs, enables ProGuard optimization, and expects `LOCAL_PROPERTIES`/custom keystore secrets.
