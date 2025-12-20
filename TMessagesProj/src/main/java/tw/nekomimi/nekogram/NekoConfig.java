@@ -222,6 +222,7 @@ public class NekoConfig {
     public static ConfigItem shamalaMode = addConfig("shamalaMode", configTypeBool, true);
     public static ConfigItem ultraShamalaMode = addConfig("ultraShamalaMode", configTypeBool, false);
     public static ConfigItem hyperShamalaMode = addConfig("hyperShamalaMode", configTypeBool, false);
+    public static ConfigItem uspdmpshmMode = addConfig("uspdmpshmMode", configTypeBool, false);
 
     // --- Locked Status ---
     public static ConfigItem sendReadMessagePacketsLocked = addConfig("sendReadMessagePacketsLocked", configTypeBool, false);
@@ -438,6 +439,16 @@ public class NekoConfig {
         hyperShamalaMode.toggleConfigBool();
     }
     // --- Hyper Shamala Mode ---
+
+    // --- УСПДМПШМ (safe session mode) ---
+    public static boolean isUspdmpshmModeActive() {
+        return uspdmpshmMode.Bool();
+    }
+
+    public static void toggleUspdmpshmMode() {
+        uspdmpshmMode.toggleConfigBool();
+    }
+    // --- УСПДМПШМ (safe session mode) ---
 
     public static Set<String> getAllKeys() {
         synchronized (sync) {

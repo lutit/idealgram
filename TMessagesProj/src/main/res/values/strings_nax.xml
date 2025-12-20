@@ -150,6 +150,16 @@
     <string name="HyperShamalaModeEnabled">HYPER SHAMALA MODE unleashed</string>
     <string name="HyperShamalaModeDisabled">HYPER SHAMALA MODE contained</string>
     <string name="HyperShamalaModeRandom">Hyper Shamala melts your UI\u2026</string>
+    <string name="UspdmpshmMode">УСПДМПШМ</string>
+    <string name="EnableUspdmpshmMode">Enable УСПДМПШМ</string>
+    <string name="DisableUspdmpshmMode">Disable УСПДМПШМ</string>
+    <string name="UspdmpshmModeEnabled">УСПДМПШМ enabled (session)</string>
+    <string name="UspdmpshmModeDisabled">УСПДМПШМ disabled</string>
+    <string name="UspdmpshmOfferTitle">Enable УСПДМПШМ?</string>
+    <string name="UspdmpshmOfferText">Visual chaos mode (no sounds). Runs only for this session and turns off when you leave the app.</string>
+    <string name="UspdmpshmPhase1">PROTOCOL CHAOS: IGNITION</string>
+    <string name="UspdmpshmPhase2">SINGULARITY: COMPRESSION</string>
+    <string name="UspdmpshmPhase3">PROTOCOL CHAOS: RELEASE</string>
     <string name="Legends">Legends</string>
     <string name="UzbekGPTShortcutTitle">UzbekGPT</string>
     <string name="UzbekGPTShortcutSubtitle">Talk to @Uzbek_GPTrobot</string>

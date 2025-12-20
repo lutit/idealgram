@@ -185,6 +185,7 @@ import org.telegram.ui.Components.Easings;
 import org.telegram.ui.Components.EmbedBottomSheet;
 import org.telegram.ui.Components.EmojiPacksAlert;
 import org.telegram.ui.Components.ChaosOverlay;
+import org.telegram.ui.Components.UspdmpshmOverlay;
 import org.telegram.ui.Components.FireworksOverlay;
 import org.telegram.ui.Components.FloatingDebug.FloatingDebugController;
 import org.telegram.ui.Components.FolderBottomSheet;
@@ -333,6 +334,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     public FrameLayout frameLayout;
     private FireworksOverlay fireworksOverlay;
     private ChaosOverlay chaosOverlay;
+    private UspdmpshmOverlay uspdmpshmOverlay;
     private BottomSheetTabsOverlay bottomSheetTabsOverlay;
     public DrawerLayoutContainer drawerLayoutContainer;
     private DrawerLayoutAdapter drawerLayoutAdapter;
@@ -514,6 +516,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
     };
 
+    private boolean uspOfferShown;
+
     private void scheduleNextHyperShamalaTick() {
         if (!NekoConfig.isHyperShamalaModeActive() || !isResumed) {
             hyperShamalaModeScheduled = false;
@@ -542,6 +546,59 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         if (chaosOverlay != null) {
             chaosOverlay.stop();
         }
+    }
+
+    private void startUspdmpshmModeEffects() {
+        if (!isResumed) {
+            return;
+        }
+        if (uspdmpshmOverlay != null) {
+            uspdmpshmOverlay.start();
+        }
+        if (chaosOverlay != null) {
+            chaosOverlay.start();
+        }
+        updateHyperShamalaRenderEffect(true);
+    }
+
+    private void stopUspdmpshmModeEffects() {
+        if (uspdmpshmOverlay != null) {
+            uspdmpshmOverlay.stop();
+        }
+        if (chaosOverlay != null) {
+            chaosOverlay.stop();
+        }
+        updateHyperShamalaRenderEffect(false);
+        if (NekoConfig.isUspdmpshmModeActive()) {
+            NekoConfig.uspdmpshmMode.setConfigBool(false);
+        }
+    }
+
+    private void maybeShowUspdmpshmOffer() {
+        if (!isResumed || getParentActivity() == null) {
+            return;
+        }
+        if (uspOfferShown || NekoConfig.isUspdmpshmModeActive()) {
+            return;
+        }
+        uspOfferShown = true;
+        AndroidUtilities.runOnUIThread(() -> {
+            if (!isResumed || isFinishing() || getLastFragment() == null) {
+                return;
+            }
+            try {
+                AlertDialog.Builder builder = new AlertDialog.Builder(LaunchActivity.this);
+                builder.setTitle(LocaleController.getString(R.string.UspdmpshmOfferTitle));
+                builder.setMessage(LocaleController.getString(R.string.UspdmpshmOfferText));
+                builder.setPositiveButton(LocaleController.getString(R.string.EnableUspdmpshmMode), (dialog, which) -> {
+                    NekoConfig.uspdmpshmMode.setConfigBool(true);
+                    startUspdmpshmModeEffects();
+                });
+                builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
+                builder.show();
+            } catch (Exception ignore) {
+            }
+        }, 250);
     }
 
     private void updateHyperShamalaRenderEffect(boolean enabled) {
@@ -822,6 +879,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         themeSwitchSunView.setVisibility(View.GONE);
         frameLayout.addView(bottomSheetTabsOverlay = new BottomSheetTabsOverlay(this));
         frameLayout.addView(chaosOverlay = new ChaosOverlay(this));
+        frameLayout.addView(uspdmpshmOverlay = new UspdmpshmOverlay(this));
         frameLayout.addView(fireworksOverlay = new FireworksOverlay(this) {
             {
                 setVisibility(GONE);
@@ -1151,6 +1209,20 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         startHyperShamalaModeEffects();
                     } else {
                         stopHyperShamalaModeEffects();
+                    }
+                    drawerLayoutContainer.closeDrawer(false);
+                    NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                } else if (id == DrawerLayoutAdapter.nkbtnUspdmpshmMode) {
+                    boolean willEnable = !NekoConfig.isUspdmpshmModeActive();
+                    NekoConfig.toggleUspdmpshmMode();
+                    CharSequence msg = LocaleController.getString(
+                            willEnable ? R.string.UspdmpshmModeEnabled : R.string.UspdmpshmModeDisabled
+                    );
+                    BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, msg).show();
+                    if (willEnable) {
+                        startUspdmpshmModeEffects();
+                    } else {
+                        stopUspdmpshmModeEffects();
                     }
                     drawerLayoutContainer.closeDrawer(false);
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
@@ -7460,6 +7532,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         stopShamalaModeEffects();
         stopUltraShamalaModeEffects();
         stopHyperShamalaModeEffects();
+        stopUspdmpshmModeEffects();
+        uspOfferShown = false;
         pipActivityHandler.onPause();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 4096);
         ApplicationLoader.mainInterfacePaused = true;
@@ -7636,6 +7710,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             FileLog.e(e);
         }
         super.onDestroy();
+        stopUspdmpshmModeEffects();
         onFinish();
         FloatingDebugController.onDestroy();
         if (flagSecureReason != null) {
@@ -7668,6 +7743,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         if (NekoConfig.isHyperShamalaModeActive()) {
             startHyperShamalaModeEffects();
+        }
+        if (NekoConfig.isUspdmpshmModeActive()) {
+            startUspdmpshmModeEffects();
+        } else {
+            maybeShowUspdmpshmOffer();
         }
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {

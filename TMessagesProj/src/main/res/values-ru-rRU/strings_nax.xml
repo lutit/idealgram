@@ -141,6 +141,16 @@
     <string name="HyperShamalaModeEnabled">HYPER SHAMALA MODE включён</string>
     <string name="HyperShamalaModeDisabled">HYPER SHAMALA MODE выключен</string>
     <string name="HyperShamalaModeRandom">HYPER Shamala плавит интерфейс\u2026</string>
+    <string name="UspdmpshmMode">УСПДМПШМ</string>
+    <string name="EnableUspdmpshmMode">Включить УСПДМПШМ</string>
+    <string name="DisableUspdmpshmMode">Выключить УСПДМПШМ</string>
+    <string name="UspdmpshmModeEnabled">УСПДМПШМ включён (на сессию)</string>
+    <string name="UspdmpshmModeDisabled">УСПДМПШМ выключен</string>
+    <string name="UspdmpshmOfferTitle">Включить УСПДМПШМ?</string>
+    <string name="UspdmpshmOfferText">Безопасный визуальный хаос без звуков. Работает только в этой сессии и выключится при выходе из приложения.</string>
+    <string name="UspdmpshmPhase1">ПРОТОКОЛ ХАОСА: ЗАПУСК</string>
+    <string name="UspdmpshmPhase2">СИНГУЛЯРНОСТЬ: СЖАТИЕ</string>
+    <string name="UspdmpshmPhase3">ПРОТОКОЛ ХАОСА: ВЫБРОС</string>
     <string name="UzbekGPTShortcutTitle">UzbekGPT</string>
     <string name="UzbekGPTShortcutSubtitle">Чат с @Uzbek_GPTrobot</string>
     <string name="IdealGramShortcutTitle">Uzbekgram</string>

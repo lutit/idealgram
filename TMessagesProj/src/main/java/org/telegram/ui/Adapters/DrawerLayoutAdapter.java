@@ -70,6 +70,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnLegends = 1012;
     public static int nkbtnUltraShamalaMode = 1013;
     public static int nkbtnHyperShamalaMode = 1014;
+    public static int nkbtnUspdmpshmMode = 1015;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -367,6 +368,11 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
                     ? LocaleController.getString(R.string.DisableHyperShamalaMode)
                     : LocaleController.getString(R.string.EnableHyperShamalaMode);
             items.add(new Item(nkbtnHyperShamalaMode, hyperShamalaLabel, R.drawable.ayu_ghost));
+
+            CharSequence uspLabel = NekoConfig.isUspdmpshmModeActive()
+                    ? LocaleController.getString(R.string.DisableUspdmpshmMode)
+                    : LocaleController.getString(R.string.EnableUspdmpshmMode);
+            items.add(new Item(nkbtnUspdmpshmMode, uspLabel, R.drawable.ayu_ghost));
 
             items.add(null);
         }
