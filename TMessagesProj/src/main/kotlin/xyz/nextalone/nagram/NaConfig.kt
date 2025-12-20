@@ -1425,9 +1425,10 @@ object NaConfig {
         if (!preferences.getBoolean("ShowIdAndDc", true)) {
             idDcType.setConfigInt(0)
         }
-        if (!telegramUIAutoTranslate.Bool()) {
-            telegramUIAutoTranslate.setConfigBool(true)
-        }
+        llmProviderPreset.setConfigInt(0)
+        llmApiUrl.setConfigString(getString(R.string.LlmApiUrlDefault))
+        llmModelName.setConfigString(getString(R.string.LlmModelNameDefault))
+        llmSystemPrompt.setConfigString("переведи это на русский язык")
     }
 
     private fun addConfig(

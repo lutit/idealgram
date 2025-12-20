@@ -27,7 +27,6 @@ import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AndroidUtilities;
-import org.telegram.messenger.BotWebViewVibrationEffect;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.browser.Browser;
@@ -302,13 +301,6 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         listView.setOnItemClickListener((view, position, x, y) -> {
             AbstractConfigCell a = cellGroup.rows.get(position);
             if (a instanceof ConfigCellTextCheck) {
-                if (position == cellGroup.rows.indexOf(useTelegramUIAutoTranslateRow)) {
-                    NaConfig.INSTANCE.getTelegramUIAutoTranslate().setConfigBool(true);
-                    listAdapter.notifyItemChanged(position);
-                    BotWebViewVibrationEffect.APP_ERROR.vibrate();
-                    AndroidUtilities.shakeViewSpring(view, -4);
-                    return;
-                }
                 ((ConfigCellTextCheck) a).onClick((TextCheckCell) view);
             } else if (a instanceof ConfigCellSelectBox) {
                 ((ConfigCellSelectBox) a).onClick(view);
@@ -321,35 +313,6 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                         o.onItemClick(view, position);
                     } catch (Exception ignored) {
                     }
-                }
-            } else if (a instanceof ConfigCellCustom) { // Custom OnClick
-                if (position == cellGroup.rows.indexOf(translationProviderRow)) {
-                    showProviderSelectionPopup(view, NekoConfig.translationProvider, () -> {
-                        if (NekoConfig.translationProvider.Int() == Translator.providerTelegram) {
-                            boolean isRealPremium = UserConfig.getInstance(currentAccount).isPremium();
-                            if (!isRealPremium) {
-                                NekoConfig.translationProvider.setConfigInt(Translator.providerLLMTranslator);
-                                listAdapter.notifyItemChanged(position);
-                                BulletinFactory.of(this).createSimpleBulletin(R.raw.info, getString(R.string.LoginEmailResetPremiumRequiredTitle)).show();
-                                BotWebViewVibrationEffect.APP_ERROR.vibrate();
-                                View useTelegramUIAutoTranslateView = ((ConfigCellTextCheck) useTelegramUIAutoTranslateRow).cell;
-                                AndroidUtilities.shakeViewSpring(useTelegramUIAutoTranslateView, -4);
-                            }
-                        }
-                        NaConfig.INSTANCE.getTelegramUIAutoTranslate().setConfigBool(true);
-                        listAdapter.notifyItemChanged(cellGroup.rows.indexOf(useTelegramUIAutoTranslateRow));
-                        listAdapter.notifyItemChanged(position);
-                    });
-                } else if (position == cellGroup.rows.indexOf(translateToLangRow)) {
-                    Translator.showTargetLangSelect(view, false, (locale) -> {
-                        NekoConfig.translateToLang.setConfigString(TranslatorKt.getLocale2code(locale));
-                        listAdapter.notifyItemChanged(position);
-                        return Unit.INSTANCE;
-                    });
-                } else if (position == cellGroup.rows.indexOf(doNotTranslateRow)) {
-                    presentFragment(new RestrictedLanguagesSelectActivity());
-                } else if (position == cellGroup.rows.indexOf(articleTranslationProviderRow)) {
-                    showProviderSelectionPopup(view, NaConfig.INSTANCE.getArticleTranslationProvider(), () -> listAdapter.notifyItemChanged(position));
                 }
             }
         });
@@ -609,45 +572,8 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         cellGroup.rows.clear();
 
         cellGroup.appendCell(headerOptions);
-        cellGroup.appendCell(showTranslateRow);
         cellGroup.appendCell(useTelegramUIAutoTranslateRow);
-        cellGroup.appendCell(keepMarkdownRow);
         cellGroup.appendCell(dividerOptions);
-
-        cellGroup.appendCell(headerTranslation);
-        cellGroup.appendCell(translationProviderRow);
-        cellGroup.appendCell(translatorModeRow);
-        cellGroup.appendCell(translateToLangRow);
-        cellGroup.appendCell(doNotTranslateRow);
-        cellGroup.appendCell(preferredTranslateTargetLangRow);
-        if (!NaConfig.INSTANCE.getGoogleTranslateExp().Bool()) {
-            cellGroup.appendCell(googleCloudTranslateKeyRow);
-        }
-        cellGroup.appendCell(dividerTranslation);
-
-        cellGroup.appendCell(headerAITranslatorSettings);
-        cellGroup.appendCell(llmProviderRow);
-        List<AbstractConfigCell> currentLlmProviderConfigRows = llmProviderConfigMap.get(currentLlmProvider);
-        if (currentLlmProviderConfigRows != null) {
-            currentLlmProviderConfigRows.forEach(cellGroup::appendCell);
-        }
-        cellGroup.appendCell(llmSystemPromptRow);
-        cellGroup.appendCell(llmUserPromptRow);
-        cellGroup.appendCell(headerTemperature);
-        cellGroup.appendCell(temperatureValueRow);
-        cellGroup.appendCell(dividerAITranslatorSettings);
-
-        cellGroup.appendCell(headerArticleTranslation);
-        cellGroup.appendCell(enableSeparateArticleTranslatorRow);
-        if (NaConfig.INSTANCE.getEnableSeparateArticleTranslator().Bool()) {
-            cellGroup.appendCell(articleTranslationProviderRow);
-        }
-        cellGroup.appendCell(dividerArticleTranslation);
-
-        cellGroup.appendCell(headerExperimental);
-        cellGroup.appendCell(googleTranslateExpRow);
-        cellGroup.appendCell(keepTranslatorPrefRow);
-        cellGroup.appendCell(dividerExperimental);
     }
 
     private SpannableString premiumStar;

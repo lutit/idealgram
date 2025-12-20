@@ -165,11 +165,9 @@ public class TranslateController extends BaseController {
 
     public boolean isDialogTranslatable(long dialogId) {
         return (
-            translatableDialogs.contains(dialogId) &&
             isFeatureAvailable(dialogId) &&
             !DialogObject.isEncryptedDialog(dialogId) &&
             getUserConfig().getClientUserId() != dialogId
-            /* DialogObject.isChatDialog(dialogId) &&*/
         );
     }
 
@@ -197,7 +195,7 @@ public class TranslateController extends BaseController {
     }
 
     public boolean isTranslatingDialog(long dialogId) {
-        return isFeatureAvailable(dialogId) && translatingDialogs.get(dialogId, isChatAutoTranslated(dialogId));
+        return isFeatureAvailable(dialogId) && translatingDialogs.get(dialogId, true);
     }
 
     public void toggleTranslatingDialog(long dialogId) {
@@ -694,7 +692,7 @@ public class TranslateController extends BaseController {
     }
 
     public void checkDialogMessageSure(long dialogId) {
-        if (!translatingDialogs.get(dialogId, isChatAutoTranslated(dialogId))) {
+        if (!translatingDialogs.get(dialogId, true)) {
             return;
         }
         getMessagesStorage().getStorageQueue().postRunnable(() -> {

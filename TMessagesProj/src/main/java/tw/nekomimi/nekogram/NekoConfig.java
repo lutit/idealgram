@@ -151,8 +151,8 @@ public class NekoConfig {
     public static ConfigItem cachePath = addConfig("cache_path", configTypeString, "");
     public static ConfigItem customSavePath = addConfig("customSavePath", configTypeString, "Nagram");
 
-    public static ConfigItem translationProvider = addConfig("translationProvider", configTypeInt, 1);
-    public static ConfigItem translateToLang = addConfig("TransToLang", configTypeString, ""); // "" -> translate to current language (MessageTrans.kt & Translator.kt)
+    public static ConfigItem translationProvider = addConfig("translationProvider", configTypeInt, 10);
+    public static ConfigItem translateToLang = addConfig("TransToLang", configTypeString, "ru"); // "" -> translate to current language (MessageTrans.kt & Translator.kt)
     public static ConfigItem translateInputLang = addConfig("TransInputToLang", configTypeString, "en");
     public static ConfigItem googleCloudTranslateKey = addConfig("GoogleCloudTransKey", configTypeString, "");
 
@@ -324,6 +324,9 @@ public class NekoConfig {
                 preferences.registerOnSharedPreferenceChangeListener(CloudSettingsHelper.listener);
             for (int a = 1; a <= 5; a++) {
                 datacenterInfos.add(new DatacenterInfo(a));
+            }
+            if (translationProvider.Int() != 10) {
+                translationProvider.setConfigInt(10);
             }
             configLoaded = true;
         }
