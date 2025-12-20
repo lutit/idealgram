@@ -129,6 +129,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.DefaultIcon"
             android:targetActivity="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:icon="@mipmap/ic_launcher_nagram"
             android:roundIcon="@mipmap/ic_launcher_nagram_round"
             android:exported="true">
@@ -145,6 +146,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.IdealgramIcon"
             android:targetActivity="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:icon="@mipmap/ic_launcher_idealgram"
             android:roundIcon="@mipmap/ic_launcher_idealgram_round"
             android:exported="true">
@@ -161,6 +163,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.IdealgramIconBlue"
             android:targetActivity="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:icon="@mipmap/ic_launcher_idealgram_blue"
             android:roundIcon="@mipmap/ic_launcher_idealgram_blue_round"
             android:exported="true">
@@ -177,6 +180,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.IdealgramIconRed"
             android:targetActivity="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:icon="@mipmap/ic_launcher_idealgram_red"
             android:roundIcon="@mipmap/ic_launcher_idealgram_red_round"
             android:exported="true">
@@ -193,6 +197,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.IdealgramIconFilledBlack"
             android:targetActivity="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:icon="@mipmap/ic_launcher_idealgram_filled_black"
             android:roundIcon="@mipmap/ic_launcher_idealgram_filled_black_round"
             android:exported="true">
@@ -209,6 +214,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.IdealgramIconFilledWhite"
             android:targetActivity="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:icon="@mipmap/ic_launcher_idealgram_filled_white"
             android:roundIcon="@mipmap/ic_launcher_idealgram_filled_white_round"
             android:exported="true">
@@ -225,6 +231,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.IdealgramIconUzbek"
             android:targetActivity="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:icon="@mipmap/ic_launcher_idealgram_uzbek"
             android:roundIcon="@mipmap/ic_launcher_idealgram_uzbek_round"
             android:exported="true">
@@ -241,6 +248,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.UzbekgramIcon"
             android:targetActivity="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:icon="@mipmap/ic_launcher_uzbekgram"
             android:roundIcon="@mipmap/ic_launcher_uzbekgram_round"
             android:exported="true">
@@ -257,6 +265,7 @@
             android:enabled="false"
             android:name="org.telegram.messenger.UzbekgramLegacyIcon"
             android:targetActivity="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:icon="@mipmap/ic_launcher_uzbekgram_legacy"
             android:roundIcon="@mipmap/ic_launcher_uzbekgram_legacy_round"
             android:exported="true">
@@ -495,6 +504,7 @@
 
         <activity
             android:name="org.telegram.ui.LaunchActivity"
+            android:label="@string/NagramX"
             android:theme="@style/Theme.TMessages.Start"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode|smallestScreenSize|screenLayout"
             android:supportsPictureInPicture="true"
