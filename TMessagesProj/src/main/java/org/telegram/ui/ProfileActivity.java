@@ -11441,7 +11441,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                 }
 
-                if (lastSectionRow == -1 && currentChat.left && !currentChat.kicked) {
+                if (lastSectionRow == -1 && currentChat.left && !currentChat.kicked && !org.telegram.messenger.JoinButtonPolicy.isJoinDisabled(dialogId, currentChat.id)) {
                     long requestedTime = MessagesController.getNotificationsSettings(currentAccount).getLong("dialog_join_requested_time_" + dialogId, -1);
                     if (!(requestedTime > 0 && System.currentTimeMillis() - requestedTime < 1000 * 60 * 2)) {
                         if (actionsView == null || !actionsView.canHaveJoinAction()) {

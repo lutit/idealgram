@@ -2523,7 +2523,7 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
         boolean animated = fragmentBeginToShow || forceAnimate;
         boolean bottomPannelVisibleLocal;
         long requestedTime = MessagesController.getNotificationsSettings(currentAccount).getLong("dialog_join_requested_time_" + -chatId, -1);
-        if (chatLocal != null && ChatObject.isNotInChat(chatLocal) && (requestedTime > 0 && System.currentTimeMillis() - requestedTime < 1000 * 60 * 2)) {
+        if (chatLocal != null && ChatObject.isNotInChat(chatLocal) && !org.telegram.messenger.JoinButtonPolicy.isJoinDisabled(dialog_id, chatId) && (requestedTime > 0 && System.currentTimeMillis() - requestedTime < 1000 * 60 * 2)) {
             bottomPannelVisibleLocal = true;
 
             bottomOverlayChatText.setText(LocaleController.getString(R.string.ChannelJoinRequestSent), animated);
@@ -2531,7 +2531,7 @@ public class TopicsFragment extends BaseFragment implements NotificationCenter.N
             AndroidUtilities.updateViewVisibilityAnimated(bottomOverlayProgress, false, 0.5f, animated);
             AndroidUtilities.updateViewVisibilityAnimated(bottomOverlayChatText, true, 0.5f, animated);
             setButtonType(BOTTOM_BUTTON_TYPE_JOIN);
-        } else if (chatLocal != null && !openedForSelect && (ChatObject.isNotInChat(chatLocal) || getMessagesController().isJoiningChannel(chatLocal.id))) {
+        } else if (chatLocal != null && !openedForSelect && !org.telegram.messenger.JoinButtonPolicy.isJoinDisabled(dialog_id, chatId) && (ChatObject.isNotInChat(chatLocal) || getMessagesController().isJoiningChannel(chatLocal.id))) {
             bottomPannelVisibleLocal = true;
 
             boolean showProgress = false;

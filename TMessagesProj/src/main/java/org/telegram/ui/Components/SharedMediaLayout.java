@@ -9420,24 +9420,26 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                 });
                 previewMenu.addView(openChannel);
 
-                ActionBarMenuSubItem joinChannel = new ActionBarMenuSubItem(getContext(), false, false);
-                joinChannel.setTextAndIcon(getString(R.string.ProfileJoinChannel), R.drawable.msg_addbot);
-                joinChannel.setMinimumWidth(160);
-                joinChannel.setOnClickListener(view -> {
-                    profileActivity.finishPreviewFragment();
-                    chat.left = false;
-                    update(false);
-                    notifyItemRemoved(position);
-                    if (chats.isEmpty()) {
-                        updateTabs(true);
-                        checkCurrentTabValid();
-                    }
-                    profileActivity.getNotificationCenter().postNotificationName(NotificationCenter.channelRecommendationsLoaded, -dialog_id);
-                    profileActivity.getMessagesController().addUserToChat(chat.id, profileActivity.getUserConfig().getCurrentUser(), 0, null, profileActivity, () -> {
-                        BulletinFactory.of(profileActivity).createSimpleBulletin(R.raw.contact_check, LocaleController.formatString(R.string.YouJoinedChannel, chat == null ? "" : chat.title)).show(true);
+                if (!org.telegram.messenger.JoinButtonPolicy.isJoinDisabled(-chat.id, chat.id)) {
+                    ActionBarMenuSubItem joinChannel = new ActionBarMenuSubItem(getContext(), false, false);
+                    joinChannel.setTextAndIcon(getString(R.string.ProfileJoinChannel), R.drawable.msg_addbot);
+                    joinChannel.setMinimumWidth(160);
+                    joinChannel.setOnClickListener(view -> {
+                        profileActivity.finishPreviewFragment();
+                        chat.left = false;
+                        update(false);
+                        notifyItemRemoved(position);
+                        if (chats.isEmpty()) {
+                            updateTabs(true);
+                            checkCurrentTabValid();
+                        }
+                        profileActivity.getNotificationCenter().postNotificationName(NotificationCenter.channelRecommendationsLoaded, -dialog_id);
+                        profileActivity.getMessagesController().addUserToChat(chat.id, profileActivity.getUserConfig().getCurrentUser(), 0, null, profileActivity, () -> {
+                            BulletinFactory.of(profileActivity).createSimpleBulletin(R.raw.contact_check, LocaleController.formatString(R.string.YouJoinedChannel, chat == null ? "" : chat.title)).show(true);
+                        });
                     });
-                });
-                previewMenu.addView(joinChannel);
+                    previewMenu.addView(joinChannel);
+                }
                 profileActivity.presentFragmentAsPreviewWithMenu(fragment, previewMenu);
             } else if (obj instanceof TLRPC.User) {
                 final TLRPC.User user = (TLRPC.User) obj;

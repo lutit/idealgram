@@ -27860,7 +27860,10 @@ public class ChatActivity extends BaseFragment implements
             boolean shouldApply = false;
             if (ChatObject.isChannel(currentChat) && !(currentChat instanceof TLRPC.TL_channelForbidden)) {
                 if (ChatObject.isNotInChat(currentChat) && !UserObject.isBotForum(currentUser) && (ChatObject.isForum(currentChat) || !isThreadChat() || currentChat.join_to_send)) {
-                    if (getMessagesController().isJoiningChannel(currentChat.id)) {
+                    if (org.telegram.messenger.JoinButtonPolicy.isJoinDisabled(dialog_id, currentChat.id)) {
+                        forceNoBottom = true;
+                        showBottomOverlayProgress(false, false);
+                    } else if (getMessagesController().isJoiningChannel(currentChat.id)) {
                         showBottomOverlayProgress(true, false);
                     } else {
                         if (currentChat.join_request) {
@@ -40787,20 +40790,22 @@ public class ChatActivity extends BaseFragment implements
                 });
                 previewMenu.addView(openChannel);
 
-                ActionBarMenuSubItem joinChannel = new ActionBarMenuSubItem(getParentActivity(), false, false);
-                joinChannel.setTextAndIcon(LocaleController.getString(R.string.ProfileJoinChannel), R.drawable.msg_addbot);
-                joinChannel.setMinimumWidth(160);
-                joinChannel.setOnClickListener(view -> {
-                    finishPreviewFragment();
-                    chat.left = false;
-                    if (cell != null && cell.channelRecommendationsCell != null) {
-                        getNotificationCenter().postNotificationName(NotificationCenter.channelRecommendationsLoaded, cell.channelRecommendationsCell.chatId);
-                    }
-                    getMessagesController().addUserToChat(chat.id, getUserConfig().getCurrentUser(), 0, null, ChatActivity.this, () -> {
-                        BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.contact_check, LocaleController.formatString(R.string.YouJoinedChannel, chat == null ? "" : chat.title)).show(true);
+                if (!org.telegram.messenger.JoinButtonPolicy.isJoinDisabled(-chat.id, chat.id)) {
+                    ActionBarMenuSubItem joinChannel = new ActionBarMenuSubItem(getParentActivity(), false, false);
+                    joinChannel.setTextAndIcon(LocaleController.getString(R.string.ProfileJoinChannel), R.drawable.msg_addbot);
+                    joinChannel.setMinimumWidth(160);
+                    joinChannel.setOnClickListener(view -> {
+                        finishPreviewFragment();
+                        chat.left = false;
+                        if (cell != null && cell.channelRecommendationsCell != null) {
+                            getNotificationCenter().postNotificationName(NotificationCenter.channelRecommendationsLoaded, cell.channelRecommendationsCell.chatId);
+                        }
+                        getMessagesController().addUserToChat(chat.id, getUserConfig().getCurrentUser(), 0, null, ChatActivity.this, () -> {
+                            BulletinFactory.of(ChatActivity.this).createSimpleBulletin(R.raw.contact_check, LocaleController.formatString(R.string.YouJoinedChannel, chat == null ? "" : chat.title)).show(true);
+                        });
                     });
-                });
-                previewMenu.addView(joinChannel);
+                    previewMenu.addView(joinChannel);
+                }
 
                 ChatActivity chatActivity = new ChatActivity(args);
                 chatActivity.allowExpandPreviewByClick = true;
