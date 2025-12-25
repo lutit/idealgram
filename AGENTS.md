@@ -7,11 +7,19 @@
 - `.github/workflows/`: CI pipelines for test, staging, and release; keep these green when changing build logic.
 
 ## Build, Test, and Development Commands
+- Preferred (fast, remote, skips native): `./deploy_and_build.sh test` – rsync project to `macserver`, runs `./gradlew assembleDebug --build-cache` with `NATIVE_TARGET=SKIP`, then downloads APKs to `./apks/`.
+- Avoid running Gradle directly on the local machine unless explicitly requested (it’s slower/heavier than the remote script workflow).
 - `./gradlew :TMessagesProj:assembleDebug` – build a debuggable APK for local installs.
 - `./gradlew :TMessagesProj:assembleRelease` – build a signed release APK (requires valid keystore and `local.properties`).
 - `./gradlew :TMessagesProj:lintDebug` – run Android Lint checks for the debug variant.
 - `./gradlew :TMessagesProj:testDebugUnitTest` – run JVM unit tests.
 - `./gradlew :TMessagesProj:connectedDebugAndroidTest` – run instrumentation tests on a connected device or emulator.
+
+### Remote Build Script (`deploy_and_build.sh`)
+- Usage: `./deploy_and_build.sh [default|test|native]`
+- `default` / `test`: sets `NATIVE_TARGET=SKIP` and builds `assembleDebug` on `macserver` (fast path); APKs end up in `./apks/`.
+- `native`: builds with `NATIVE_TARGET=<abi>` (second arg, default `universal`) — do not use unless explicitly requested.
+- Requirements: SSH host `macserver` reachable and writable `REMOTE_DIR` (`/home/user/idealgram`) on that machine.
 
 ## Coding Style & Naming Conventions
 - Use Android Studio’s default formatter (Kotlin/Java, 4-space indentation, braces on the same line).
@@ -23,6 +31,7 @@
 - Prefer small, fast unit tests for business logic; use instrumentation tests only when Android framework behavior is required.
 - Place tests in `src/test/java` and `src/androidTest/java`, mirroring the package of the code under test.
 - New features should include tests when feasible and must not break existing CI workflows.
+- For this repo, run all build/test sanity checks via `./deploy_and_build.sh test` (remote, fast, skips native); do not build native code by default.
 
 ## Commit & Pull Request Guidelines
 - Use conventional-style summaries when possible: `type(scope): short imperative message`, e.g. `fix(ui): avoid crash on theme load`.
