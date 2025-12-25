@@ -96,7 +96,6 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
 
     private static final String DRAWER_FLAG_ASSET = "uzbek.jpg";
     private static volatile Bitmap drawerFlagBitmap;
-    private static volatile boolean drawerFlagTriedToLoad;
 
     private BackupImageView avatarImageView;
     private SimpleTextView nameTextView;
@@ -135,23 +134,24 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
     private TLRPC.User user;
     private boolean allowInvalidate = true;
 
-    private static Bitmap getDrawerFlagBitmap() {
-        if (drawerFlagTriedToLoad) {
-            return drawerFlagBitmap;
+    private Bitmap getDrawerFlagBitmap() {
+        Bitmap cached = drawerFlagBitmap;
+        if (cached != null) {
+            return cached;
         }
         synchronized (DrawerProfileCell.class) {
-            if (drawerFlagTriedToLoad) {
-                return drawerFlagBitmap;
+            cached = drawerFlagBitmap;
+            if (cached != null) {
+                return cached;
             }
-            drawerFlagTriedToLoad = true;
             BitmapFactory.Options bounds = new BitmapFactory.Options();
-            try (InputStream inputStream = ApplicationLoader.applicationContext.getAssets().open(DRAWER_FLAG_ASSET)) {
+            try (InputStream inputStream = getContext().getAssets().open(DRAWER_FLAG_ASSET)) {
                 bounds.inJustDecodeBounds = true;
                 BitmapFactory.decodeStream(inputStream, null, bounds);
             } catch (Exception e) {
                 FileLog.e(e);
             }
-            try (InputStream inputStream = ApplicationLoader.applicationContext.getAssets().open(DRAWER_FLAG_ASSET)) {
+            try (InputStream inputStream = getContext().getAssets().open(DRAWER_FLAG_ASSET)) {
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 int target = Math.max(AndroidUtilities.dp(360), AndroidUtilities.displaySize.x);
                 int inSampleSize = 1;
@@ -168,6 +168,20 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
                 FileLog.e(e);
             }
             return drawerFlagBitmap;
+        }
+    }
+
+    private void drawDrawerFlag(Canvas canvas) {
+        Bitmap bitmap = getDrawerFlagBitmap();
+        if (bitmap == null) {
+            return;
+        }
+        srcRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        destRect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
+        try {
+            canvas.drawBitmap(bitmap, srcRect, destRect, paint);
+        } catch (Throwable e) {
+            FileLog.e(e);
         }
     }
 
@@ -702,6 +716,7 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
         int backgroundType = NekoConfig.largeAvatarInDrawer.Int();
         Drawable backgroundDrawable = Theme.getCachedWallpaper();
         boolean useImageBackground = backgroundDrawable != null;
+        boolean useFlagBackground = getDrawerFlagBitmap() != null;
         if (backgroundType != NekoConfig.DRAWER_BACKGROUND_WALLPAPER || Theme.getActiveTheme().isDay() || Theme.getActiveTheme().isMonetLight()) {
             int backgroundKey = applyBackground(false);
             useImageBackground = backgroundKey != Theme.key_chats_menuTopBackground && Theme.isCustomTheme() && !Theme.isPatternWallpaper() && backgroundDrawable != null && !(backgroundDrawable instanceof ColorDrawable) && !(backgroundDrawable instanceof GradientDrawable);
@@ -726,7 +741,13 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
         nameTextView.setTextColor(Theme.getColor(Theme.key_chats_menuName));
         phoneTextView.getTextView().setTextColor(Theme.getColor(Theme.key_chats_menuName));
 
-        if (useAvatarAsDrawerBackground()) {
+        if (useFlagBackground) {
+            phoneTextView.getTextView().setTextColor(Theme.getColor(Theme.key_chats_menuPhone));
+            if (shadowView.getVisibility() != VISIBLE) {
+                shadowView.setVisibility(VISIBLE);
+            }
+            drawDrawerFlag(canvas);
+        } else if (useAvatarAsDrawerBackground()) {
             phoneTextView.getTextView().setTextColor(Theme.getColor(Theme.key_chats_menuPhone));
             if (shadowView.getVisibility() != VISIBLE) {
                 shadowView.setVisibility(VISIBLE);
@@ -764,25 +785,6 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
                 shadowView.setVisibility(visibility);
             }
             super.onDraw(canvas);
-            if (backgroundType == NekoConfig.DRAWER_BACKGROUND_DEFAULT) {
-                Bitmap bitmap = getDrawerFlagBitmap();
-                if (bitmap != null) {
-                    float scaleX = (float) getMeasuredWidth() / (float) bitmap.getWidth();
-                    float scaleY = (float) getMeasuredHeight() / (float) bitmap.getHeight();
-                    float scale = Math.max(scaleX, scaleY);
-                    int width = (int) (getMeasuredWidth() / scale);
-                    int height = (int) (getMeasuredHeight() / scale);
-                    int x = (bitmap.getWidth() - width) / 2;
-                    int y = (bitmap.getHeight() - height) / 2;
-                    srcRect.set(x, y, x + width, y + height);
-                    destRect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
-                    try {
-                        canvas.drawBitmap(bitmap, srcRect, destRect, paint);
-                    } catch (Throwable e) {
-                        FileLog.e(e);
-                    }
-                }
-            }
         }
 
 
