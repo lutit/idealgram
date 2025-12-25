@@ -135,6 +135,20 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     private final HashMap<String, ImportingStickers> importingStickersFiles = new HashMap<>();
     private final HashMap<String, ImportingStickers> importingStickersMap = new HashMap<>();
 
+    private static void copyShamalaOriginalTextParams(TLRPC.Message localMessage, TLRPC.Message serverMessage) {
+        if (localMessage == null || serverMessage == null || localMessage.params == null) {
+            return;
+        }
+        String original = localMessage.params.get("shamala_original_text");
+        if (TextUtils.isEmpty(original)) {
+            return;
+        }
+        if (serverMessage.params == null) {
+            serverMessage.params = new HashMap<>();
+        }
+        serverMessage.params.put("shamala_original_text", original);
+    }
+
     public static boolean checkUpdateStickersOrder(CharSequence text) {
         if (text instanceof Spannable) {
             AnimatedEmojiSpan[] spans = ((Spannable)text).getSpans(0, text.length(), AnimatedEmojiSpan.class);
@@ -2569,6 +2583,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                             newMsgArr.remove(index);
                                             final int oldId = newMsgObj1.id;
                                             final ArrayList<TLRPC.Message> sentMessages = new ArrayList<>();
+                                            copyShamalaOriginalTextParams(newMsgObj1, message);
                                             sentMessages.add(message);
                                             msgObj1.messageOwner.post_author = message.post_author;
                                             if ((message.flags & 33554432) != 0) {
@@ -6892,6 +6907,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                         if (id != null) {
                             TLRPC.Message message = newMessages.get(id);
                             if (message != null) {
+                                copyShamalaOriginalTextParams(newMsgObj, message);
                                 MessageObject.getDialogId(message);
                                 sentMessages.add(message);
                                 if ((message.flags & 33554432) != 0) {
@@ -7208,6 +7224,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                         messageReplies.replies++;
                                     }
 
+                                    copyShamalaOriginalTextParams(newMsgObj, newMessage.message);
                                     sentMessages.add(message = newMessage.message);
                                     Utilities.stageQueue.postRunnable(() -> getMessagesController().processNewChannelDifferenceParams(newMessage.pts, newMessage.pts_count, newMessage.message.peer_id.channel_id));
                                     updatesArr.remove(a);
@@ -7228,6 +7245,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                             break;
                                         }
                                     }
+                                    copyShamalaOriginalTextParams(newMsgObj, newMessage.message);
                                     sentMessages.add(message = newMessage.message);
                                     updatesArr.remove(a);
                                     a--;
@@ -7235,6 +7253,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                 } else if (update instanceof TLRPC.TL_updateQuickReplyMessage) {
                                     QuickRepliesController.getInstance(currentAccount).processUpdate(update, msgObj.getQuickReplyName(), msgObj.getQuickReplyId());
                                     final TLRPC.TL_updateQuickReplyMessage newMessage = (TLRPC.TL_updateQuickReplyMessage) update;
+                                    copyShamalaOriginalTextParams(newMsgObj, newMessage.message);
                                     sentMessages.add(message = newMessage.message);
                                     updatesArr.remove(a);
                                     a--;
