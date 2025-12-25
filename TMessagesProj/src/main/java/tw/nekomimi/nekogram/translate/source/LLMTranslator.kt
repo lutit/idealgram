@@ -130,7 +130,7 @@ object LLMTranslator : Translator {
                 }
 
                 return finalText
-            } catch (_: RateLimitException) {
+            } catch (e: RateLimitException) {
                 retryCount++
                 val waitTimeMillis = BASE_WAIT * 2.0.pow(retryCount - 1).toLong()
                 val jitter = Random.nextLong(waitTimeMillis / 2)

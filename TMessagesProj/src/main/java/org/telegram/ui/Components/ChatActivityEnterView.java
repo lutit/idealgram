@@ -8202,7 +8202,10 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         final String apiKey = BuildConfig.UZBEKGPT_API_KEY;
 
         if (TextUtils.isEmpty(apiUrl) || TextUtils.isEmpty(apiKey)) {
-            completeShamalaWithResult("error: 'Shamala API not configured'", notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
+            if (internalParams != null) {
+                internalParams.shamalaOriginalText = originalMessage;
+            }
+            completeShamalaWithResult(originalMessage, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
             return;
         }
 
@@ -8218,7 +8221,10 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             root.put("temperature", 0.8);
             root.put("max_tokens", 250);
         } catch (JSONException e) {
-            completeShamalaWithResult("error: '" + (e.getMessage() != null ? e.getMessage() : "json error") + "'", notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
+            if (internalParams != null) {
+                internalParams.shamalaOriginalText = originalMessage;
+            }
+            completeShamalaWithResult(originalMessage, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
             return;
         }
 
@@ -8233,8 +8239,12 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         SHAMALA_HTTP_CLIENT.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                String msg = e.getMessage();
-                completeShamalaWithResult("error: '" + (msg != null ? msg : "network error") + "'", notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
+                AndroidUtilities.runOnUIThread(() -> {
+                    if (internalParams != null) {
+                        internalParams.shamalaOriginalText = originalMessage;
+                    }
+                    completeShamalaWithResult(originalMessage, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
+                });
             }
 
             @Override
@@ -8278,10 +8288,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 }
 
                 if (result == null) {
-                    if (TextUtils.isEmpty(error)) {
-                        error = "unknown";
-                    }
-                    result = "error: '" + error + "'";
+                    result = originalMessage.toString();
                 }
                 final CharSequence finalMessage = result;
                 AndroidUtilities.runOnUIThread(() -> {
