@@ -1022,6 +1022,4 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     public boolean isLightStatusBar() {
         return false;
     }
-
-    @Override
 }
