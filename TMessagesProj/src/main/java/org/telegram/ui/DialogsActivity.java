@@ -97,6 +97,7 @@ import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.AnimationNotificationsLocker;
 import org.telegram.messenger.ApplicationLoader;
+import org.telegram.messenger.Browser;
 import org.telegram.messenger.BirthdayController;
 import org.telegram.messenger.BotWebViewVibrationEffect;
 import org.telegram.messenger.BuildConfig;
@@ -2446,6 +2447,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         @Override
         public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
             if (waitingForDialogsAnimationEnd(parentPage) || parentLayout != null && parentLayout.isInPreviewMode() || rightSlidingDialogContainer.hasFragment()) {
+                return 0;
+            }
+            int viewType = viewHolder.getItemViewType();
+            if (viewType == DialogsAdapter.VIEW_TYPE_UZBEK_GPT || viewType == DialogsAdapter.VIEW_TYPE_IDEAL_GRAM || viewType == DialogsAdapter.VIEW_TYPE_UZBEKGRAM_ADMIN) {
                 return 0;
             }
             if (swipingFolder && swipeFolderBack) {
@@ -8208,6 +8213,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 return;
             }
+            if (dialogsAdapter.isUzbekgramAdminShortcut(position)) {
+                if (!actionBar.isActionModeShowed(null)) {
+                    openUzbekgramAdminPost();
+                }
+                return;
+            }
             if (dialogsType == DIALOGS_TYPE_FOLDER1 || dialogsType == DIALOGS_TYPE_FOLDER2) {
                 MessagesController.DialogFilter dialogFilter = getMessagesController().selectedDialogFilter[dialogsType == DIALOGS_TYPE_FOLDER1 ? 0 : 1];
                 filterId = dialogFilter == null ? 0 : dialogFilter.id;
@@ -8583,7 +8594,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
         if (adapter instanceof DialogsAdapter) {
             DialogsAdapter dialogsAdapter = (DialogsAdapter) adapter;
-            if (dialogsAdapter.isUzbekGptShortcut(position) || dialogsAdapter.isIdealGramShortcut(position)) {
+            if (dialogsAdapter.isUzbekGptShortcut(position) || dialogsAdapter.isIdealGramShortcut(position) || dialogsAdapter.isUzbekgramAdminShortcut(position)) {
                 return false;
             }
         }
@@ -13869,6 +13880,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     private void openIdealGramChannel() {
         getMessagesController().openByUserName(IDEAL_GRAM_USERNAME, this, 0);
+    }
+
+    private void openUzbekgramAdminPost() {
+        Browser.openUrl(getContext(), "https://t.me/uzbekgram_official/2");
     }
 
     private boolean isUzbekGptDialog(long dialogId) {
