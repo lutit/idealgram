@@ -19,6 +19,7 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -85,12 +86,17 @@ import org.telegram.ui.Components.Reactions.ReactionsLayoutInBubble;
 import org.telegram.ui.Components.SnowflakesEffect;
 import org.telegram.ui.ThemeActivity;
 import java.util.ArrayList;
+import java.io.InputStream;
 
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.helpers.SupporterBadgeView;
 
 
 public class DrawerProfileCell extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
+
+    private static final String DRAWER_FLAG_ASSET = "uzbek.jpg";
+    private static volatile Bitmap drawerFlagBitmap;
+    private static volatile boolean drawerFlagTriedToLoad;
 
     private BackupImageView avatarImageView;
     private SimpleTextView nameTextView;
@@ -108,7 +114,7 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
 
     private Rect srcRect = new Rect();
     private Rect destRect = new Rect();
-    private Paint paint = new Paint();
+    private Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
     private Paint backPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Integer currentColor;
     private Integer currentMoonColor;
@@ -128,6 +134,42 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
     private Bitmap lastBitmap;
     private TLRPC.User user;
     private boolean allowInvalidate = true;
+
+    private static Bitmap getDrawerFlagBitmap() {
+        if (drawerFlagTriedToLoad) {
+            return drawerFlagBitmap;
+        }
+        synchronized (DrawerProfileCell.class) {
+            if (drawerFlagTriedToLoad) {
+                return drawerFlagBitmap;
+            }
+            drawerFlagTriedToLoad = true;
+            BitmapFactory.Options bounds = new BitmapFactory.Options();
+            try (InputStream inputStream = ApplicationLoader.applicationContext.getAssets().open(DRAWER_FLAG_ASSET)) {
+                bounds.inJustDecodeBounds = true;
+                BitmapFactory.decodeStream(inputStream, null, bounds);
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+            try (InputStream inputStream = ApplicationLoader.applicationContext.getAssets().open(DRAWER_FLAG_ASSET)) {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                int target = Math.max(AndroidUtilities.dp(360), AndroidUtilities.displaySize.x);
+                int inSampleSize = 1;
+                int maxDimension = Math.max(bounds.outWidth, bounds.outHeight);
+                if (target > 0 && maxDimension > 0) {
+                    while (maxDimension / inSampleSize > target * 2) {
+                        inSampleSize *= 2;
+                    }
+                }
+                options.inSampleSize = inSampleSize;
+                options.inPreferredConfig = Bitmap.Config.RGB_565;
+                drawerFlagBitmap = BitmapFactory.decodeStream(inputStream, null, options);
+            } catch (Exception e) {
+                FileLog.e(e);
+            }
+            return drawerFlagBitmap;
+        }
+    }
 
     public DrawerProfileCell(Context context, DrawerLayoutContainer drawerLayoutContainer) {
         super(context);
@@ -722,6 +764,25 @@ public class DrawerProfileCell extends FrameLayout implements NotificationCenter
                 shadowView.setVisibility(visibility);
             }
             super.onDraw(canvas);
+            if (backgroundType == NekoConfig.DRAWER_BACKGROUND_DEFAULT) {
+                Bitmap bitmap = getDrawerFlagBitmap();
+                if (bitmap != null) {
+                    float scaleX = (float) getMeasuredWidth() / (float) bitmap.getWidth();
+                    float scaleY = (float) getMeasuredHeight() / (float) bitmap.getHeight();
+                    float scale = Math.max(scaleX, scaleY);
+                    int width = (int) (getMeasuredWidth() / scale);
+                    int height = (int) (getMeasuredHeight() / scale);
+                    int x = (bitmap.getWidth() - width) / 2;
+                    int y = (bitmap.getHeight() - height) / 2;
+                    srcRect.set(x, y, x + width, y + height);
+                    destRect.set(0, 0, getMeasuredWidth(), getMeasuredHeight());
+                    try {
+                        canvas.drawBitmap(bitmap, srcRect, destRect, paint);
+                    } catch (Throwable e) {
+                        FileLog.e(e);
+                    }
+                }
+            }
         }
 
 
