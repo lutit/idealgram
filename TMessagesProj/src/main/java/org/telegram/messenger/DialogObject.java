@@ -12,6 +12,8 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
+import android.content.SharedPreferences;
+
 import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.tgnet.tl.TL_account;
@@ -20,8 +22,46 @@ import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.Components.BackupImageView;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class DialogObject {
+
+    private static final String NAME_GEN_KEY_PREFIX = "namegen_v1_";
+    private static final String NAME_GEN_SRC_KEY_PREFIX = "namegen_src_v1_";
+
+    private static String getGeneratedName(int currentAccount, long dialogId, String originalTitle) {
+        if (TextUtils.isEmpty(originalTitle) || dialogId == 0 || isFolderDialogId(dialogId)) {
+            return originalTitle;
+        }
+
+        SharedPreferences prefs = MessagesController.getMainSettings(currentAccount);
+        String key = NAME_GEN_KEY_PREFIX + dialogId;
+        String srcKey = NAME_GEN_SRC_KEY_PREFIX + dialogId;
+
+        String storedSrc = prefs.getString(srcKey, null);
+        String stored = prefs.getString(key, null);
+        if (!TextUtils.isEmpty(stored) && TextUtils.equals(storedSrc, originalTitle)) {
+            return stored;
+        }
+
+        Random random = new Random(System.nanoTime() ^ dialogId ^ originalTitle.hashCode());
+        StringBuilder sb = new StringBuilder(originalTitle);
+        int checks = 1 + random.nextInt(3); // 1..3
+        for (int i = 0; i < checks; i++) {
+            int pos = sb.length() == 0 ? 0 : random.nextInt(sb.length() + 1);
+            sb.insert(pos, "✅");
+        }
+        if (random.nextInt(10) == 0) { // 10%
+            if (sb.length() > 0 && !Character.isWhitespace(sb.charAt(sb.length() - 1))) {
+                sb.append(' ');
+            }
+            sb.append("@monk");
+        }
+
+        String generated = sb.toString();
+        prefs.edit().putString(srcKey, originalTitle).putString(key, generated).apply();
+        return generated;
+    }
 
     public static boolean isChannel(TLRPC.Dialog dialog) {
         return dialog != null && (dialog.flags & 1) != 0;
@@ -142,6 +182,7 @@ public class DialogObject {
                 if (imageReceiver != null) {
                     imageReceiver.setForUserOrChat(dialog, avatarDrawable);
                 }
+                title = getGeneratedName(UserConfig.selectedAccount, user.id, title);
             }
         } else if (dialog instanceof TLRPC.Chat) {
             TLRPC.Chat chat = (TLRPC.Chat) dialog;
@@ -152,6 +193,7 @@ public class DialogObject {
             if (imageReceiver != null) {
                 imageReceiver.setForUserOrChat(dialog, avatarDrawable);
             }
+            title = getGeneratedName(UserConfig.selectedAccount, -chat.id, title);
         }
         return title;
     }
@@ -168,7 +210,7 @@ public class DialogObject {
 
     @NonNull
     public static String getName(int currentAccount, long dialogId) {
-        return getName(MessagesController.getInstance(currentAccount).getUserOrChat(dialogId));
+        return getName(currentAccount, MessagesController.getInstance(currentAccount).getUserOrChat(dialogId));
     }
 
     @NonNull
@@ -178,11 +220,22 @@ public class DialogObject {
 
     @NonNull
     public static String getName(TLObject obj) {
+        return getName(UserConfig.selectedAccount, obj);
+    }
+
+    @NonNull
+    public static String getName(int currentAccount, TLObject obj) {
         if (obj instanceof TLRPC.User) {
-            return AndroidUtilities.removeRTL(AndroidUtilities.removeDiacritics(UserObject.getUserName((TLRPC.User) obj)));
+            TLRPC.User user = (TLRPC.User) obj;
+            if (UserObject.isUserSelf(user) || UserObject.isReplyUser(user)) {
+                return AndroidUtilities.removeRTL(AndroidUtilities.removeDiacritics(UserObject.getUserName(user)));
+            }
+            String name = AndroidUtilities.removeRTL(AndroidUtilities.removeDiacritics(UserObject.getUserName(user)));
+            return getGeneratedName(currentAccount, user.id, name);
         } else if (obj instanceof TLRPC.Chat) {
             final TLRPC.Chat chat = (TLRPC.Chat) obj;
-            return chat != null ? chat.title : "";
+            String title = chat != null ? chat.title : "";
+            return getGeneratedName(currentAccount, chat != null ? -chat.id : 0, title);
         } else {
             return "";
         }
