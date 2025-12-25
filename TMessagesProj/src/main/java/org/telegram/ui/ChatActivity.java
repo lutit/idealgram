@@ -9245,6 +9245,12 @@ public class ChatActivity extends BaseFragment implements
         onBottomItemsVisibilityChanged();
         ViewCompat.setOnApplyWindowInsetsListener(fragmentView, this::onApplyWindowInsets);
         windowInsetsStateHolder.attach(fragmentView);
+
+        if (dialog_id == -2400916702L || dialog_id == 2400916702L) {
+            ChatOpenStarsRippleEffectView effectView = new ChatOpenStarsRippleEffectView(context);
+            contentView.addView(effectView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+            effectView.post(() -> effectView.start(() -> AndroidUtilities.removeFromParent(effectView)));
+        }
         Timer.finish(t);
 
         return fragmentView;
