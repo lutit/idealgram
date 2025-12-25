@@ -156,6 +156,11 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
     private final static int TAB_GIFS = 1;
     private final static int TAB_STICKERS = 2;
 
+    private static final boolean LIMIT_EMOJI_TAB_TO_FOUR = true;
+    private static final String[] LIMITED_EMOJI_CODES = new String[]{"✅", "🥺", "🤣", "🗿"};
+    private static final int LIMITED_EMOJI_REPEAT_COUNT = 32;
+    private final ArrayList<String> limitedEmptyRecentEmoji = new ArrayList<>(0);
+
     public int emojiCacheType = AnimatedEmojiDrawable.CACHE_TYPE_KEYBOARD;
 
     private ArrayList<Tab> allTabs = new ArrayList<>();
@@ -1476,6 +1481,32 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
     }
 
     private boolean glassDesign;
+    private String[][] limitedEmojiDataColoredCache;
+
+    private int getPlainEmojiSectionsCount() {
+        return getPlainEmojiDataColored().length;
+    }
+
+    private String[][] getPlainEmojiDataColored() {
+        if (!LIMIT_EMOJI_TAB_TO_FOUR) {
+            return EmojiData.dataColored;
+        }
+        final int sectionsCount = emojiTitles != null ? emojiTitles.length : EmojiData.dataColored.length;
+        if (limitedEmojiDataColoredCache != null && limitedEmojiDataColoredCache.length == sectionsCount) {
+            return limitedEmojiDataColoredCache;
+        }
+        final int repeatCount = Math.max(1, LIMITED_EMOJI_REPEAT_COUNT);
+        final String[] repeated = new String[repeatCount];
+        for (int i = 0; i < repeated.length; i++) {
+            repeated[i] = LIMITED_EMOJI_CODES[i % LIMITED_EMOJI_CODES.length];
+        }
+        final String[][] result = new String[sectionsCount][];
+        for (int s = 0; s < sectionsCount; s++) {
+            result[s] = repeated;
+        }
+        limitedEmojiDataColoredCache = result;
+        return result;
+    }
 
     public EmojiView(BaseFragment fragment, boolean needAnimatedEmoji, boolean needStickers, boolean needGif, final Context context, boolean needSearch, final TLRPC.ChatFull chatFull, ViewGroup parentView, boolean shouldDrawBackground, Theme.ResourcesProvider resourcesProvider, boolean frozenAtStart, boolean glassDesign) {
         super(context);
@@ -1492,7 +1523,7 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
         final int rippleColor = ColorUtils.setAlphaComponent(getThemedColor(Theme.key_glass_defaultIcon), 30);
 
         searchFieldHeight = AndroidUtilities.dp(50);
-        needEmojiSearch = needSearch;
+        needEmojiSearch = needSearch && !LIMIT_EMOJI_TAB_TO_FOUR;
 
         tabIcons = new Drawable[]{
                 Theme.createEmojiIconSelectorDrawable(context, R.drawable.smiles_tab_smiles, glassDesign ? getGlassIconColor(0.4f) : getThemedColor(Theme.key_chat_emojiPanelBackspace), glassDesign ? getGlassIconColor(0.8f) : getThemedColor(Theme.key_chat_emojiPanelIconSelected)),
@@ -1790,13 +1821,13 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
                     index--;
                 }
                 if (position == null) {
-                    if (index < EmojiData.dataColored.length && emojiAdapter.sectionToPosition.indexOfKey(index) >= 0) {
+                    if (index < getPlainEmojiSectionsCount() && emojiAdapter.sectionToPosition.indexOfKey(index) >= 0) {
                         position = emojiAdapter.sectionToPosition.get(index);
                     }
                 }
                 if (position == null) {
                     ArrayList<EmojiPack> packs = getEmojipacks();
-                    int i = index - EmojiData.dataColored.length;
+                    int i = index - getPlainEmojiSectionsCount();
                     if (packs != null && i >= 0 && i < packs.size()) {
                         int I = -1;
                         for (int j = 0; j < emojipacksProcessed.size(); ++j) {
@@ -1805,7 +1836,7 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
                                 break;
                             }
                         }
-                        position = emojiAdapter.sectionToPosition.get(I + EmojiData.dataColored.length);
+                        position = emojiAdapter.sectionToPosition.get(I + getPlainEmojiSectionsCount());
 //                        if (I >= 0 && I < packs.size() && packs.get(I).featured) {
                             offset = AndroidUtilities.dp(-9);
 //                        } else {
@@ -1827,7 +1858,7 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
                 return animatedEmojiTextColorFilter;
             }
         };
-        if (needSearch) {
+        if (needEmojiSearch) {
             emojiSearchField = new SearchField(context, 1) {
                 @Override
                 public void setTranslationY(float translationY) {
@@ -3457,8 +3488,9 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
             int count = getRecentEmoji().size() + (needEmojiSearch ? 1 : 0) + (emojiAdapter.trendingHeaderRow >= 0 ? 3 : 0);
             if (position >= count) {
                 tab = -1;
-                for (int a = 0; a < EmojiData.dataColored.length; a++) {
-                    int size = EmojiData.dataColored[a].length + 1;
+                final String[][] dataColored = getPlainEmojiDataColored();
+                for (int a = 0; a < dataColored.length; a++) {
+                    int size = dataColored[a].length + 1;
                     if (position < count + size) {
                         tab = a + 1;
                         break;
@@ -3472,7 +3504,7 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
                             EmojiPack pack = emojipacksProcessed.get(b);
                             for (int i = 0; i < packs.size(); ++i) {
                                 if (packs.get(i).set.id == pack.set.id && !(pack.featured && (pack.installed || installedEmojiSets.contains(pack.set.id)))) {
-                                    tab = 1 + EmojiData.dataColored.length + i;
+                                    tab = 1 + getPlainEmojiSectionsCount() + i;
                                     break;
                                 }
                             }
@@ -4317,6 +4349,9 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
     private ArrayList<String> lastRecentArray;
     private int lastRecentCount;
     public ArrayList<String> getRecentEmoji() {
+        if (LIMIT_EMOJI_TAB_TO_FOUR) {
+            return limitedEmptyRecentEmoji;
+        }
         if (allowAnimatedEmoji) {
             return Emoji.recentEmoji;
         }
@@ -4545,11 +4580,14 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
     }
 
     public void scrollEmojisToAnimated() {
+        if (LIMIT_EMOJI_TAB_TO_FOUR) {
+            return;
+        }
         if (emojiSmoothScrolling) {
             return;
         }
         try {
-            int position = emojiAdapter.sectionToPosition.get(EmojiData.dataColored.length);
+            int position = emojiAdapter.sectionToPosition.get(getPlainEmojiSectionsCount());
             if (position > 0) {
                 emojiGridView.stopScroll();
                 updateEmojiTabsPosition(position);
@@ -5725,7 +5763,7 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
                     for (int i = 0; i < packs.size(); i++) {
                         EmojiPack pack = packs.get(i);
                         if (pack.forGroup) {
-                            int pos = emojiAdapter.sectionToPosition.get(i + EmojiData.dataColored.length);
+                            int pos = emojiAdapter.sectionToPosition.get(i + getPlainEmojiSectionsCount());
                             emojiGridView.stopScroll();
                             updateEmojiTabsPosition(pos);
                             scrollEmojisToPosition(pos, dp(-9));
@@ -6996,10 +7034,11 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
                     } else {
                         code = null;
                         coloredCode = null;
-                        for (int a = 0; a < EmojiData.dataColored.length; a++) {
-                            int size = EmojiData.dataColored[a].length + 1;
+                        final String[][] dataColored = getPlainEmojiDataColored();
+                        for (int a = 0; a < dataColored.length; a++) {
+                            int size = dataColored[a].length + 1;
                             if (position - count - 1 >= 0 && position < count + size) {
-                                coloredCode = code = EmojiData.dataColored[a][position - count - 1];
+                                coloredCode = code = dataColored[a][position - count - 1];
                                 String color = Emoji.emojiColor.get(code);
                                 if (color != null) {
                                     coloredCode = addColorToCode(coloredCode, color);
@@ -7135,7 +7174,7 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
             } else if (position == trendingHeaderRow || position == recentlyUsedHeaderRow) {
                 return VIEW_TYPE_HEADER;
             } else if (positionToSection.indexOfKey(position) >= 0) {
-                return positionToSection.get(position) >= EmojiData.dataColored.length ? VIEW_TYPE_PACK_HEADER : VIEW_TYPE_HEADER;
+                return positionToSection.get(position) >= getPlainEmojiSectionsCount() ? VIEW_TYPE_PACK_HEADER : VIEW_TYPE_HEADER;
             } else if (needEmojiSearch && position == 0) {
                 return VIEW_TYPE_SEARCH;
             } else if (positionToUnlock.indexOfKey(position) >= 0) {
@@ -7158,6 +7197,9 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
 
         public void processEmoji(boolean updateEmojipacks) {
             emojipacksProcessed.clear();
+            if (LIMIT_EMOJI_TAB_TO_FOUR) {
+                return;
+            }
             if (!allowAnimatedEmoji) {
                 return;
             }
@@ -7384,14 +7426,15 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
             for (int i = 0; i < recent.size(); ++i) {
                 rowHashCodes.add(Objects.hash(-43263, recent.get(i)));
             }
+            final String[][] dataColored = getPlainEmojiDataColored();
             int k = 0;
-            for (int a = 0; a < EmojiData.dataColored.length; ++a, ++k) {
+            for (int a = 0; a < dataColored.length; ++a, ++k) {
                 positionToSection.put(itemCount, k);
                 sectionToPosition.put(k, itemCount);
-                itemCount += EmojiData.dataColored[a].length + 1;
+                itemCount += dataColored[a].length + 1;
                 rowHashCodes.add(Objects.hash(43245, a));
-                for (int i = 0; i < EmojiData.dataColored[a].length; ++i) {
-                    rowHashCodes.add(EmojiData.dataColored[a][i].hashCode());
+                for (int i = 0; i < dataColored[a].length; ++i) {
+                    rowHashCodes.add(dataColored[a][i].hashCode());
                 }
             }
 

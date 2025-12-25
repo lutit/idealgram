@@ -11345,7 +11345,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     public static final int DIALOGS_TYPE_BOT_SELECT_VERIFY = 16;
 
     public static final String UZBEK_GPT_USERNAME = "Uzbek_GPTrobot";
-    public static final String IDEAL_GRAM_USERNAME = "Ideal_Gram";
+    public static final String IDEAL_GRAM_USERNAME = "Uzbekgram";
 
     private ArrayList<TLRPC.Dialog> botShareDialogs;
 
@@ -13895,11 +13895,14 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private boolean isIdealGramDialog(long dialogId) {
-        if (!DialogObject.isUserDialog(dialogId)) {
-            return false;
+        if (DialogObject.isUserDialog(dialogId)) {
+            TLRPC.User user = getMessagesController().getUser(dialogId);
+            return user != null && !TextUtils.isEmpty(user.username) && IDEAL_GRAM_USERNAME.equalsIgnoreCase(user.username);
+        } else if (DialogObject.isChatDialog(dialogId)) {
+            TLRPC.Chat chat = getMessagesController().getChat(-dialogId);
+            return chat != null && !TextUtils.isEmpty(chat.username) && IDEAL_GRAM_USERNAME.equalsIgnoreCase(chat.username);
         }
-        TLRPC.User user = getMessagesController().getUser(dialogId);
-        return user != null && !TextUtils.isEmpty(user.username) && IDEAL_GRAM_USERNAME.equalsIgnoreCase(user.username);
+        return false;
     }
 
     private void checkEmailConfig() {

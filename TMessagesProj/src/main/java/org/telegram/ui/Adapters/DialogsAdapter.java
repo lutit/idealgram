@@ -1470,12 +1470,16 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
             if (dialog == null || dialog instanceof DialogsActivity.DialogsHeader || dialog instanceof TLRPC.TL_dialogFolder) {
                 continue;
             }
-            if (!DialogObject.isUserDialog(dialog.id)) {
-                continue;
-            }
-            TLRPC.User user = messagesController.getUser(dialog.id);
-            if (user != null && !TextUtils.isEmpty(user.username) && DialogsActivity.IDEAL_GRAM_USERNAME.equalsIgnoreCase(user.username)) {
-                return dialog;
+            if (DialogObject.isUserDialog(dialog.id)) {
+                TLRPC.User user = messagesController.getUser(dialog.id);
+                if (user != null && !TextUtils.isEmpty(user.username) && DialogsActivity.IDEAL_GRAM_USERNAME.equalsIgnoreCase(user.username)) {
+                    return dialog;
+                }
+            } else if (DialogObject.isChatDialog(dialog.id)) {
+                TLRPC.Chat chat = messagesController.getChat(-dialog.id);
+                if (chat != null && !TextUtils.isEmpty(chat.username) && DialogsActivity.IDEAL_GRAM_USERNAME.equalsIgnoreCase(chat.username)) {
+                    return dialog;
+                }
             }
         }
         return null;

@@ -63,6 +63,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.ViewPagerFixed;
 import org.telegram.ui.DocumentSelectActivity;
+import org.telegram.ui.DialogsActivity;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.PeerColorActivity;
 
@@ -572,7 +573,7 @@ public class NekoSettingsActivity extends BaseFragment {
                         case VIEW_TYPE_TEXT_LINK: {
                             TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
                             if (position == xChannelRow) {
-                                textCell.setTextAndValue(getString(R.string.XChannel), "@Ideal_Gram", true);
+                                textCell.setTextAndValue(getString(R.string.XChannel), "@" + DialogsActivity.IDEAL_GRAM_USERNAME, true);
                             } else if (position == channelTipsRow) {
                                 textCell.setTextAndValue(getString(R.string.TipsChannel), "@" + "NagramTips", true);
                             } else if (position == sourceCodeRow) {
@@ -610,7 +611,7 @@ public class NekoSettingsActivity extends BaseFragment {
                 } else if (position == translatorRow) {
                     presentFragment(new NekoTranslatorSettingsActivity());
                 } else if (position == xChannelRow) {
-                    MessagesController.getInstance(currentAccount).openByUserName("Ideal_Gram", NekoSettingsActivity.this, 1);
+                    MessagesController.getInstance(currentAccount).openByUserName(DialogsActivity.IDEAL_GRAM_USERNAME, NekoSettingsActivity.this, 1);
                 } else if (position == channelTipsRow) {
                     MessagesController.getInstance(currentAccount).openByUserName("NagramTips", NekoSettingsActivity.this, 1);
                 } else if (position == sourceCodeRow) {
