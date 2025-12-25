@@ -17,7 +17,9 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -39,6 +41,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -76,6 +79,7 @@ import org.telegram.ui.Components.SimpleThemeDescription;
 import org.telegram.ui.Components.voip.CellFlickerDrawable;
 
 import java.util.ArrayList;
+import java.io.InputStream;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -99,6 +103,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     private TextView chaosBadgeView;
     private FrameLayout frameLayout2;
     private FrameLayout frameContainerView;
+    private ImageView backgroundImageView;
 
     private RLottieDrawable darkThemeDrawable;
 
@@ -148,20 +153,22 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         MessagesController.getGlobalMainSettings().edit().putLong("intro_crashed_time", System.currentTimeMillis()).apply();
 
         titles = new String[]{
-                LocaleController.getString(R.string.Page1Title),
-                LocaleController.getString(R.string.Page2Title),
-                LocaleController.getString(R.string.Page3Title),
-                LocaleController.getString(R.string.Page5Title),
-                LocaleController.getString(R.string.Page4Title),
-                LocaleController.getString(R.string.Page6Title)
+                "UZBEKGRAM",
+                "UZBEKGRAM",
+                "UZBEKGRAM",
+                "UZBEKGRAM",
+                "UZBEKGRAM",
+                "UZBEKGRAM",
+                "UZBEKGRAM"
         };
         messages = new String[]{
-                LocaleController.getString(R.string.Page1Message),
-                LocaleController.getString(R.string.Page2Message),
-                LocaleController.getString(R.string.Page3Message),
-                LocaleController.getString(R.string.Page5Message),
-                LocaleController.getString(R.string.Page4Message),
-                LocaleController.getString(R.string.Page6Message)
+                "Дунёдаги энг тез мессенджер.\nХамда текин ва хавфсиз.",
+                "Дунёдаги энг тез мессенджер.\nХамда текин ва хавфсиз.",
+                "Дунёдаги энг тез мессенджер.\nХамда текин ва хавфсиз.",
+                "Дунёдаги энг тез мессенджер.\nХамда текин ва хавфсиз.",
+                "Дунёдаги энг тез мессенджер.\nХамда текин ва хавфсиз.",
+                "Дунёдаги энг тез мессенджер.\nХамда текин ва хавфсиз.",
+                "Дунёдаги энг тез мессенджер.\nХамда текин ва хавфсиз."
         };
         return true;
     }
@@ -170,8 +177,24 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     public View createView(Context context) {
         actionBar.setAddToContainer(false);
 
+        FrameLayout rootView = new FrameLayout(context);
+
+        backgroundImageView = new ImageView(context);
+        backgroundImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        try (InputStream is = context.getAssets().open("uzbek.jpg")) {
+            backgroundImageView.setImageBitmap(BitmapFactory.decodeStream(is));
+        } catch (Exception ignore) {
+            backgroundImageView.setBackgroundColor(0xFF111111);
+        }
+        rootView.addView(backgroundImageView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
+        View backgroundOverlayView = new View(context);
+        backgroundOverlayView.setBackgroundColor(0x55000000);
+        rootView.addView(backgroundOverlayView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
         ScrollView scrollView = new ScrollView(context);
         scrollView.setFillViewport(true);
+        rootView.addView(scrollView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
 
         RLottieImageView themeIconView = new RLottieImageView(context);
         FrameLayout themeFrameLayout = new FrameLayout(context);
@@ -255,52 +278,29 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         frameLayout2 = new FrameLayout(context);
         frameContainerView.addView(frameLayout2, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 0, 78, 0, 0));
 
-        TextureView textureView = new TextureView(context);
-        frameLayout2.addView(textureView, LayoutHelper.createFrame(ICON_WIDTH_DP, ICON_HEIGHT_DP, Gravity.CENTER));
-        textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+        FrameLayout logoContainer = new FrameLayout(context);
+        GradientDrawable logoBg = new GradientDrawable();
+        logoBg.setShape(GradientDrawable.OVAL);
+        logoBg.setColor(0x55000000);
+        logoContainer.setBackground(logoBg);
+
+        ImageView logoImage = new ImageView(context);
+        logoImage.setImageResource(R.mipmap.ic_launcher_idealgram_uzbek_foreground);
+        logoImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        logoContainer.addView(logoImage, LayoutHelper.createFrame(90, 90, Gravity.CENTER));
+        frameLayout2.addView(logoContainer, LayoutHelper.createFrame(140, 140, Gravity.CENTER));
+
+        viewPager = new ViewPager(context) {
             @Override
-            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                if (eglThread == null && surface != null) {
-                    eglThread = new EGLThread(surface);
-                    eglThread.setSurfaceTextureSize(width, height);
-                    eglThread.postRunnable(()->{
-                        float time = (System.currentTimeMillis() - currentDate) / 1000.0f;
-                        Intro.setPage(currentViewPagerPage);
-                        Intro.setDate(time);
-                        Intro.onDrawFrame(0);
-                        if (eglThread != null && eglThread.isAlive() && eglThread.eglDisplay != null && eglThread.eglSurface != null) {
-                            try {
-                                eglThread.egl10.eglSwapBuffers(eglThread.eglDisplay, eglThread.eglSurface);
-                            } catch (Exception ignored) {} // If display or surface already destroyed
-                        }
-                    });
-                    eglThread.postRunnable(eglThread.drawRunnable);
-                }
+            public boolean onInterceptTouchEvent(android.view.MotionEvent ev) {
+                return false;
             }
 
             @Override
-            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, final int width, final int height) {
-                if (eglThread != null) {
-                    eglThread.setSurfaceTextureSize(width, height);
-                }
+            public boolean onTouchEvent(android.view.MotionEvent ev) {
+                return false;
             }
-
-            @Override
-            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                if (eglThread != null) {
-                    eglThread.shutdown();
-                    eglThread = null;
-                }
-                return true;
-            }
-
-            @Override
-            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
-            }
-        });
-
-        viewPager = new ViewPager(context);
+        };
         viewPager.setAdapter(new IntroAdapter());
         viewPager.setPageMargin(0);
         viewPager.setOffscreenPageLimit(1);
@@ -309,13 +309,6 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 bottomPages.setPageOffset(position, positionOffset);
-
-                float width = viewPager.getMeasuredWidth();
-                if (width == 0) {
-                    return;
-                }
-                float offset = (position * width + positionOffsetPixels - currentViewPagerPage * width) / width;
-                Intro.setScrollOffset(offset);
             }
 
             @Override
@@ -367,7 +360,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
                 }
             }
         };
-        startMessagingButton.setText(LocaleController.getString(R.string.StartMessaging));
+        startMessagingButton.setText("МУЛОҚОТНИ БОШЛАШ");
         startMessagingButton.setGravity(Gravity.CENTER);
         startMessagingButton.setTypeface(AndroidUtilities.bold());
         startMessagingButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
@@ -398,15 +391,17 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
             chaosBadgeTicker.run();
         });
         frameContainerView.addView(chaosBadgeView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 32, 0, 32, 134));
-        AndroidUtilities.runOnUIThread(chaosBadgeTicker, 2400);
+        chaosBadgeView.setVisibility(View.GONE);
 
-        bottomPages = new BottomPagesView(context, viewPager, 6);
+        bottomPages = new BottomPagesView(context, viewPager, titles.length);
+        bottomPages.setColor(Theme.key_windowBackgroundWhite, Theme.key_windowBackgroundWhiteBlueText4);
         frameContainerView.addView(bottomPages, LayoutHelper.createFrame(66, 5, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, ICON_HEIGHT_DP + 200, 0, 0));
 
         switchLanguageTextView = new TextView(context);
         switchLanguageTextView.setGravity(Gravity.CENTER);
         switchLanguageTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         frameContainerView.addView(switchLanguageTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, 30, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, 20));
+        switchLanguageTextView.setVisibility(View.GONE);
         switchLanguageTextView.setOnClickListener(v -> {
             if (startPressed || localeInfo == null) {
                 return;
@@ -435,8 +430,9 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         });
 
         frameContainerView.addView(themeFrameLayout, LayoutHelper.createFrame(64, 64, Gravity.TOP | Gravity.RIGHT, 0, themeMargin, themeMargin, 0));
+        themeFrameLayout.setVisibility(View.GONE);
 
-        fragmentView = scrollView;
+        fragmentView = rootView;
 
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.suggestedLangpack);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.configLoaded);
@@ -456,8 +452,9 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         super.onResume();
         if (justCreated) {
             if (LocaleController.isRTL) {
-                viewPager.setCurrentItem(6);
-                lastPage = 6;
+                int page = Math.max(0, titles.length - 1);
+                viewPager.setCurrentItem(page);
+                lastPage = page;
             } else {
                 viewPager.setCurrentItem(0);
                 lastPage = 0;
@@ -486,7 +483,7 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
 
     @Override
     public boolean hasForceLightStatusBar() {
-        return true;
+        return false;
     }
 
     @Override
@@ -611,14 +608,17 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
                 }
             };
 
-            headerTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
-            headerTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 26);
+            headerTextView.setTextColor(Color.WHITE);
+            headerTextView.setTypeface(AndroidUtilities.bold());
+            headerTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 30);
             headerTextView.setGravity(Gravity.CENTER);
+            headerTextView.setShadowLayer(AndroidUtilities.dp(2), 0, AndroidUtilities.dp(1), 0x66000000);
             frameLayout.addView(headerTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT, 18, 244, 18, 0));
 
-            messageTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText3));
-            messageTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+            messageTextView.setTextColor(0xCCFFFFFF);
+            messageTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
             messageTextView.setGravity(Gravity.CENTER);
+            messageTextView.setShadowLayer(AndroidUtilities.dp(2), 0, AndroidUtilities.dp(1), 0x55000000);
             frameLayout.addView(messageTextView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.LEFT, 16, 286, 16, 0));
 
             container.addView(frameLayout, 0);
@@ -986,33 +986,23 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
     }
 
     private void updateColors(boolean fromTheme) {
-        fragmentView.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
-        switchLanguageTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText4));
-        startMessagingButton.setTextColor(Theme.getColor(Theme.key_featuredStickers_buttonText));
-        startMessagingButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), Theme.getColor(Theme.key_changephoneinfo_image2), Theme.getColor(Theme.key_chats_actionPressedBackground)));
-        updateChaosBadgeColors();
-        darkThemeDrawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_changephoneinfo_image2), PorterDuff.Mode.SRC_IN));
+        if (switchLanguageTextView != null) {
+            switchLanguageTextView.setTextColor(Color.WHITE);
+        }
+        if (startMessagingButton != null) {
+            startMessagingButton.setTextColor(Color.WHITE);
+            startMessagingButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), 0xff2ca5e0, 0xff238abf));
+        }
         bottomPages.invalidate();
         if (fromTheme) {
-            if (eglThread != null) {
-                eglThread.postRunnable(()->{
-                    eglThread.loadTexture(R.drawable.intro_powerful_mask, 17, Theme.getColor(Theme.key_windowBackgroundWhite), true);
-                    eglThread.updatePowerfulTextures();
-
-                    eglThread.loadTexture(eglThread.telegramMaskProvider, 23, true);
-                    eglThread.updateTelegramTextures();
-
-                    Intro.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
-                });
-            }
             for (int i = 0; i < viewPager.getChildCount(); i++) {
                 View ch = viewPager.getChildAt(i);
                 TextView headerTextView = ch.findViewWithTag(pagerHeaderTag);
-                headerTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+                headerTextView.setTextColor(Color.WHITE);
                 TextView messageTextView = ch.findViewWithTag(pagerMessageTag);
-                messageTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText3));
+                messageTextView.setTextColor(0xCCFFFFFF);
             }
-        } else Intro.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+        }
     }
 
     private void updateChaosBadgeColors() {
@@ -1030,7 +1020,8 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
 
     @Override
     public boolean isLightStatusBar() {
-        int color = Theme.getColor(Theme.key_windowBackgroundWhite, null, true);
-        return ColorUtils.calculateLuminance(color) > 0.7f;
+        return false;
     }
+
+    @Override
 }
