@@ -46,4 +46,7 @@ export NATIVE_TARGET="$NATIVE_TARGET"
 EOF
 
 mkdir -p ./apks
-scp "$REMOTE:$REMOTE_DIR/TMessagesProj/build/outputs/apk/debug/"*.apk ./apks/
+rsync -a --whole-file --inplace --no-compress --progress \
+  -e "ssh -T -c aes128-gcm@openssh.com -o Compression=no" \
+  "$REMOTE:$REMOTE_DIR/TMessagesProj/build/outputs/apk/debug/" \
+  ./apks/
