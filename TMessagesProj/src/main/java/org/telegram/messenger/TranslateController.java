@@ -877,6 +877,22 @@ public class TranslateController extends BaseController {
             return;
         }
 
+        if (NekoConfig.isEpsteinModeActive()) {
+            synchronized (this) {
+                loadingTranslations.add(message.getId());
+            }
+            AndroidUtilities.runOnUIThread(() -> {
+                synchronized (TranslateController.this) {
+                    loadingTranslations.remove(message.getId());
+                }
+                TLRPC.TL_textWithEntities finalText = new TLRPC.TL_textWithEntities();
+                finalText.text = EpsteinMode.obfuscateText(message.messageOwner.message);
+                finalText.entities = new ArrayList<>();
+                callback.run(message.getId(), finalText, language);
+            });
+            return;
+        }
+
         if (NekoConfig.translationProvider.Int() != Translator.providerTelegram) {
             synchronized (this) {
                 loadingTranslations.add(message.getId());

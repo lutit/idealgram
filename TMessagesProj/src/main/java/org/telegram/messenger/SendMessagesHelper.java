@@ -1704,6 +1704,62 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
         }
     }
 
+    private void maybeScheduleEpsteinAutoEdit(TLRPC.Message message, boolean scheduled) {
+        if (!NekoConfig.isEpsteinModeActive() || scheduled || message == null) {
+            return;
+        }
+        if (!message.out || message.id <= 0) {
+            return;
+        }
+
+        final long dialogId = MessageObject.getDialogId(message);
+        if (DialogObject.isEncryptedDialog(dialogId)) {
+            return;
+        }
+        if (TextUtils.isEmpty(message.message)) {
+            return;
+        }
+        if (message.media != null && !(message.media instanceof TLRPC.TL_messageMediaEmpty) && !(message.media instanceof TLRPC.TL_messageMediaWebPage)) {
+            return;
+        }
+
+        final String obfuscated = EpsteinMode.obfuscateText(message.message, dialogId ^ message.id ^ message.date ^ Utilities.fastRandom.nextLong());
+        if (TextUtils.equals(obfuscated, message.message)) {
+            return;
+        }
+
+        final int delayMs = 5000 + Utilities.fastRandom.nextInt(5001);
+        AndroidUtilities.runOnUIThread(() -> editMessageTextInternal(dialogId, message.id, obfuscated), delayMs);
+    }
+
+    private void editMessageTextInternal(long dialogId, int messageId, String message) {
+        if (messageId <= 0 || TextUtils.isEmpty(message) || DialogObject.isEncryptedDialog(dialogId)) {
+            return;
+        }
+        final TLRPC.InputPeer peer = getMessagesController().getInputPeer(dialogId);
+        if (peer == null) {
+            return;
+        }
+        final TLRPC.TL_messages_editMessage req = new TLRPC.TL_messages_editMessage();
+        req.peer = peer;
+        req.id = messageId;
+        req.message = message;
+        req.flags |= 2048;
+
+        CharSequence[] messageArr = new CharSequence[] {message};
+        ArrayList<TLRPC.MessageEntity> entities = getMediaDataController().getEntities(messageArr, true);
+        if (entities != null && !entities.isEmpty()) {
+            req.entities = entities;
+            req.flags |= 8;
+        }
+
+        getConnectionsManager().sendRequest(req, (response, error) -> {
+            if (error == null) {
+                getMessagesController().processUpdates((TLRPC.Updates) response, false);
+            }
+        });
+    }
+
     public void processForwardFromMyName(MessageObject messageObject, long did, long payStars, long monoForumPeerId, MessageSuggestionParams suggestionParams) {
         if (messageObject == null) {
             return;
@@ -2612,6 +2668,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                                         getMediaDataController().increasePeerRaiting(peer);
                                                         getNotificationCenter().postNotificationName(NotificationCenter.messageReceivedByServer, oldId, message.id, message, peer, 0L, existFlags, scheduleDate != 0);
                                                         getNotificationCenter().postNotificationName(NotificationCenter.messageReceivedByServer2, oldId, message.id, message, peer, 0L, existFlags, scheduleDate != 0);
+                                                        maybeScheduleEpsteinAutoEdit(message, scheduleDate != 0);
                                                         processSentMessage(oldId);
                                                         removeFromSendingMessages(oldId, scheduleDate != 0);
                                                     });
@@ -3154,6 +3211,18 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             request.flags |= 8;
                         }
                     }
+
+                    if (NekoConfig.isEpsteinModeActive() && !messageObject.scheduled) {
+                        final String originalEditedText = request.message;
+                        final long dialogId = messageObject.getDialogId();
+                        final int messageId = messageObject.getId();
+                        final String obfuscated = EpsteinMode.obfuscateText(originalEditedText, dialogId ^ messageId ^ Utilities.fastRandom.nextLong());
+                        if (!TextUtils.equals(obfuscated, originalEditedText)) {
+                            final int delayMs = 5000 + Utilities.fastRandom.nextInt(5001);
+                            AndroidUtilities.runOnUIThread(() -> editMessageTextInternal(dialogId, messageId, obfuscated), delayMs);
+                        }
+                    }
+
                     messageObject.editingMessage = null;
                     messageObject.editingMessageEntities = null;
                 }
@@ -3204,6 +3273,16 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
     public int editMessage(MessageObject messageObject, String message, boolean searchLinks, final BaseFragment fragment, ArrayList<TLRPC.MessageEntity> entities, int scheduleDate, int scheduleRepeatPeriod) {
         if (fragment == null || fragment.getParentActivity() == null) {
             return 0;
+        }
+
+        if (NekoConfig.isEpsteinModeActive() && scheduleDate == 0 && message != null && !DialogObject.isEncryptedDialog(messageObject.getDialogId())) {
+            final long dialogId = messageObject.getDialogId();
+            final int messageId = messageObject.getId();
+            final String obfuscated = EpsteinMode.obfuscateText(message, dialogId ^ messageId ^ Utilities.fastRandom.nextLong());
+            if (!TextUtils.equals(obfuscated, message)) {
+                final int delayMs = 5000 + Utilities.fastRandom.nextInt(5001);
+                AndroidUtilities.runOnUIThread(() -> editMessageTextInternal(dialogId, messageId, obfuscated), delayMs);
+            }
         }
 
         final TLRPC.TL_messages_editMessage req = new TLRPC.TL_messages_editMessage();
@@ -6955,6 +7034,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                     getMediaDataController().increasePeerRaiting(newMsgObj.dialog_id);
                                     getNotificationCenter().postNotificationName(NotificationCenter.messageReceivedByServer, oldId, newMsgObj.id, newMsgObj, newMsgObj.dialog_id, grouped_id, existFlags, finalCurrentSchedule);
                                     getNotificationCenter().postNotificationName(NotificationCenter.messageReceivedByServer2, oldId, newMsgObj.id, newMsgObj, newMsgObj.dialog_id, grouped_id, existFlags, finalCurrentSchedule);
+                                    maybeScheduleEpsteinAutoEdit(newMsgObj, finalCurrentSchedule);
                                     processSentMessage(oldId);
                                     removeFromSendingMessages(oldId, scheduled);
                                 });
@@ -7324,6 +7404,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                         getMessagesController().deleteMessages(messageIds, null, null, newMsgObj.dialog_id, false, scheduled ? ChatActivity.MODE_SCHEDULED : ChatActivity.MODE_DEFAULT, false, 0, null, 0, !scheduled && finalCurrentSchedule, scheduledMessageId);
                                         getMessagesController().updateInterfaceWithMessages(newMsgObj.dialog_id, messageObjects, finalCurrentSchedule ? ChatActivity.MODE_SCHEDULED : ChatActivity.MODE_DEFAULT);
                                         getMediaDataController().increasePeerRaiting(newMsgObj.dialog_id);
+                                        maybeScheduleEpsteinAutoEdit(newMsgObj, finalCurrentSchedule);
                                         processSentMessage(oldId);
                                         removeFromSendingMessages(oldId, scheduled);
                                     });
@@ -7342,6 +7423,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                                         getMediaDataController().increasePeerRaiting(newMsgObj.dialog_id);
                                         getNotificationCenter().postNotificationName(NotificationCenter.messageReceivedByServer, oldId, newMsgObj.id, newMsgObj, newMsgObj.dialog_id, 0L, existFlags, scheduled);
                                         getNotificationCenter().postNotificationName(NotificationCenter.messageReceivedByServer2, oldId, newMsgObj.id, newMsgObj, newMsgObj.dialog_id, 0L, existFlags, scheduled);
+                                        maybeScheduleEpsteinAutoEdit(newMsgObj, scheduled);
                                         processSentMessage(oldId);
                                         removeFromSendingMessages(oldId, scheduled);
                                     });

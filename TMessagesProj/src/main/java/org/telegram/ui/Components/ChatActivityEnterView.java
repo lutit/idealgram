@@ -7632,7 +7632,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 return;
             }
             if (!TextUtils.isEmpty(message)) {
-                if (NekoConfig.isShamalaModeActive() || NekoConfig.isUltraShamalaModeActive() || NekoConfig.isHyperShamalaModeActive()) {
+                if (!NekoConfig.isEpsteinModeActive() && (NekoConfig.isShamalaModeActive() || NekoConfig.isUltraShamalaModeActive() || NekoConfig.isHyperShamalaModeActive())) {
                     applyShamalaAndSend(message, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
                 } else {
                     sendPreparedTextMessage(message, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);

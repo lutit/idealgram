@@ -71,6 +71,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnUltraShamalaMode = 1013;
     public static int nkbtnHyperShamalaMode = 1014;
     public static int nkbtnUspdmpshmMode = 1015;
+    public static int nkbtnEpsteinMode = 1016;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -373,6 +374,11 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
                     ? LocaleController.getString(R.string.DisableUspdmpshmMode)
                     : LocaleController.getString(R.string.EnableUspdmpshmMode);
             items.add(new Item(nkbtnUspdmpshmMode, uspLabel, R.drawable.ayu_ghost));
+
+            CharSequence epsteinLabel = NekoConfig.isEpsteinModeActive()
+                    ? LocaleController.getString(R.string.DisableEpsteinMode)
+                    : LocaleController.getString(R.string.EnableEpsteinMode);
+            items.add(new Item(nkbtnEpsteinMode, epsteinLabel, R.drawable.msg_spoiler));
 
             items.add(null);
         }

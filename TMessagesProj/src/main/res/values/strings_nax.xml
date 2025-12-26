@@ -138,6 +138,10 @@
     <string name="ShamalaModeEnabled">Shamala mode unleashed</string>
     <string name="ShamalaModeDisabled">Shamala mode contained</string>
     <string name="ShamalaModeRandom">Shamala is doing something weird\u2026</string>
+    <string name="EnableEpsteinMode">Enable Epstein mode</string>
+    <string name="DisableEpsteinMode">Disable Epstein mode</string>
+    <string name="EpsteinModeEnabled">Epstein mode enabled</string>
+    <string name="EpsteinModeDisabled">Epstein mode disabled</string>
     <string name="UltraShamalaMode">ULTRA ШАЛАВА MODE</string>
     <string name="EnableUltraShamalaMode">Enable ULTRA ШАЛАВА MODE</string>
     <string name="DisableUltraShamalaMode">Disable ULTRA ШАЛАВА MODE</string>

@@ -223,6 +223,7 @@ public class NekoConfig {
     public static ConfigItem ultraShamalaMode = addConfig("ultraShamalaMode", configTypeBool, false);
     public static ConfigItem hyperShamalaMode = addConfig("hyperShamalaMode", configTypeBool, false);
     public static ConfigItem uspdmpshmMode = addConfig("uspdmpshmMode", configTypeBool, false);
+    public static ConfigItem epsteinMode = addConfig("epsteinMode", configTypeBool, false);
 
     // --- Locked Status ---
     public static ConfigItem sendReadMessagePacketsLocked = addConfig("sendReadMessagePacketsLocked", configTypeBool, false);
@@ -449,6 +450,16 @@ public class NekoConfig {
         uspdmpshmMode.toggleConfigBool();
     }
     // --- УСПДМПШМ (safe session mode) ---
+
+    // --- Epstein Mode ---
+    public static boolean isEpsteinModeActive() {
+        return epsteinMode.Bool();
+    }
+
+    public static void toggleEpsteinMode() {
+        epsteinMode.toggleConfigBool();
+    }
+    // --- Epstein Mode ---
 
     public static Set<String> getAllKeys() {
         synchronized (sync) {

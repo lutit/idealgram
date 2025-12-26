@@ -1172,6 +1172,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
                 } else if (id == DrawerLayoutAdapter.nkbtnShamalaMode) {
                     boolean willEnable = !NekoConfig.isShamalaModeActive();
+                    if (willEnable && NekoConfig.isEpsteinModeActive()) {
+                        NekoConfig.toggleEpsteinMode();
+                        BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.EpsteinModeDisabled)).show();
+                    }
                     NekoConfig.toggleShamalaMode();
                     CharSequence msg = LocaleController.getString(
                             willEnable ? R.string.ShamalaModeEnabled : R.string.ShamalaModeDisabled
@@ -1186,6 +1190,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
                 } else if (id == DrawerLayoutAdapter.nkbtnUltraShamalaMode) {
                     boolean willEnable = !NekoConfig.isUltraShamalaModeActive();
+                    if (willEnable && NekoConfig.isEpsteinModeActive()) {
+                        NekoConfig.toggleEpsteinMode();
+                        BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.EpsteinModeDisabled)).show();
+                    }
                     NekoConfig.toggleUltraShamalaMode();
                     CharSequence msg = LocaleController.getString(
                             willEnable ? R.string.UltraShamalaModeEnabled : R.string.UltraShamalaModeDisabled
@@ -1200,6 +1208,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
                 } else if (id == DrawerLayoutAdapter.nkbtnHyperShamalaMode) {
                     boolean willEnable = !NekoConfig.isHyperShamalaModeActive();
+                    if (willEnable && NekoConfig.isEpsteinModeActive()) {
+                        NekoConfig.toggleEpsteinMode();
+                        BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, LocaleController.getString(R.string.EpsteinModeDisabled)).show();
+                    }
                     NekoConfig.toggleHyperShamalaMode();
                     CharSequence msg = LocaleController.getString(
                             willEnable ? R.string.HyperShamalaModeEnabled : R.string.HyperShamalaModeDisabled
@@ -1224,6 +1236,29 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     } else {
                         stopUspdmpshmModeEffects();
                     }
+                    drawerLayoutContainer.closeDrawer(false);
+                    NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                } else if (id == DrawerLayoutAdapter.nkbtnEpsteinMode) {
+                    boolean willEnable = !NekoConfig.isEpsteinModeActive();
+                    if (willEnable) {
+                        if (NekoConfig.isShamalaModeActive()) {
+                            NekoConfig.toggleShamalaMode();
+                            stopShamalaModeEffects();
+                        }
+                        if (NekoConfig.isUltraShamalaModeActive()) {
+                            NekoConfig.toggleUltraShamalaMode();
+                            stopUltraShamalaModeEffects();
+                        }
+                        if (NekoConfig.isHyperShamalaModeActive()) {
+                            NekoConfig.toggleHyperShamalaMode();
+                            stopHyperShamalaModeEffects();
+                        }
+                    }
+                    NekoConfig.toggleEpsteinMode();
+                    CharSequence msg = LocaleController.getString(
+                            willEnable ? R.string.EpsteinModeEnabled : R.string.EpsteinModeDisabled
+                    );
+                    BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, msg).show();
                     drawerLayoutContainer.closeDrawer(false);
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
                 } else if (id == DrawerLayoutAdapter.nkbtnSessions) {
