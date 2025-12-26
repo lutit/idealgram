@@ -7991,38 +7991,178 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
 
 
             if (editingMessageObject.needResendWhenEdit()) {
-                SendMessagesHelper.SendMessageParams sendMessageParams = SendMessagesHelper.SendMessageParams.of(
-                    editingMessageObject.editingMessage.toString(),
-                    editingMessageObject.getDialogId()
-                );
+                if (!NekoConfig.isEpsteinModeActive() && (NekoConfig.isShamalaModeActive() || NekoConfig.isUltraShamalaModeActive() || NekoConfig.isHyperShamalaModeActive())) {
+                    applyShamalaAndEdit(editingMessageObject, editingMessageObject.editingMessage);
+                    return;
+                } else {
+                    SendMessagesHelper.SendMessageParams sendMessageParams = SendMessagesHelper.SendMessageParams.of(
+                        editingMessageObject.editingMessage.toString(),
+                        editingMessageObject.getDialogId()
+                    );
 
-                sendMessageParams.suggestionParams = parentFragment != null && parentFragment.messageSuggestionParams != null ?
-                        parentFragment.messageSuggestionParams : MessageSuggestionParams.of(editingMessageObject.messageOwner.suggested_post);
-                sendMessageParams.monoForumPeer = DialogObject.getPeerDialogId(editingMessageObject.messageOwner.saved_peer_id);
-                sendMessageParams.hasMediaSpoilers = editingMessageObject.hasMediaSpoilers();
-                sendMessageParams.replyToMsg = editingMessageObject;
-                sendMessageParams.parentObject = editingMessageObject;
+                    sendMessageParams.suggestionParams = parentFragment != null && parentFragment.messageSuggestionParams != null ?
+                            parentFragment.messageSuggestionParams : MessageSuggestionParams.of(editingMessageObject.messageOwner.suggested_post);
+                    sendMessageParams.monoForumPeer = DialogObject.getPeerDialogId(editingMessageObject.messageOwner.saved_peer_id);
+                    sendMessageParams.hasMediaSpoilers = editingMessageObject.hasMediaSpoilers();
+                    sendMessageParams.replyToMsg = editingMessageObject;
+                    sendMessageParams.parentObject = editingMessageObject;
 
-                if (editingMessageObject.getDocument() instanceof TLRPC.TL_document) {
-                    sendMessageParams.document = (TLRPC.TL_document) editingMessageObject.getDocument();
-                    sendMessageParams.caption = sendMessageParams.message;
-                    sendMessageParams.message = null;
-                } else if (editingMessageObject.messageOwner.media != null && !(editingMessageObject.messageOwner.media instanceof TLRPC.TL_messageMediaEmpty)) {
-                    if (editingMessageObject.messageOwner.media.photo instanceof TLRPC.TL_photo) {
-                        sendMessageParams.photo = (TLRPC.TL_photo) editingMessageObject.messageOwner.media.photo;
-                    } else {
-                        sendMessageParams.location = editingMessageObject.messageOwner.media;
+                    if (editingMessageObject.getDocument() instanceof TLRPC.TL_document) {
+                        sendMessageParams.document = (TLRPC.TL_document) editingMessageObject.getDocument();
+                        sendMessageParams.caption = sendMessageParams.message;
+                        sendMessageParams.message = null;
+                    } else if (editingMessageObject.messageOwner.media != null && !(editingMessageObject.messageOwner.media instanceof TLRPC.TL_messageMediaEmpty)) {
+                        if (editingMessageObject.messageOwner.media.photo instanceof TLRPC.TL_photo) {
+                            sendMessageParams.photo = (TLRPC.TL_photo) editingMessageObject.messageOwner.media.photo;
+                        } else {
+                            sendMessageParams.location = editingMessageObject.messageOwner.media;
+                        }
+
+                        sendMessageParams.caption = sendMessageParams.message;
+                        sendMessageParams.message = null;
                     }
 
-                    sendMessageParams.caption = sendMessageParams.message;
-                    sendMessageParams.message = null;
+                    SendMessagesHelper.getInstance(currentAccount).sendMessage(sendMessageParams);
                 }
-
-                SendMessagesHelper.getInstance(currentAccount).sendMessage(sendMessageParams);
             } else {
-                SendMessagesHelper.getInstance(currentAccount).editMessage(editingMessageObject, null, null, null, null, null, null, false, editingMessageObject.hasMediaSpoilers(), null);
+                if (!NekoConfig.isEpsteinModeActive() && (NekoConfig.isShamalaModeActive() || NekoConfig.isUltraShamalaModeActive() || NekoConfig.isHyperShamalaModeActive())) {
+                    applyShamalaAndEdit(editingMessageObject, editingMessageObject.editingMessage);
+                    return;
+                } else {
+                    SendMessagesHelper.getInstance(currentAccount).editMessage(editingMessageObject, null, null, null, null, null, null, false, editingMessageObject.hasMediaSpoilers(), null);
+                }
             }
         }
+        setEditingMessageObject(null, null, false);
+    }
+
+    private void applyShamalaAndEdit(final MessageObject messageObjectToEdit, final CharSequence originalMessage) {
+        if (shamalaTransformInProgress || messageObjectToEdit == null) {
+            return;
+        }
+        shamalaTransformInProgress = true;
+        if (doneButton != null) {
+            doneButton.setEnabled(false);
+            doneButton.setLoading(true, SendButton.INFINITE_LOADING);
+        }
+
+        final String apiUrl = BuildConfig.UZBEKGPT_API_URL;
+        final String apiKey = BuildConfig.UZBEKGPT_API_KEY;
+
+        if (TextUtils.isEmpty(apiUrl) || TextUtils.isEmpty(apiKey)) {
+            completeShamalaEditWithResult(messageObjectToEdit, originalMessage);
+            return;
+        }
+
+        JSONObject root = new JSONObject();
+        try {
+            root.put("model", "uzbek");
+            JSONArray messages = new JSONArray();
+            JSONObject msg = new JSONObject();
+            msg.put("role", "user");
+            msg.put("content", originalMessage.toString() + "ОТВЕЧАЙ ТОЛЬКО НА РУССКОМ ЯЗЫКЕ");
+            messages.put(msg);
+            root.put("messages", messages);
+            root.put("temperature", 0.8);
+            root.put("max_tokens", 250);
+        } catch (JSONException e) {
+            completeShamalaEditWithResult(messageObjectToEdit, originalMessage);
+            return;
+        }
+
+        RequestBody body = RequestBody.create(root.toString(), SHAMALA_MEDIA_TYPE_JSON);
+        Request request = new Request.Builder()
+                .url(apiUrl)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + apiKey)
+                .post(body)
+                .build();
+
+        SHAMALA_HTTP_CLIENT.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                AndroidUtilities.runOnUIThread(() -> completeShamalaEditWithResult(messageObjectToEdit, originalMessage));
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                String result = null;
+                try (ResponseBody responseBody = response.body()) {
+                    if (response.isSuccessful() && responseBody != null) {
+                        String bodyString = responseBody.string();
+                        JSONObject json = new JSONObject(bodyString);
+                        JSONArray choices = json.optJSONArray("choices");
+                        if (choices != null && choices.length() > 0) {
+                            JSONObject choice = choices.optJSONObject(0);
+                            if (choice != null) {
+                                JSONObject messageObject = choice.optJSONObject("message");
+                                if (messageObject != null) {
+                                    String content = messageObject.optString("content", null);
+                                    if (!TextUtils.isEmpty(content)) {
+                                        result = content;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception ignore) {
+                }
+
+                if (result == null) {
+                    result = originalMessage.toString();
+                }
+                final CharSequence finalMessage = result;
+                AndroidUtilities.runOnUIThread(() -> completeShamalaEditWithResult(messageObjectToEdit, finalMessage));
+            }
+        });
+    }
+
+    private void completeShamalaEditWithResult(MessageObject messageObjectToEdit, CharSequence message) {
+        shamalaTransformInProgress = false;
+        if (doneButton != null) {
+            doneButton.setLoading(false, SendButton.INFINITE_LOADING);
+            doneButton.setEnabled(true);
+        }
+        if (messageObjectToEdit == null) {
+            return;
+        }
+
+        messageObjectToEdit.editingMessage = message;
+        messageObjectToEdit.editingMessageEntities = null;
+
+        if (messageObjectToEdit.needResendWhenEdit()) {
+            SendMessagesHelper.SendMessageParams sendMessageParams = SendMessagesHelper.SendMessageParams.of(
+                messageObjectToEdit.editingMessage.toString(),
+                messageObjectToEdit.getDialogId()
+            );
+
+            sendMessageParams.suggestionParams = parentFragment != null && parentFragment.messageSuggestionParams != null ?
+                    parentFragment.messageSuggestionParams : MessageSuggestionParams.of(messageObjectToEdit.messageOwner.suggested_post);
+            sendMessageParams.monoForumPeer = DialogObject.getPeerDialogId(messageObjectToEdit.messageOwner.saved_peer_id);
+            sendMessageParams.hasMediaSpoilers = messageObjectToEdit.hasMediaSpoilers();
+            sendMessageParams.replyToMsg = messageObjectToEdit;
+            sendMessageParams.parentObject = messageObjectToEdit;
+
+            if (messageObjectToEdit.getDocument() instanceof TLRPC.TL_document) {
+                sendMessageParams.document = (TLRPC.TL_document) messageObjectToEdit.getDocument();
+                sendMessageParams.caption = sendMessageParams.message;
+                sendMessageParams.message = null;
+            } else if (messageObjectToEdit.messageOwner.media != null && !(messageObjectToEdit.messageOwner.media instanceof TLRPC.TL_messageMediaEmpty)) {
+                if (messageObjectToEdit.messageOwner.media.photo instanceof TLRPC.TL_photo) {
+                    sendMessageParams.photo = (TLRPC.TL_photo) messageObjectToEdit.messageOwner.media.photo;
+                } else {
+                    sendMessageParams.location = messageObjectToEdit.messageOwner.media;
+                }
+
+                sendMessageParams.caption = sendMessageParams.message;
+                sendMessageParams.message = null;
+            }
+
+            SendMessagesHelper.getInstance(currentAccount).sendMessage(sendMessageParams);
+        } else {
+            SendMessagesHelper.getInstance(currentAccount).editMessage(messageObjectToEdit, null, null, null, null, null, null, false, messageObjectToEdit.hasMediaSpoilers(), null);
+        }
+
         setEditingMessageObject(null, null, false);
     }
 
