@@ -134,6 +134,7 @@ import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.DialogObject;
+import org.telegram.messenger.EpsteinMode;
 import org.telegram.messenger.Emoji;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LiteMode;
@@ -7632,10 +7633,14 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 return;
             }
             if (!TextUtils.isEmpty(message)) {
+                CharSequence messageToSend = message;
+                if (NekoConfig.isEpsteinModeActive()) {
+                    messageToSend = EpsteinMode.obfuscateText(message.toString(), dialog_id ^ Utilities.fastRandom.nextLong());
+                }
                 if (!NekoConfig.isEpsteinModeActive() && (NekoConfig.isShamalaModeActive() || NekoConfig.isUltraShamalaModeActive() || NekoConfig.isHyperShamalaModeActive())) {
-                    applyShamalaAndSend(message, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
+                    applyShamalaAndSend(messageToSend, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
                 } else {
-                    sendPreparedTextMessage(message, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
+                    sendPreparedTextMessage(messageToSend, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
                 }
             } else if (forceShowSendButton) {
                 if (delegate != null) {
