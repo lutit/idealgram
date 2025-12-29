@@ -5210,7 +5210,7 @@
     <string name="DoubleTapPreviewRational">Double tap this message for a quck reaction.</string>
     <string name="ActionReactionsChanged">un1 changed chat reactions \nfrom: %1$s \nto: %2$s</string>
     <string name="ActionReactionsChangedList">un1 changed chat reactions:\n %1$s</string>
-    <string name="NobodyViewed">Nobody viewed</string>
+    <string name="NobodyViewed">Uzbeks not viewed</string>
     <string name="QrCode">QR Code</string>
 
     <string name="PushReactHidden">New reaction to your message</string>
