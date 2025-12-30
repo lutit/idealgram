@@ -3134,6 +3134,9 @@ public class Theme {
     private static boolean isWallpaperMotion;
     private static int patternIntensity;
     private static boolean isPatternWallpaper;
+    private static final String FORCED_WALLPAPER_ASSET = "uzbek.jpg";
+    private static Drawable forcedWallpaper;
+    private static boolean forcedWallpaperFailed;
 
     public static Paint dividerPaint;
     public static Paint dividerExtraPaint;
@@ -10016,6 +10019,14 @@ public class Theme {
             boolean local
     ) {
         BackgroundDrawableSettings settings = new BackgroundDrawableSettings();
+        Drawable forced = getForcedWallpaper();
+        if (forced != null) {
+            settings.wallpaper = forced;
+            settings.isCustomTheme = true;
+            settings.isWallpaperMotion = false;
+            settings.isPatternWallpaper = false;
+            return settings;
+        }
         settings.wallpaper = local ? null : wallpaper;
         boolean overrideTheme = (!hasPreviousTheme || isApplyingAccent) && overrideWallpaper != null;
         if (overrideWallpaper != null) {
@@ -10242,6 +10253,81 @@ public class Theme {
         return settings;
     }
 
+    private static Drawable getForcedWallpaper() {
+        if (forcedWallpaper != null) {
+            return forcedWallpaper;
+        }
+        if (forcedWallpaperFailed) {
+            return null;
+        }
+        Context context = ApplicationLoader.applicationContext;
+        if (context == null) {
+            forcedWallpaperFailed = true;
+            return null;
+        }
+        Bitmap bitmap = loadAssetScreenSizedBitmap(context, FORCED_WALLPAPER_ASSET);
+        if (bitmap == null) {
+            forcedWallpaperFailed = true;
+            return null;
+        }
+        BitmapDrawable drawable = new BitmapDrawable(context.getResources(), bitmap);
+        drawable.setFilterBitmap(true);
+        forcedWallpaper = drawable;
+        return forcedWallpaper;
+    }
+
+    private static Bitmap loadAssetScreenSizedBitmap(Context context, String assetName) {
+        InputStream stream = null;
+        try {
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = 1;
+            opts.inJustDecodeBounds = true;
+            stream = context.getAssets().open(assetName);
+            BitmapFactory.decodeStream(stream, null, opts);
+            float photoW = opts.outWidth;
+            float photoH = opts.outHeight;
+            float scaleFactor;
+            int w_filter = Math.min(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y);
+            int h_filter = Math.max(AndroidUtilities.displaySize.x, AndroidUtilities.displaySize.y);
+            if (w_filter >= h_filter && photoW > photoH) {
+                scaleFactor = Math.max(photoW / w_filter, photoH / h_filter);
+            } else {
+                scaleFactor = Math.min(photoW / w_filter, photoH / h_filter);
+            }
+            if (scaleFactor < 1.2f) {
+                scaleFactor = 1;
+            }
+            AndroidUtilities.closeStream(stream);
+            stream = null;
+            opts.inJustDecodeBounds = false;
+            if (scaleFactor > 1.0f && (photoW > w_filter || photoH > h_filter)) {
+                int sample = 1;
+                do {
+                    sample *= 2;
+                } while (sample * 2 < scaleFactor);
+                opts.inSampleSize = sample;
+            } else {
+                opts.inSampleSize = (int) scaleFactor;
+            }
+            stream = context.getAssets().open(assetName);
+            Bitmap bitmap = BitmapFactory.decodeStream(stream, null, opts);
+            if (bitmap != null && (bitmap.getWidth() < w_filter || bitmap.getHeight() < h_filter)) {
+                float scale = Math.max((float) w_filter / bitmap.getWidth(), (float) h_filter / bitmap.getHeight());
+                if (scale >= 1.02f) {
+                    Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, (int) (bitmap.getWidth() * scale), (int) (bitmap.getHeight() * scale), true);
+                    bitmap.recycle();
+                    return scaledBitmap;
+                }
+            }
+            return bitmap;
+        } catch (Exception e) {
+            FileLog.e(e);
+        } finally {
+            AndroidUtilities.closeStream(stream);
+        }
+        return null;
+    }
+
     public static Drawable createDefaultWallpaper() {
         return createDefaultWallpaper(0, 0);
     }
@@ -10465,6 +10551,9 @@ public class Theme {
     }
 
     public static Drawable getCachedWallpaperNonBlocking() {
+        if (forcedWallpaper != null) {
+            return forcedWallpaper;
+        }
         if (themedWallpaper != null) {
             return themedWallpaper;
         } else {

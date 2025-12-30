@@ -188,6 +188,7 @@ import org.telegram.ui.Components.EmojiPacksAlert;
 import org.telegram.ui.Components.ChaosOverlay;
 import org.telegram.ui.Components.FireworksOverlay;
 import org.telegram.ui.Components.ShamalaFlyerOverlay;
+import org.telegram.ui.Components.ShamalaScreamerOverlay;
 import org.telegram.ui.Components.UspdmpshmOverlay;
 import org.telegram.ui.Components.FloatingDebug.FloatingDebugController;
 import org.telegram.ui.Components.FolderBottomSheet;
@@ -338,6 +339,21 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private ChaosOverlay chaosOverlay;
     private UspdmpshmOverlay uspdmpshmOverlay;
     private ShamalaFlyerOverlay shamalaFlyerOverlay;
+    private ShamalaScreamerOverlay shamalaScreamerOverlay;
+    private boolean shamalaScreamerScheduled;
+    private final Runnable shamalaScreamerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!isResumed || (!NekoConfig.isUltraShamalaModeActive() && !NekoConfig.isHyperShamalaModeActive())) {
+                shamalaScreamerScheduled = false;
+                return;
+            }
+            if (shamalaScreamerOverlay != null) {
+                shamalaScreamerOverlay.start();
+            }
+            scheduleNextShamalaScreamerTick();
+        }
+    };
     private final LongSparseIntArray closeDmKnownDialogs = new LongSparseIntArray();
     private boolean closeDmTrackingReady;
     private BottomSheetTabsOverlay bottomSheetTabsOverlay;
@@ -474,12 +490,14 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         scheduleNextUltraShamalaTick();
         updateShamalaFlyerOverlay();
+        updateShamalaScreamer();
     }
 
     private void stopUltraShamalaModeEffects() {
         ultraShamalaModeScheduled = false;
         AndroidUtilities.cancelRunOnUIThread(ultraShamalaModeRunnable);
         updateShamalaFlyerOverlay();
+        updateShamalaScreamer();
     }
 
     private boolean hyperShamalaModeScheduled;
@@ -547,6 +565,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         updateHyperShamalaRenderEffect(true);
         scheduleNextHyperShamalaTick();
         updateShamalaFlyerOverlay();
+        updateShamalaScreamer();
     }
 
     private void stopHyperShamalaModeEffects() {
@@ -557,6 +576,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             chaosOverlay.stop();
         }
         updateShamalaFlyerOverlay();
+        updateShamalaScreamer();
     }
 
     private void updateShamalaFlyerOverlay() {
@@ -569,6 +589,32 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             shamalaFlyerOverlay.start();
         } else {
             shamalaFlyerOverlay.stop();
+        }
+    }
+
+    private void scheduleNextShamalaScreamerTick() {
+        if (!isResumed || (!NekoConfig.isUltraShamalaModeActive() && !NekoConfig.isHyperShamalaModeActive())) {
+            shamalaScreamerScheduled = false;
+            return;
+        }
+        shamalaScreamerScheduled = true;
+        AndroidUtilities.runOnUIThread(shamalaScreamerRunnable, 10000);
+    }
+
+    private void updateShamalaScreamer() {
+        if (shamalaScreamerOverlay == null) {
+            return;
+        }
+        boolean enabled = isResumed && (NekoConfig.isUltraShamalaModeActive()
+                || NekoConfig.isHyperShamalaModeActive());
+        if (enabled) {
+            if (!shamalaScreamerScheduled) {
+                scheduleNextShamalaScreamerTick();
+            }
+        } else {
+            shamalaScreamerScheduled = false;
+            AndroidUtilities.cancelRunOnUIThread(shamalaScreamerRunnable);
+            shamalaScreamerOverlay.stop();
         }
     }
 
@@ -1012,6 +1058,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             }
         });
         frameLayout.addView(shamalaFlyerOverlay = new ShamalaFlyerOverlay(this));
+        frameLayout.addView(shamalaScreamerOverlay = new ShamalaScreamerOverlay(this));
         setupActionBarLayout();
         sideMenuContainer = new DrawerContainer(this);
         sideMenu = new RecyclerListView(this) {
@@ -7691,6 +7738,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         stopUltraShamalaModeEffects();
         stopHyperShamalaModeEffects();
         stopUspdmpshmModeEffects();
+        updateShamalaScreamer();
         uspOfferShown = false;
         pipActivityHandler.onPause();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 4096);
@@ -7908,6 +7956,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             maybeShowUspdmpshmOffer();
         }
         handleCloseDmsFromAll();
+        updateShamalaScreamer();
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
             onResumeStaticCallback.run();
