@@ -5303,6 +5303,7 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
         groupStickerSet = null;
         groupStickerPackPosition = -1;
         groupStickerPackNum = -10;
+        LongSparseArray<Boolean> seenStickerSets = new LongSparseArray<>();
 
         if (frozenStickerSets == null || updateStickerSets) {
             frozenStickerSets = new ArrayList<>(mediaDataController.getStickerSets(MediaDataController.TYPE_IMAGE));
@@ -5323,6 +5324,12 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
                         set.documents.addAll(installingStickerSet.covers);
                     }
                     if (!set.documents.isEmpty()) {
+                        if (set.set != null && seenStickerSets.indexOfKey(set.set.id) >= 0) {
+                            continue;
+                        }
+                        if (set.set != null) {
+                            seenStickerSets.put(set.set.id, Boolean.TRUE);
+                        }
                         stickerSets.add(set);
                     }
                 }
@@ -5333,6 +5340,12 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
             TLRPC.TL_messages_stickerSet pack = packs.get(a);
             if (pack.set != null && pack.set.archived || pack.documents == null || pack.documents.isEmpty()) {
                 continue;
+            }
+            if (pack.set != null && seenStickerSets.indexOfKey(pack.set.id) >= 0) {
+                continue;
+            }
+            if (pack.set != null) {
+                seenStickerSets.put(pack.set.id, Boolean.TRUE);
             }
             stickerSets.add(pack);
         }
@@ -5502,6 +5515,7 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
         MediaDataController.getInstance(currentAccount).addRecentSticker(MediaDataController.TYPE_IMAGE, null, document, (int) (System.currentTimeMillis() / 1000), false);
         boolean wasEmpty = recentStickers.isEmpty();
         recentStickers = MediaDataController.getInstance(currentAccount).getRecentStickers(MediaDataController.TYPE_IMAGE, true);
+        recentStickers = dedupeDocuments(recentStickers);
         if (stickersGridAdapter != null) {
             stickersGridAdapter.notifyDataSetChanged();
         }
@@ -5888,6 +5902,8 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
             int previousCount2 = favouriteStickers.size();
             recentStickers = MediaDataController.getInstance(currentAccount).getRecentStickers(MediaDataController.TYPE_IMAGE, true);
             favouriteStickers = MediaDataController.getInstance(currentAccount).getRecentStickers(MediaDataController.TYPE_FAVE);
+            recentStickers = dedupeDocuments(recentStickers);
+            favouriteStickers = dedupeDocuments(favouriteStickers);
             if (UserConfig.getInstance(currentAccount).isPremium()) {
                 premiumStickers = MediaDataController.getInstance(currentAccount).getRecentStickers(MediaDataController.TYPE_PREMIUM_STICKERS);
             } else {
@@ -5925,6 +5941,27 @@ public class EmojiView extends FrameLayout implements NotificationCenter.Notific
             }
             checkPanels();
         }
+    }
+
+    private ArrayList<TLRPC.Document> dedupeDocuments(ArrayList<TLRPC.Document> source) {
+        if (source == null || source.isEmpty()) {
+            return source;
+        }
+        LongSparseArray<Boolean> seen = new LongSparseArray<>();
+        ArrayList<TLRPC.Document> result = new ArrayList<>(source.size());
+        for (int i = 0; i < source.size(); i++) {
+            TLRPC.Document document = source.get(i);
+            if (document == null) {
+                continue;
+            }
+            long key = (document.id << 32) ^ (document.dc_id & 0xffffffffL);
+            if (seen.indexOfKey(key) >= 0) {
+                continue;
+            }
+            seen.put(key, Boolean.TRUE);
+            result.add(document);
+        }
+        return result;
     }
 
     private void updateRecentGifs() {

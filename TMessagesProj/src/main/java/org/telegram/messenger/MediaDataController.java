@@ -427,6 +427,9 @@ public class MediaDataController extends BaseController {
         if (!loadingStickers[type] && (!stickersLoaded[type] || Math.abs(System.currentTimeMillis() / 1000 - loadDate[type]) >= 60 * 60)) {
             loadStickers(type, true, false);
         }
+        if (FORCE_ONLY_ALLOWED_STICKERS && type == TYPE_IMAGE) {
+            ensureAllowedStickerSetInstalled();
+        }
     }
 
     public void checkReactions() {
@@ -1743,17 +1746,16 @@ public class MediaDataController extends BaseController {
     }
 
     public ArrayList<TLRPC.TL_messages_stickerSet> getStickerSets(int type) {
-        if (FORCE_ONLY_ALLOWED_STICKERS && type == TYPE_IMAGE) {
-            ensureAllowedStickerSetInstalled();
-        }
         if (type == TYPE_FEATURED) {
             return stickerSets[2];
         }
         if (FORCE_ONLY_ALLOWED_STICKERS && type == TYPE_IMAGE) {
             ArrayList<TLRPC.TL_messages_stickerSet> filtered = new ArrayList<>();
+            LongSparseArray<Boolean> seen = new LongSparseArray<>();
             for (int i = 0; i < stickerSets[type].size(); i++) {
                 TLRPC.TL_messages_stickerSet set = stickerSets[type].get(i);
-                if (isAllowedStickerSet(set)) {
+                if (set != null && set.set != null && seen.indexOfKey(set.set.id) < 0 && isAllowedStickerSet(set)) {
+                    seen.put(set.set.id, Boolean.TRUE);
                     filtered.add(set);
                 }
             }
