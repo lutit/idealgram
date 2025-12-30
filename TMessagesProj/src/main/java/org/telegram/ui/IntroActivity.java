@@ -38,6 +38,7 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -283,11 +284,15 @@ public class IntroActivity extends BaseFragment implements NotificationCenter.No
         logoBg.setShape(GradientDrawable.OVAL);
         logoBg.setColor(0x55000000);
         logoContainer.setBackground(logoBg);
+        if (Build.VERSION.SDK_INT >= 21) {
+            logoContainer.setOutlineProvider(ViewOutlineProvider.BACKGROUND);
+            logoContainer.setClipToOutline(true);
+        }
 
         ImageView logoImage = new ImageView(context);
-        logoImage.setImageResource(R.mipmap.ic_launcher_idealgram_uzbek_foreground);
-        logoImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        logoContainer.addView(logoImage, LayoutHelper.createFrame(90, 90, Gravity.CENTER));
+        logoImage.setImageResource(R.mipmap.ic_launcher_uzbekgram_legacy_foreground);
+        logoImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        logoContainer.addView(logoImage, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER));
         frameLayout2.addView(logoContainer, LayoutHelper.createFrame(140, 140, Gravity.CENTER));
 
         viewPager = new ViewPager(context) {
