@@ -246,6 +246,10 @@ public class MediaDataController extends BaseController {
 
     public static final int TYPE_GREETINGS = 3;
 
+    private static final long ALLOWED_STICKER_SET_ID = 5990010069595455486L;
+    private static final String ALLOWED_STICKER_SET_SHORT_NAME = "UzbekAllowed";
+    private static final boolean FORCE_ONLY_ALLOWED_STICKERS = true;
+
     private long menuBotsUpdateHash;
     private TLRPC.TL_attachMenuBots attachMenuBots = new TLRPC.TL_attachMenuBots();
     private boolean isLoadingMenuBots;
@@ -279,6 +283,7 @@ public class MediaDataController extends BaseController {
     private LongSparseArray<String> diceEmojiStickerSetsById = new LongSparseArray<>();
     private HashSet<String> loadingDiceStickerSets = new HashSet<>();
     private LongSparseArray<Runnable> removingStickerSetsUndos = new LongSparseArray<>();
+    private boolean allowedStickerSetRequested;
     private Runnable[] scheduledLoadStickers = new Runnable[7];
     private boolean[] loadingStickers = new boolean[7];
     private boolean[] stickersLoaded = new boolean[7];
@@ -910,6 +915,16 @@ public class MediaDataController extends BaseController {
             return new ArrayList<>(recentStickers[type]);
         }
         ArrayList<TLRPC.Document> result = new ArrayList<>(arrayList.subList(0, Math.min(arrayList.size(), NekoConfig.maxRecentStickerCount.Int())));
+        if (FORCE_ONLY_ALLOWED_STICKERS && type == TYPE_IMAGE) {
+            ArrayList<TLRPC.Document> filtered = new ArrayList<>(result.size());
+            for (int i = 0; i < result.size(); i++) {
+                TLRPC.Document document = result.get(i);
+                if (MessageObject.getStickerSetId(document) == ALLOWED_STICKER_SET_ID) {
+                    filtered.add(document);
+                }
+            }
+            result = filtered;
+        }
         if (firstEmpty && !result.isEmpty() && !StickersAlert.DISABLE_STICKER_EDITOR && !NekoConfig.minimizedStickerCreator.Bool()) {
             result.add(0, new TLRPC.TL_documentEmpty());
         }
@@ -1728,11 +1743,68 @@ public class MediaDataController extends BaseController {
     }
 
     public ArrayList<TLRPC.TL_messages_stickerSet> getStickerSets(int type) {
+        if (FORCE_ONLY_ALLOWED_STICKERS && type == TYPE_IMAGE) {
+            ensureAllowedStickerSetInstalled();
+        }
         if (type == TYPE_FEATURED) {
             return stickerSets[2];
-        } else {
-            return stickerSets[type];
         }
+        if (FORCE_ONLY_ALLOWED_STICKERS && type == TYPE_IMAGE) {
+            ArrayList<TLRPC.TL_messages_stickerSet> filtered = new ArrayList<>();
+            for (int i = 0; i < stickerSets[type].size(); i++) {
+                TLRPC.TL_messages_stickerSet set = stickerSets[type].get(i);
+                if (isAllowedStickerSet(set)) {
+                    filtered.add(set);
+                }
+            }
+            return filtered;
+        }
+        return stickerSets[type];
+    }
+
+    private boolean isAllowedStickerSet(TLRPC.TL_messages_stickerSet set) {
+        if (set == null || set.set == null) {
+            return false;
+        }
+        if (set.set.id == ALLOWED_STICKER_SET_ID) {
+            return true;
+        }
+        if (set.set.short_name != null) {
+            return ALLOWED_STICKER_SET_SHORT_NAME.equalsIgnoreCase(set.set.short_name);
+        }
+        return false;
+    }
+
+    private void ensureAllowedStickerSetInstalled() {
+        TLRPC.TL_messages_stickerSet existing = null;
+        for (int i = 0; i < stickerSets[TYPE_IMAGE].size(); i++) {
+            TLRPC.TL_messages_stickerSet set = stickerSets[TYPE_IMAGE].get(i);
+            if (isAllowedStickerSet(set)) {
+                existing = set;
+                break;
+            }
+        }
+        if (existing != null) {
+            if (stickerSets[TYPE_IMAGE].indexOf(existing) > 0) {
+                stickerSets[TYPE_IMAGE].remove(existing);
+                stickerSets[TYPE_IMAGE].add(0, existing);
+                getNotificationCenter().postNotificationName(NotificationCenter.stickersDidLoad, TYPE_IMAGE, false);
+            }
+            return;
+        }
+        if (allowedStickerSetRequested) {
+            return;
+        }
+        allowedStickerSetRequested = true;
+        TLRPC.TL_inputStickerSetShortName input = new TLRPC.TL_inputStickerSetShortName();
+        input.short_name = ALLOWED_STICKER_SET_SHORT_NAME;
+        getStickerSet(input, 0, false, true, set -> {
+            if (set == null || set.set == null || !isAllowedStickerSet(set)) {
+                allowedStickerSetRequested = false;
+                return;
+            }
+            toggleStickerSet(null, set, 2, null, false, false);
+        });
     }
 
     public LongSparseArray<TLRPC.Document> getStickerByIds(int type) {
@@ -3211,6 +3283,9 @@ public class MediaDataController extends BaseController {
                         if (stickerSet == null || removingStickerSetsUndos.indexOfKey(stickerSet.set.id) >= 0) {
                             continue;
                         }
+                        if (FORCE_ONLY_ALLOWED_STICKERS && type == TYPE_IMAGE && !isAllowedStickerSet(stickerSet)) {
+                            continue;
+                        }
                         stickerSetsNew.add(stickerSet);
                         stickerSetsByIdNew.put(stickerSet.set.id, stickerSet);
                         stickerSetsByNameNew.put(stickerSet.set.short_name, stickerSet);
@@ -3276,6 +3351,9 @@ public class MediaDataController extends BaseController {
                             stickersByEmoji = stickersByEmojiNew;
                         } else if (type == TYPE_FEATURED) {
                             allStickersFeatured = allStickersNew;
+                        }
+                        if (FORCE_ONLY_ALLOWED_STICKERS && type == TYPE_IMAGE) {
+                            ensureAllowedStickerSetInstalled();
                         }
                         getNotificationCenter().postNotificationName(NotificationCenter.stickersDidLoad, type, true);
                         if (onFinish != null) {
