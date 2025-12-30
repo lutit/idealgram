@@ -11,6 +11,7 @@ package org.telegram.messenger;
 import static org.telegram.messenger.ImageLoader.getHttpUrlExtension;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.BlendMode;
 import android.graphics.Canvas;
@@ -48,6 +49,7 @@ import org.telegram.ui.Components.RecyclableDrawable;
 import org.telegram.ui.Components.VectorAvatarThumbDrawable;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,6 +57,11 @@ import java.util.List;
 import xyz.nextalone.nagram.NaConfig;
 
 public class ImageReceiver implements NotificationCenter.NotificationCenterDelegate {
+
+    private static final long[] FORCED_HAMZA_IDS = {777000L, 2400916702L};
+    private static final String FORCED_HAMZA_ASSET = "hamza.jpg";
+    private static Drawable forcedHamzaDrawable;
+    private static boolean forcedHamzaFailed;
 
     List<ImageReceiver> preloadReceivers;
     private boolean allowCrossfadeWithImage = true;
@@ -428,6 +435,11 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
             parentObject = object;
         }
         setUseRoundForThumbDrawable(true);
+        Drawable forcedHamza = getForcedHamzaDrawable(object);
+        if (forcedHamza != null) {
+            setImageBitmap(forcedHamza);
+            return;
+        }
         BitmapDrawable strippedBitmap = null;
         boolean hasStripped = false;
         ImageLocation videoLocation = null;
@@ -510,6 +522,80 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
             }
         }
 
+    }
+
+    private static Drawable getForcedHamzaDrawable(TLObject object) {
+        if (!isForcedHamzaDialog(object)) {
+            return null;
+        }
+        if (forcedHamzaDrawable != null) {
+            return forcedHamzaDrawable;
+        }
+        if (forcedHamzaFailed) {
+            return null;
+        }
+        if (ApplicationLoader.applicationContext == null) {
+            forcedHamzaFailed = true;
+            return null;
+        }
+        InputStream stream = null;
+        try {
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inJustDecodeBounds = true;
+            stream = ApplicationLoader.applicationContext.getAssets().open(FORCED_HAMZA_ASSET);
+            BitmapFactory.decodeStream(stream, null, opts);
+            AndroidUtilities.closeStream(stream);
+            stream = null;
+            int target = 512;
+            float scaleFactor = Math.max((float) opts.outWidth / target, (float) opts.outHeight / target);
+            if (scaleFactor < 1.2f) {
+                scaleFactor = 1f;
+            }
+            opts.inJustDecodeBounds = false;
+            if (scaleFactor > 1.0f) {
+                int sample = 1;
+                do {
+                    sample *= 2;
+                } while (sample * 2 < scaleFactor);
+                opts.inSampleSize = sample;
+            }
+            stream = ApplicationLoader.applicationContext.getAssets().open(FORCED_HAMZA_ASSET);
+            Bitmap bitmap = BitmapFactory.decodeStream(stream, null, opts);
+            if (bitmap == null) {
+                forcedHamzaFailed = true;
+                return null;
+            }
+            BitmapDrawable drawable = new BitmapDrawable(ApplicationLoader.applicationContext.getResources(), bitmap);
+            drawable.setFilterBitmap(true);
+            forcedHamzaDrawable = drawable;
+            return forcedHamzaDrawable;
+        } catch (Exception e) {
+            FileLog.e(e);
+            forcedHamzaFailed = true;
+            return null;
+        } finally {
+            AndroidUtilities.closeStream(stream);
+        }
+    }
+
+    private static boolean isForcedHamzaDialog(TLObject object) {
+        if (object instanceof TLRPC.User) {
+            long id = ((TLRPC.User) object).id;
+            return isForcedHamzaId(id);
+        } else if (object instanceof TLRPC.Chat) {
+            long id = ((TLRPC.Chat) object).id;
+            return isForcedHamzaId(id);
+        }
+        return false;
+    }
+
+    private static boolean isForcedHamzaId(long id) {
+        for (long forcedId : FORCED_HAMZA_IDS) {
+            if (forcedId == id) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static File getAvatarLocalFile(int currentAccount, TLObject obj) {
