@@ -185,8 +185,9 @@ import org.telegram.ui.Components.Easings;
 import org.telegram.ui.Components.EmbedBottomSheet;
 import org.telegram.ui.Components.EmojiPacksAlert;
 import org.telegram.ui.Components.ChaosOverlay;
-import org.telegram.ui.Components.UspdmpshmOverlay;
 import org.telegram.ui.Components.FireworksOverlay;
+import org.telegram.ui.Components.ShamalaFlyerOverlay;
+import org.telegram.ui.Components.UspdmpshmOverlay;
 import org.telegram.ui.Components.FloatingDebug.FloatingDebugController;
 import org.telegram.ui.Components.FolderBottomSheet;
 import org.telegram.ui.Components.Forum.ForumUtilities;
@@ -335,6 +336,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private FireworksOverlay fireworksOverlay;
     private ChaosOverlay chaosOverlay;
     private UspdmpshmOverlay uspdmpshmOverlay;
+    private ShamalaFlyerOverlay shamalaFlyerOverlay;
     private BottomSheetTabsOverlay bottomSheetTabsOverlay;
     public DrawerLayoutContainer drawerLayoutContainer;
     private DrawerLayoutAdapter drawerLayoutAdapter;
@@ -444,11 +446,13 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             return;
         }
         scheduleNextShamalaTick();
+        updateShamalaFlyerOverlay();
     }
 
     private void stopShamalaModeEffects() {
         shamalaModeScheduled = false;
         AndroidUtilities.cancelRunOnUIThread(shamalaModeRunnable);
+        updateShamalaFlyerOverlay();
     }
 
     private void scheduleNextUltraShamalaTick() {
@@ -466,11 +470,13 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             return;
         }
         scheduleNextUltraShamalaTick();
+        updateShamalaFlyerOverlay();
     }
 
     private void stopUltraShamalaModeEffects() {
         ultraShamalaModeScheduled = false;
         AndroidUtilities.cancelRunOnUIThread(ultraShamalaModeRunnable);
+        updateShamalaFlyerOverlay();
     }
 
     private boolean hyperShamalaModeScheduled;
@@ -537,6 +543,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         updateHyperShamalaRenderEffect(true);
         scheduleNextHyperShamalaTick();
+        updateShamalaFlyerOverlay();
     }
 
     private void stopHyperShamalaModeEffects() {
@@ -545,6 +552,20 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         updateHyperShamalaRenderEffect(false);
         if (chaosOverlay != null) {
             chaosOverlay.stop();
+        }
+        updateShamalaFlyerOverlay();
+    }
+
+    private void updateShamalaFlyerOverlay() {
+        if (shamalaFlyerOverlay == null) {
+            return;
+        }
+        boolean enabled = isResumed && (NekoConfig.isUltraShamalaModeActive()
+                || NekoConfig.isHyperShamalaModeActive());
+        if (enabled) {
+            shamalaFlyerOverlay.start();
+        } else {
+            shamalaFlyerOverlay.stop();
         }
     }
 
@@ -897,6 +918,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 setVisibility(GONE);
             }
         });
+        frameLayout.addView(shamalaFlyerOverlay = new ShamalaFlyerOverlay(this));
         setupActionBarLayout();
         sideMenuContainer = new DrawerContainer(this);
         sideMenu = new RecyclerListView(this) {
