@@ -957,6 +957,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         frameLayout.setClipToPadding(false);
         frameLayout.setClipChildren(false);
         setContentView(frameLayout);
+        AndroidUtilities.runOnUIThread(() -> StarsController.getInstance(currentAccount).maybeShowAppleDebtReminder(this));
         pipActivityController.addPipListener(new IPipActivityListener() {
             @Override
             public void onCompleteEnterToPip() {

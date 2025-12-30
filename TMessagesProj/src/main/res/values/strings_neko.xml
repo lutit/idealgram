@@ -40,6 +40,7 @@
     <string name="StickerSizeDialogMessageReplyTo">Meow</string>
     <string name="StickerSizeDialogName">Duang</string>
     <string name="Experimental">Experimental</string>
+    <string name="AppleMode">Apple mode</string>
     <string name="UnlimitedFavoredStickers">Unlimited Favored Stickers</string>
     <string name="UnlimitedFavoredStickersAbout">Add unlimited stickers to favorites. Stickers may not be synchronized to other devices.</string>
     <string name="MessageDetails">Details</string>

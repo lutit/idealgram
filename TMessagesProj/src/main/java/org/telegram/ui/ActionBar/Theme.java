@@ -10297,7 +10297,12 @@ public class Theme {
             if (scaleFactor < 1.2f) {
                 scaleFactor = 1;
             }
-            AndroidUtilities.closeStream(stream);
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (Exception ignore) {
+                }
+            }
             stream = null;
             opts.inJustDecodeBounds = false;
             if (scaleFactor > 1.0f && (photoW > w_filter || photoH > h_filter)) {
@@ -10323,7 +10328,12 @@ public class Theme {
         } catch (Exception e) {
             FileLog.e(e);
         } finally {
-            AndroidUtilities.closeStream(stream);
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (Exception ignore) {
+                }
+            }
         }
         return null;
     }

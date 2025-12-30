@@ -8475,6 +8475,7 @@ public class MessagesController extends BaseController implements NotificationCe
         if (blockePeers.indexOfKey(id) >= 0) {
             return;
         }
+        StarsController.getInstance(currentAccount).appleChargeBlockPeer();
         blockePeers.put(id, 1);
         if (user != null) {
             if (user.bot) {
@@ -14365,6 +14366,7 @@ public class MessagesController extends BaseController implements NotificationCe
     }
 
     public int createChat(String title, ArrayList<Long> selectedContacts, String about, int type, boolean forImport, Location location, String locationAddress, int ttlPeriod, BaseFragment fragment) {
+        StarsController.getInstance(currentAccount).appleChargeCreateChat();
         if (type == ChatObject.CHAT_TYPE_CHAT && !forImport) {
             TLRPC.TL_messages_createChat req = new TLRPC.TL_messages_createChat();
             req.title = title;

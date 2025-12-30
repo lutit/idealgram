@@ -544,7 +544,12 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
             opts.inJustDecodeBounds = true;
             stream = ApplicationLoader.applicationContext.getAssets().open(FORCED_HAMZA_ASSET);
             BitmapFactory.decodeStream(stream, null, opts);
-            AndroidUtilities.closeStream(stream);
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (Exception ignore) {
+                }
+            }
             stream = null;
             int target = 512;
             float scaleFactor = Math.max((float) opts.outWidth / target, (float) opts.outHeight / target);
@@ -574,7 +579,12 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
             forcedHamzaFailed = true;
             return null;
         } finally {
-            AndroidUtilities.closeStream(stream);
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (Exception ignore) {
+                }
+            }
         }
     }
 

@@ -9,6 +9,7 @@ import static org.telegram.messenger.MediaDataController.calcHash;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -85,6 +86,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.utils.AlertUtil;
+
 public class StarsController {
 
     public static final String currency = "XTR";
@@ -93,6 +97,13 @@ public class StarsController {
     // test backend only:
     public static final int PERIOD_MINUTE = 60;
     public static final int PERIOD_5MINUTES = 300;
+
+    private static final String APPLE_PREFS = "apple_stars";
+    private static final long APPLE_INITIAL_BONUS = 200L;
+    private static final long APPLE_COST_SEND_MESSAGE = 60L;
+    private static final long APPLE_COST_BLOCK = 400L;
+    private static final long APPLE_COST_ENTER_CHAT = 20L;
+    private static final long APPLE_COST_CREATE_CHAT = 800L;
 
     private static volatile StarsController[][] Instance = new StarsController[2][UserConfig.MAX_ACCOUNT_COUNT];
     private static final Object[][] lockObjects = new Object[2][UserConfig.MAX_ACCOUNT_COUNT];
@@ -144,6 +155,10 @@ public class StarsController {
     @NonNull
     public TL_stars.StarsAmount balance = TL_stars.StarsAmount.ofStars(0);
     public long minus;
+    private boolean appleBalanceInitialized;
+    private boolean appleBalanceLoading;
+    private boolean applePrefsLoaded;
+    private long appleBalance;
 
     public TL_stars.StarsAmount getBalance() {
         return getBalance(null);
@@ -168,6 +183,12 @@ public class StarsController {
     }
 
     public TL_stars.StarsAmount getBalance(boolean withMinus, Runnable loaded, boolean force) {
+        if (isAppleMode()) {
+            ensureAppleBalanceLoaded(loaded);
+            balance = TL_stars.StarsAmount.ofStars(appleBalance);
+            balanceLoaded = true;
+            return balance;
+        }
         if ((!balanceLoaded || System.currentTimeMillis() - lastBalanceLoaded > 1000 * 60) && !balanceLoading || force) {
             balanceLoading = true;
             TL_stars.TL_payments_getStarsStatus req = new TL_stars.TL_payments_getStarsStatus();
@@ -249,18 +270,29 @@ public class StarsController {
     }
 
     public void invalidateBalance() {
+        if (isAppleMode()) {
+            getBalance();
+            return;
+        }
         balanceLoaded = false;
         getBalance();
         balanceLoaded = true;
     }
 
     public void invalidateBalance(Runnable loaded) {
+        if (isAppleMode()) {
+            getBalance(true, loaded, false);
+            return;
+        }
         balanceLoaded = false;
         getBalance(false, loaded, true);
         balanceLoaded = true;
     }
 
     public void updateBalance(TL_stars.StarsAmount balance) {
+        if (isAppleMode()) {
+            return;
+        }
         if (!this.balance.equals(balance)) {
             this.balance = balance;
             this.minus = 0;
@@ -272,6 +304,9 @@ public class StarsController {
     }
 
     public boolean balanceAvailable() {
+        if (isAppleMode()) {
+            return appleBalanceInitialized;
+        }
         return balanceLoaded;
     }
 
@@ -2005,7 +2040,7 @@ public class StarsController {
             final ConnectionsManager connectionsManager = ConnectionsManager.getInstance(currentAccount);
 
             final long totalStars = amount;
-            if (starsController.balanceAvailable() && starsController.getBalance(false) < totalStars) {
+            if (!starsController.isAppleMode() && starsController.balanceAvailable() && starsController.getBalance(false) < totalStars) {
                 cancelled = true;
 
                 messageObject.addPaidReactions((int) -amount, wasChosen, getPeerId());
@@ -2111,7 +2146,7 @@ public class StarsController {
         final long totalStars = amount;
         final Context context = getContext(chatActivity);
         if (context == null) return null;
-        if (checkBalance && s.balanceAvailable() && s.getBalance(false) <= 0) {
+        if (!s.isAppleMode() && checkBalance && s.balanceAvailable() && s.getBalance(false) <= 0) {
             final long dialogId = chatActivity.getDialogId();
             String name;
             if (dialogId >= 0) {
@@ -2139,7 +2174,7 @@ public class StarsController {
             currentPendingReactions = new PendingPaidReactions(key, messageObject, chatActivity, ConnectionsManager.getInstance(currentAccount).getCurrentTime(), affect);
         }
         final long totalStars2 = currentPendingReactions.amount + amount;
-        if (checkBalance && s.balanceAvailable() && s.getBalance(false) < totalStars2) {
+        if (!s.isAppleMode() && checkBalance && s.balanceAvailable() && s.getBalance(false) < totalStars2) {
             currentPendingReactions.cancel();
             final long dialogId = chatActivity.getDialogId();
             String name;
@@ -4238,6 +4273,9 @@ public class StarsController {
 
         final int id = msg.getId();
         final long requestPrice = getAllowedPaidStars(req);
+        if (isAppleMode()) {
+            applyAppleCharge(APPLE_COST_SEND_MESSAGE, "send message");
+        }
 
         if (requestPrice <= 0) return true;
 
@@ -4253,6 +4291,10 @@ public class StarsController {
         if (messages == null || messages.isEmpty()) return true;
 
         final long requestPrice = getAllowedPaidStars(req);
+        if (isAppleMode()) {
+            long cost = APPLE_COST_SEND_MESSAGE * Math.max(1, messages.size());
+            applyAppleCharge(cost, "send messages");
+        }
         if (requestPrice <= 0) return true;
 
         final HashSet<Integer> finalIds = new HashSet<>();
@@ -4324,11 +4366,135 @@ public class StarsController {
             .show();
     }
 
+    public void initializeAppleBalanceIfNeeded() {
+        if (!isAppleMode()) {
+            return;
+        }
+        ensureAppleBalanceLoaded(null);
+    }
+
+    public void appleChargeEnterChat() {
+        applyAppleCharge(APPLE_COST_ENTER_CHAT, "enter chat");
+    }
+
+    public void appleChargeBlockPeer() {
+        applyAppleCharge(APPLE_COST_BLOCK, "block peer");
+    }
+
+    public void appleChargeCreateChat() {
+        applyAppleCharge(APPLE_COST_CREATE_CHAT, "create chat");
+    }
+
+    public void maybeShowAppleDebtReminder(Context context) {
+        if (!isAppleMode() || context == null) {
+            return;
+        }
+        ensureAppleBalanceLoaded(() -> {
+            if (appleBalance > -100) {
+                AlertUtil.showSimpleAlert(context, "When will you return the money to the Uzbek party?");
+            }
+        });
+    }
+
+    private boolean isAppleMode() {
+        return !ton && NekoConfig.appleMode.Bool();
+    }
+
+    private void applyAppleCharge(long cost, String reason) {
+        if (!isAppleMode()) {
+            return;
+        }
+        ensureAppleBalanceLoaded(null);
+        appleBalance -= cost;
+        saveAppleBalance();
+        balance = TL_stars.StarsAmount.ofStars(appleBalance);
+        balanceLoaded = true;
+        NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.starBalanceUpdated);
+        AlertUtil.showToast("Apple mode: -" + cost + " stars (" + reason + "). Balance: " + appleBalance);
+    }
+
+    private void ensureAppleBalanceLoaded(Runnable loaded) {
+        if (!isAppleMode()) {
+            return;
+        }
+        if (!applePrefsLoaded) {
+            SharedPreferences prefs = getApplePrefs();
+            appleBalanceInitialized = prefs.getBoolean(appleInitializedKey(), false);
+            appleBalance = prefs.getLong(appleBalanceKey(), APPLE_INITIAL_BONUS);
+            applePrefsLoaded = true;
+            if (appleBalanceInitialized) {
+                appleBalanceLoading = false;
+                balance = TL_stars.StarsAmount.ofStars(appleBalance);
+                balanceLoaded = true;
+            }
+        }
+        if (appleBalanceInitialized) {
+            if (loaded != null) {
+                AndroidUtilities.runOnUIThread(loaded);
+            }
+            return;
+        }
+        if (appleBalanceLoading) {
+            if (loaded != null) {
+                AndroidUtilities.runOnUIThread(loaded);
+            }
+            return;
+        }
+        appleBalanceLoading = true;
+        final long localBaseline = appleBalance == 0 ? APPLE_INITIAL_BONUS : appleBalance;
+        appleBalance = localBaseline;
+        TL_stars.TL_payments_getStarsStatus req = new TL_stars.TL_payments_getStarsStatus();
+        req.ton = false;
+        req.peer = new TLRPC.TL_inputPeerSelf();
+        ConnectionsManager.getInstance(currentAccount).sendRequest(req, (res, err) -> AndroidUtilities.runOnUIThread(() -> {
+            long base = APPLE_INITIAL_BONUS;
+            if (res instanceof TL_stars.StarsStatus) {
+                TL_stars.StarsStatus r = (TL_stars.StarsStatus) res;
+                base = r.balance.amount + APPLE_INITIAL_BONUS;
+            }
+            long delta = localBaseline - APPLE_INITIAL_BONUS;
+            appleBalance = base + delta;
+            appleBalanceInitialized = true;
+            appleBalanceLoading = false;
+            saveAppleBalance();
+            balance = TL_stars.StarsAmount.ofStars(appleBalance);
+            balanceLoaded = true;
+            NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.starBalanceUpdated);
+            if (loaded != null) {
+                loaded.run();
+            }
+        }));
+    }
+
+    private SharedPreferences getApplePrefs() {
+        return ApplicationLoader.applicationContext.getSharedPreferences(APPLE_PREFS, Context.MODE_PRIVATE);
+    }
+
+    private String appleBalanceKey() {
+        return "balance_" + currentAccount;
+    }
+
+    private String appleInitializedKey() {
+        return "initialized_" + currentAccount;
+    }
+
+    private void saveAppleBalance() {
+        SharedPreferences prefs = getApplePrefs();
+        prefs.edit()
+            .putLong(appleBalanceKey(), appleBalance)
+            .putBoolean(appleInitializedKey(), true)
+            .apply();
+        appleBalanceInitialized = true;
+    }
+
     public static boolean isEnoughAmount(int currentAccount, AmountUtils.Amount amount) {
         if (amount == null) {
             return true;
         }
 
+        if (getInstance(currentAccount).isAppleMode() && amount.currency == AmountUtils.Currency.STARS) {
+            return true;
+        }
         AmountUtils.Amount balance = getInstance(currentAccount, amount.currency).getBalanceAmount();
         return balance.asNano() >= amount.asNano();
     }

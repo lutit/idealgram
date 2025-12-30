@@ -458,6 +458,7 @@ public class ChatActivity extends BaseFragment implements
     protected TLRPC.User currentUser;
     protected TLRPC.EncryptedChat currentEncryptedChat;
     private boolean userBlocked;
+    private boolean appleEnterCharged;
 
     private long chatInviterId;
 
@@ -30279,6 +30280,10 @@ public class ChatActivity extends BaseFragment implements
     @Override
     public void onResume() {
         super.onResume();
+        if (!appleEnterCharged) {
+            appleEnterCharged = true;
+            StarsController.getInstance(currentAccount).appleChargeEnterChat();
+        }
         cachedIsGestureNavigation = AndroidUtil.isGestureNavigation(getContext());
         checkShowBlur(false);
         activityResumeTime = System.currentTimeMillis();
