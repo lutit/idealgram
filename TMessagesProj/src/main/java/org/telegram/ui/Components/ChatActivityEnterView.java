@@ -3458,6 +3458,9 @@ public class ChatActivityEnterView extends FrameLayout implements
     }
 
     public long getStarsPrice() {
+        if (StarsController.isAppleModeEnabled()) {
+            return StarsController.getAppleCostSendMessage();
+        }
         return parentFragment != null ?
                 parentFragment.getMessagesController().getSendPaidMessagesStars(parentFragment.getDialogId()) :
                 MessagesController.getInstance(currentAccount).getSendPaidMessagesStars(dialog_id);

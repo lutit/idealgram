@@ -6382,6 +6382,13 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         }
     }
 
+    private String applePriceSuffix(long price) {
+        if (StarsController.isAppleModeEnabled()) {
+            return " (" + StarsController.formatApplePrice(price) + ")";
+        }
+        return "";
+    }
+
     private void onBlockContactClicked(boolean fromActions) {
         TLRPC.User user = getMessagesController().getUser(userId);
         if (user == null) {
@@ -6407,9 +6414,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }, resourcesProvider);
                 } else {
                     AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), resourcesProvider);
-                    builder.setTitle(LocaleController.getString(R.string.BlockUser));
+                    builder.setTitle(LocaleController.getString(R.string.BlockUser) + applePriceSuffix(StarsController.getAppleCostBlock()));
                     builder.setMessage(AndroidUtilities.replaceTags(formatString("AreYouSureBlockContact2", R.string.AreYouSureBlockContact2, ContactsController.formatName(user.first_name, user.last_name))));
-                    builder.setPositiveButton(LocaleController.getString(R.string.BlockContact), (dialogInterface, i) -> {
+                    builder.setPositiveButton(LocaleController.getString(R.string.BlockContact) + applePriceSuffix(StarsController.getAppleCostBlock()), (dialogInterface, i) -> {
                         getMessagesController().blockPeer(userId);
                         if (BulletinFactory.canShowBulletin(ProfileActivity.this)) {
                             BulletinFactory.createBanBulletin(ProfileActivity.this, true).show();
@@ -6460,9 +6467,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 createActionBarMenu(true);
             } else {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), resourcesProvider);
-                builder.setTitle(getString(R.string.BlockChannel));
+                builder.setTitle(getString(R.string.BlockChannel) + applePriceSuffix(StarsController.getAppleCostBlock()));
                 builder.setMessage(AndroidUtilities.replaceTags(formatString(R.string.AreYouSureBlockContact2, chat.title)));
-                builder.setPositiveButton(LocaleController.getString(R.string.Block), (dialogInterface, i) -> {
+                builder.setPositiveButton(LocaleController.getString(R.string.Block) + applePriceSuffix(StarsController.getAppleCostBlock()), (dialogInterface, i) -> {
                     AyuFilter.blockPeer(-chatId);
                     channelBlocked = true;
                     if (BulletinFactory.canShowBulletin(ProfileActivity.this)) {
@@ -12659,12 +12666,13 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             otherItem.addSubItem(clear_cache, R.drawable.msg_delete, getString(R.string.ClearCache));
                             otherItem.addSubItem(report, R.drawable.msg_report, LocaleController.getString(R.string.ReportBot)).setColors(getThemedColor(Theme.key_text_RedRegular), getThemedColor(Theme.key_text_RedRegular));
                             if (!userBlocked) {
-                                otherItem.addSubItem(block_contact, R.drawable.msg_block2, LocaleController.getString(R.string.DeleteAndBlock)).setColors(getThemedColor(Theme.key_text_RedRegular), getThemedColor(Theme.key_text_RedRegular));
+                                otherItem.addSubItem(block_contact, R.drawable.msg_block2, LocaleController.getString(R.string.DeleteAndBlock) + applePriceSuffix(StarsController.getAppleCostBlock()))
+                                    .setColors(getThemedColor(Theme.key_text_RedRegular), getThemedColor(Theme.key_text_RedRegular));
                             } else {
                                 otherItem.addSubItem(block_contact, R.drawable.msg_retry, LocaleController.getString(R.string.BotRestart));
                             }
                         } else {
-                            otherItem.addSubItem(block_contact, !userBlocked ? R.drawable.msg_block : R.drawable.msg_block, !userBlocked ? LocaleController.getString(R.string.BlockContact) : LocaleController.getString(R.string.Unblock));
+                            otherItem.addSubItem(block_contact, !userBlocked ? R.drawable.msg_block : R.drawable.msg_block, !userBlocked ? LocaleController.getString(R.string.BlockContact) + applePriceSuffix(StarsController.getAppleCostBlock()) : LocaleController.getString(R.string.Unblock));
                         }
                     }
                 } else {
@@ -12676,7 +12684,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     if (!TextUtils.isEmpty(user.phone)) {
                         otherItem.addSubItem(share_contact, R.drawable.msg_share, LocaleController.getString(R.string.ShareContact));
                     }
-                    otherItem.addSubItem(block_contact, !userBlocked ? R.drawable.msg_block : R.drawable.msg_block, !userBlocked ? LocaleController.getString(R.string.BlockContact) : LocaleController.getString(R.string.Unblock));
+                    otherItem.addSubItem(block_contact, !userBlocked ? R.drawable.msg_block : R.drawable.msg_block, !userBlocked ? LocaleController.getString(R.string.BlockContact) + applePriceSuffix(StarsController.getAppleCostBlock()) : LocaleController.getString(R.string.Unblock));
                     otherItem.addSubItem(edit_contact, R.drawable.msg_edit, LocaleController.getString(R.string.EditContact));
                     otherItem.addSubItem(delete_contact, R.drawable.msg_delete, LocaleController.getString(R.string.DeleteContact));
                 }
@@ -12762,7 +12770,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     if (NekoConfig.channelAlias.Bool()){
                         otherItem.addSubItem(aliasChannelName, R.drawable.profile_admin, getString( R.string.setChannelAliasName));
                     }
-                    otherItem.addSubItem(block_channel, R.drawable.msg_block, !channelBlocked ? getString(R.string.BlockChannel) : getString(R.string.UnblockChannel));
+                    otherItem.addSubItem(block_channel, R.drawable.msg_block, !channelBlocked ? getString(R.string.BlockChannel) + applePriceSuffix(StarsController.getAppleCostBlock()) : getString(R.string.UnblockChannel));
                     if (!BuildVars.IS_BILLING_UNAVAILABLE && !getMessagesController().premiumPurchaseBlocked()) {
                         StarsController.getInstance(currentAccount).loadStarGifts();
                         otherItem.addSubItem(gift_premium, R.drawable.msg_gift_premium, LocaleController.getString(R.string.ProfileSendAGiftToChannel));

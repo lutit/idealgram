@@ -30,6 +30,7 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.text.InputFilter;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,6 +38,7 @@ import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -79,6 +81,7 @@ import org.telegram.ui.Components.RadialProgressView;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.SizeNotifierFrameLayout;
 import org.telegram.ui.Components.VerticalPositionAutoAnimator;
+import org.telegram.ui.Stars.StarsController;
 
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -99,6 +102,7 @@ public class GroupCreateFinalActivity extends BaseFragment implements Notificati
     private FrameLayout editTextContainer;
     private ImageView floatingButtonIcon;
     private FrameLayout floatingButtonContainer;
+    private TextView applePriceView;
     ActionBarPopupWindow popupWindow;
 
     private Drawable shadowDrawable;
@@ -689,6 +693,15 @@ public class GroupCreateFinalActivity extends BaseFragment implements Notificati
         }
         VerticalPositionAutoAnimator.attach(floatingButtonContainer);
         sizeNotifierFrameLayout.addView(floatingButtonContainer, LayoutHelper.createFrame(Build.VERSION.SDK_INT >= 21 ? 56 : 60, Build.VERSION.SDK_INT >= 21 ? 56 : 60, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.BOTTOM, LocaleController.isRTL ? 14 : 0, 0, LocaleController.isRTL ? 0 : 14, 14));
+        if (StarsController.isAppleModeEnabled()) {
+            applePriceView = new TextView(context);
+            applePriceView.setText(StarsController.formatApplePrice(StarsController.getAppleCostCreateChat()));
+            applePriceView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
+            applePriceView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+            applePriceView.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(12), Theme.getColor(Theme.key_windowBackgroundWhite)));
+            applePriceView.setPadding(AndroidUtilities.dp(6), AndroidUtilities.dp(2), AndroidUtilities.dp(6), AndroidUtilities.dp(2));
+            sizeNotifierFrameLayout.addView(applePriceView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.BOTTOM, LocaleController.isRTL ? 14 : 0, 0, LocaleController.isRTL ? 0 : 14, 76));
+        }
         floatingButtonContainer.setOnClickListener(view -> {
             if (donePressed) {
                 return;

@@ -105,6 +105,30 @@ public class StarsController {
     private static final long APPLE_COST_ENTER_CHAT = 20L;
     private static final long APPLE_COST_CREATE_CHAT = 800L;
 
+    public static boolean isAppleModeEnabled() {
+        return NekoConfig.appleMode.Bool();
+    }
+
+    public static long getAppleCostSendMessage() {
+        return APPLE_COST_SEND_MESSAGE;
+    }
+
+    public static long getAppleCostBlock() {
+        return APPLE_COST_BLOCK;
+    }
+
+    public static long getAppleCostEnterChat() {
+        return APPLE_COST_ENTER_CHAT;
+    }
+
+    public static long getAppleCostCreateChat() {
+        return APPLE_COST_CREATE_CHAT;
+    }
+
+    public static String formatApplePrice(long price) {
+        return price + " XTR";
+    }
+
     private static volatile StarsController[][] Instance = new StarsController[2][UserConfig.MAX_ACCOUNT_COUNT];
     private static final Object[][] lockObjects = new Object[2][UserConfig.MAX_ACCOUNT_COUNT];
     static {

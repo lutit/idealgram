@@ -88,6 +88,7 @@ import org.telegram.ui.Components.RLottieImageView;
 import org.telegram.ui.Components.RadialProgressView;
 import org.telegram.ui.Components.SizeNotifierFrameLayout;
 import org.telegram.ui.Components.TypefaceSpan;
+import org.telegram.ui.Stars.StarsController;
 
 import java.util.ArrayList;
 
@@ -95,6 +96,7 @@ public class ChannelCreateActivity extends BaseFragment implements NotificationC
 
     private View doneButton;
     private CrossfadeDrawable doneButtonDrawable;
+    private TextView applePriceView;
     private EditTextEmoji nameTextView;
     private ShadowSectionCell sectionCell;
     private BackupImageView avatarImage;
@@ -408,6 +410,15 @@ public class ChannelCreateActivity extends BaseFragment implements NotificationC
         checkmark.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultIcon), PorterDuff.Mode.MULTIPLY));
         doneButtonDrawable = new CrossfadeDrawable(checkmark, new CircularProgressDrawable(Theme.getColor(Theme.key_actionBarDefaultIcon)));
         doneButton = menu.addItemWithWidth(done_button, doneButtonDrawable, AndroidUtilities.dp(56), LocaleController.getString(R.string.Done));
+        if (StarsController.isAppleModeEnabled()) {
+            applePriceView = new TextView(context);
+            applePriceView.setText(StarsController.formatApplePrice(StarsController.getAppleCostCreateChat()));
+            applePriceView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
+            applePriceView.setTextColor(Theme.getColor(Theme.key_actionBarDefaultTitle));
+            applePriceView.setBackground(Theme.createRoundRectDrawable(AndroidUtilities.dp(12), Theme.getColor(Theme.key_actionBarDefault)));
+            applePriceView.setPadding(AndroidUtilities.dp(6), AndroidUtilities.dp(2), AndroidUtilities.dp(6), AndroidUtilities.dp(2));
+            actionBar.addView(applePriceView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, (LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT) | Gravity.CENTER_VERTICAL, LocaleController.isRTL ? 64 : 0, 0, LocaleController.isRTL ? 0 : 64, 0));
+        }
 
         if (currentStep == 0) {
             actionBar.setTitle(LocaleController.getString(R.string.NewChannel));

@@ -118,6 +118,7 @@ import org.telegram.ui.Components.TypefaceSpan;
 import org.telegram.ui.Components.URLSpanNoUnderline;
 import org.telegram.ui.Components.URLSpanNoUnderlineBold;
 import org.telegram.ui.Components.VectorAvatarThumbDrawable;
+import org.telegram.ui.Stars.StarsController;
 import org.telegram.ui.Components.spoilers.SpoilerEffect;
 import org.telegram.ui.DialogsActivity;
 import org.telegram.ui.FilterCreateActivity;
@@ -553,6 +554,9 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
     private int timeLeft;
     private int timeTop;
     private StaticLayout timeLayout;
+    private StaticLayout appleEnterPriceLayout;
+    private int appleEnterPriceLeft;
+    private int appleEnterPriceTop;
 
     private int lock2Left;
 
@@ -2143,10 +2147,20 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
             } else {
                 timeLeft = dp(15);
             }
+            if (StarsController.isAppleModeEnabled() && currentDialogFolderId == 0) {
+                String priceText = StarsController.formatApplePrice(StarsController.getAppleCostEnterChat());
+                int priceWidth = (int) Math.ceil(Theme.dialogs_timePaint.measureText(priceText));
+                appleEnterPriceLayout = new StaticLayout(priceText, Theme.dialogs_timePaint, priceWidth, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+                appleEnterPriceLeft = LocaleController.isRTL ? timeLeft : timeLeft + Math.max(0, timeWidth - priceWidth);
+                appleEnterPriceTop = timeTop + timeLayout.getHeight() + dp(2);
+            } else {
+                appleEnterPriceLayout = null;
+            }
         } else {
             timeWidth = 0;
             timeLayout = null;
             timeLeft = 0;
+            appleEnterPriceLayout = null;
         }
 
         int timeLeftOffset = 0;
@@ -4033,6 +4047,12 @@ public class DialogCell extends BaseCell implements StoriesListPlaceProvider.Ava
                 canvas.save();
                 canvas.translate(timeLeft, timeTop);
                 SpoilerEffect.layoutDrawMaybe(timeLayout, canvas);
+                canvas.restore();
+            }
+            if (appleEnterPriceLayout != null && currentDialogFolderId == 0) {
+                canvas.save();
+                canvas.translate(appleEnterPriceLeft, appleEnterPriceTop);
+                appleEnterPriceLayout.draw(canvas);
                 canvas.restore();
             }
 
