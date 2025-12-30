@@ -60,6 +60,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.util.Base64;
+import android.util.LongSparseIntArray;
 import android.util.SparseIntArray;
 import android.view.ActionMode;
 import android.view.Gravity;
@@ -337,6 +338,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private ChaosOverlay chaosOverlay;
     private UspdmpshmOverlay uspdmpshmOverlay;
     private ShamalaFlyerOverlay shamalaFlyerOverlay;
+    private final LongSparseIntArray closeDmKnownDialogs = new LongSparseIntArray();
+    private boolean closeDmTrackingReady;
     private BottomSheetTabsOverlay bottomSheetTabsOverlay;
     public DrawerLayoutContainer drawerLayoutContainer;
     private DrawerLayoutAdapter drawerLayoutAdapter;
@@ -566,6 +569,58 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             shamalaFlyerOverlay.start();
         } else {
             shamalaFlyerOverlay.stop();
+        }
+    }
+
+    private void resetCloseDmTracking() {
+        closeDmTrackingReady = false;
+        closeDmKnownDialogs.clear();
+    }
+
+    private void maybeInitCloseDmTracking() {
+        if (!NekoConfig.closeDmsFromAll.Bool()) {
+            resetCloseDmTracking();
+            return;
+        }
+        MessagesController messagesController = MessagesController.getInstance(currentAccount);
+        if (!messagesController.dialogsLoaded || closeDmTrackingReady) {
+            return;
+        }
+        closeDmKnownDialogs.clear();
+        long selfId = UserConfig.getInstance(currentAccount).getClientUserId();
+        ArrayList<TLRPC.Dialog> dialogs = messagesController.getDialogs(0);
+        for (int i = 0; i < dialogs.size(); i++) {
+            long dialogId = dialogs.get(i).id;
+            if (DialogObject.isUserDialog(dialogId) && dialogId != selfId) {
+                closeDmKnownDialogs.put(dialogId, 1);
+            }
+        }
+        closeDmTrackingReady = true;
+    }
+
+    private void handleCloseDmsFromAll() {
+        if (!NekoConfig.closeDmsFromAll.Bool()) {
+            if (closeDmTrackingReady) {
+                resetCloseDmTracking();
+            }
+            return;
+        }
+        maybeInitCloseDmTracking();
+        if (!closeDmTrackingReady) {
+            return;
+        }
+        MessagesController messagesController = MessagesController.getInstance(currentAccount);
+        long selfId = UserConfig.getInstance(currentAccount).getClientUserId();
+        ArrayList<TLRPC.Dialog> dialogs = messagesController.getDialogs(0);
+        for (int i = 0; i < dialogs.size(); i++) {
+            long dialogId = dialogs.get(i).id;
+            if (!DialogObject.isUserDialog(dialogId) || dialogId == selfId) {
+                continue;
+            }
+            if (closeDmKnownDialogs.indexOfKey(dialogId) >= 0) {
+                continue;
+            }
+            messagesController.deleteDialog(dialogId, 0);
         }
     }
 
@@ -2228,8 +2283,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.currentUserPremiumStatusChanged);
             NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.chatSwitchedForum);
             NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.storiesEnabledUpdate);
+            NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.dialogsNeedReload);
+            NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.dialogsNeedReload);
         }
         currentAccount = UserConfig.selectedAccount;
+        resetCloseDmTracking();
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.openBoostForUsersDialog);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.appDidLogout);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.mainUserInfoChanged);
@@ -2251,6 +2309,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.currentUserPremiumStatusChanged);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.chatSwitchedForum);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.storiesEnabledUpdate);
+        NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.dialogsNeedReload);
     }
 
     private void checkLayout() {
@@ -7382,6 +7441,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.newSuggestionsAvailable);
             NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.currentUserShowLimitReachedDialog);
             NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.currentUserPremiumStatusChanged);
+            NotificationCenter.getInstance(currentAccount).removeObserver(this, NotificationCenter.dialogsNeedReload);
         }
 
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.needShowAlert);
@@ -7806,6 +7866,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         } else {
             maybeShowUspdmpshmOffer();
         }
+        handleCloseDmsFromAll();
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
             onResumeStaticCallback.run();
@@ -8006,6 +8067,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     public void didReceivedNotification(int id, final int account, Object... args) {
         if (id == NotificationCenter.appDidLogout) {
             switchToAvailableAccountOrLogout();
+        } else if (id == NotificationCenter.dialogsNeedReload) {
+            handleCloseDmsFromAll();
         } else if (id == NotificationCenter.openBoostForUsersDialog) {
             long dialogId = (long) args[0];
             ChatMessageCell chatMessageCell = null;

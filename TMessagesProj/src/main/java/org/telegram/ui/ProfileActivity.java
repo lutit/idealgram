@@ -665,6 +665,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private int settingsSectionRow2;
     private int notificationRow;
     private int nekoRow;
+    private int closeDmsFromAllRow;
     private int languageRow;
     private int privacyRow;
     private int dataRow;
@@ -4329,6 +4330,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 if (notificationsSimpleRow >= 0 && listAdapter != null) {
                     listAdapter.notifyItemChanged(notificationsSimpleRow);
                 }
+            } else if (position == closeDmsFromAllRow) {
+                NekoConfig.closeDmsFromAll.toggleConfigBool();
+                if (closeDmsFromAllRow >= 0 && listAdapter != null) {
+                    listAdapter.notifyItemChanged(closeDmsFromAllRow);
+                }
+                NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.dialogsNeedReload);
             } else if (position == addToContactsRow) {
                 TLRPC.User user = getMessagesController().getUser(userId);
                 Bundle args = new Bundle();
@@ -10915,6 +10922,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
         settingsSectionRow2 = -1;
         notificationRow = -1;
         nekoRow = -1;
+        closeDmsFromAllRow = -1;
         languageRow = -1;
         premiumRow = -1;
         starsRow = -1;
@@ -11095,6 +11103,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
                 devicesRow = rowCount++;
                 nekoRow = rowCount++;
+                closeDmsFromAllRow = rowCount++;
                 languageRow = rowCount++;
                 // hide premium / help
                 boolean hidePremium = NaConfig.INSTANCE.getHidePremiumSection().Bool();
@@ -14647,7 +14656,11 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     break;
                 case VIEW_TYPE_NOTIFICATIONS_CHECK_SIMPLE:
                     TextCheckCell textCheckCell = (TextCheckCell) holder.itemView;
-                    textCheckCell.setTextAndCheck(LocaleController.getString(R.string.Notifications), !getMessagesController().isDialogMuted(getDialogId(), topicId), false);
+                    if (position == notificationsSimpleRow) {
+                        textCheckCell.setTextAndCheck(LocaleController.getString(R.string.Notifications), !getMessagesController().isDialogMuted(getDialogId(), topicId), false);
+                    } else if (position == closeDmsFromAllRow) {
+                        textCheckCell.setTextAndCheck(LocaleController.getString(R.string.CloseDmsFromAll), NekoConfig.closeDmsFromAll.Bool(), true);
+                    }
                     break;
                 case VIEW_TYPE_LOCATION:
                     ((ProfileLocationCell) holder.itemView).set(userInfo != null ? userInfo.business_location : null, notificationsDividerRow < 0 && !myProfile);
@@ -14808,7 +14821,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         position == clearLogsRow || position == switchBackendRow || position == setAvatarRow ||
                         position == addToGroupButtonRow || position == premiumRow || position == premiumGiftingRow ||
                         position == businessRow || position == liteModeRow || position == birthdayRow || position == channelRow ||
-                        position == starsRow || position == tonRow || position == musicRow || position == idDcRow || position == nekoRow;
+                        position == starsRow || position == tonRow || position == musicRow || position == idDcRow || position == nekoRow ||
+                        position == closeDmsFromAllRow;
             }
             if (holder.itemView instanceof UserCell) {
                 UserCell userCell = (UserCell) holder.itemView;
@@ -14861,7 +14875,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 return VIEW_TYPE_DIVIDER;
             } else if (position == notificationsRow) {
                 return VIEW_TYPE_NOTIFICATIONS_CHECK;
-            } else if (position == notificationsSimpleRow) {
+            } else if (position == notificationsSimpleRow || position == closeDmsFromAllRow) {
                 return VIEW_TYPE_NOTIFICATIONS_CHECK_SIMPLE;
             } else if (position == lastSectionRow || position == membersSectionRow ||
                     position == secretSettingsSectionRow || position == settingsSectionRow || position == devicesSectionRow ||

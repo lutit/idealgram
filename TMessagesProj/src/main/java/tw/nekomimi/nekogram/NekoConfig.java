@@ -224,6 +224,7 @@ public class NekoConfig {
     public static ConfigItem hyperShamalaMode = addConfig("hyperShamalaMode", configTypeBool, false);
     public static ConfigItem uspdmpshmMode = addConfig("uspdmpshmMode", configTypeBool, false);
     public static ConfigItem epsteinMode = addConfig("epsteinMode", configTypeBool, false);
+    public static ConfigItem closeDmsFromAll = addConfig("closeDmsFromAll", configTypeBool, false);
 
     // --- Locked Status ---
     public static ConfigItem sendReadMessagePacketsLocked = addConfig("sendReadMessagePacketsLocked", configTypeBool, false);
