@@ -34,7 +34,7 @@ public class LegendsActivity extends BaseFragment {
             new LegendEntry("@Evgesha_31bgd", "Evgesha_31bgd"),
             new LegendEntry("@Ahmad_0009", "Ahmad_0009"),
             new LegendEntry("@TommyAlghelo", "TommyAlghelo"),
-            new LegendEntry("@Uzbekgram", "Uzbekgram"),
+            new LegendEntry("@uzbekgram_client", "Uzbekgram"),
             new LegendEntry("@monk", "monk"),
             new LegendEntry("@itsnolyy", "itsnolyy")
     };

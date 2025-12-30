@@ -11345,7 +11345,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     public static final int DIALOGS_TYPE_BOT_SELECT_VERIFY = 16;
 
     public static final String UZBEK_GPT_USERNAME = "Uzbek_GPTrobot";
-    public static final String IDEAL_GRAM_USERNAME = "Uzbekgram";
+    public static final String IDEAL_GRAM_USERNAME = "uzbekgram_client";
 
     private ArrayList<TLRPC.Dialog> botShareDialogs;
 
