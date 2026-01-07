@@ -17155,6 +17155,23 @@ public class MessagesStorage extends BaseController {
         return chat;
     }
 
+    private static boolean isNumericSearchQuery(String value) {
+        if (TextUtils.isEmpty(value)) {
+            return false;
+        }
+        int start = value.charAt(0) == '-' ? 1 : 0;
+        if (start == value.length()) {
+            return false;
+        }
+        for (int i = start; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (ch < '0' || ch > '9') {
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     public void localSearch(int dialogsType, String query, ArrayList<Object> resultArray, ArrayList<CharSequence> resultArrayNames, ArrayList<TLRPC.User> encUsers, ArrayList<Long> onlyDialogIds, int folderId) {
         long selfUserId = UserConfig.getInstance(currentAccount).getClientUserId();
@@ -17176,6 +17193,19 @@ public class MessagesStorage extends BaseController {
             search[0] = search1;
             if (search2 != null) {
                 search[1] = search2;
+            }
+            long[] searchIds = new long[search.length];
+            boolean[] searchIdsValid = new boolean[search.length];
+            for (int i = 0; i < search.length; i++) {
+                String q = search[i];
+                if (isNumericSearchQuery(q)) {
+                    try {
+                        searchIds[i] = Long.parseLong(q);
+                        searchIdsValid[i] = true;
+                    } catch (Exception ignore) {
+                        searchIdsValid[i] = false;
+                    }
+                }
             }
 
             ArrayList<Long> usersToLoad = new ArrayList<>();
@@ -17267,19 +17297,20 @@ public class MessagesStorage extends BaseController {
                         username = name.substring(usernamePos + 3);
                     }
                     int found = 0;
-                    int uid = cursor.intValue(3);
-                    for (String q : search) {
+                    long uid = cursor.longValue(3);
+                    for (int i = 0; i < search.length; i++) {
+                        String q = search[i];
                         if (name.startsWith(q) || name.contains(" " + q) || tName != null && (tName.startsWith(q) || tName.contains(" " + q))) {
                             found = 1;
                         } else if (username != null && username.startsWith(q)) {
                             found = 2;
                         } else {
-                            try {
-                                int qInt = Integer.parseInt(q);
-                                if (qInt == uid || q.length() > 3 && String.valueOf(uid).contains(q)) {
+                            if (searchIdsValid[i]) {
+                                long qLong = searchIds[i];
+                                if (qLong == uid || q.length() > 3 && String.valueOf(uid).contains(q)) {
                                     found = 3;
                                 }
-                            } catch (NumberFormatException ignored) {}
+                            }
                         }
                         if (found != 0) {
                             NativeByteBuffer data = cursor.byteBufferValue(0);
@@ -17319,24 +17350,54 @@ public class MessagesStorage extends BaseController {
                     if (name.equals(tName)) {
                         tName = null;
                     }
-                    int chatId = cursor.intValue(2);
-                    for (String q : search) {
+                    long chatId = cursor.longValue(2);
+                    String chatIdStr = String.valueOf(chatId);
+                    String negChatIdStr = String.valueOf(-chatId);
+                    for (int i = 0; i < search.length; i++) {
+                        String q = search[i];
                         int found = 0;
+                        String matchedId = null;
+                        boolean checkBotApiId = false;
                         if (name.startsWith(q) || name.contains(" " + q) || tName != null && (tName.startsWith(q) || tName.contains(" " + q))) {
                             found = 1;
-                        } else {
-                            try {
-                                int qInt = Integer.parseInt(q);
-                                if (qInt == chatId || q.length() > 3 && String.valueOf(chatId).contains(q)) {
+                        } else if (searchIdsValid[i]) {
+                            long qLong = searchIds[i];
+                            if (qLong == chatId) {
+                                found = 2;
+                                matchedId = chatIdStr;
+                            } else if (qLong == -chatId) {
+                                found = 2;
+                                matchedId = negChatIdStr;
+                            } else if (q.length() > 3) {
+                                if (chatIdStr.contains(q)) {
                                     found = 2;
+                                    matchedId = chatIdStr;
+                                } else if (negChatIdStr.contains(q)) {
+                                    found = 2;
+                                    matchedId = negChatIdStr;
                                 }
-                            } catch (NumberFormatException ignored) {}
+                            }
+                            if (found == 0 && q.startsWith("-100")) {
+                                checkBotApiId = true;
+                            }
                         }
-                        if (found > 0) {
+                        if (found > 0 || checkBotApiId) {
                             NativeByteBuffer data = cursor.byteBufferValue(0);
                             if (data != null) {
                                 TLRPC.Chat chat = TLRPC.Chat.TLdeserialize(data, data.readInt32(false), false);
                                 data.reuse();
+                                if (found == 0 && checkBotApiId && ChatObject.isChannel(chat)) {
+                                    long botApiId = -1000000000000L - chat.id;
+                                    String botApiIdStr = String.valueOf(botApiId);
+                                    long qLong = searchIds[i];
+                                    if (qLong == botApiId || q.length() > 3 && botApiIdStr.contains(q)) {
+                                        found = 2;
+                                        matchedId = botApiIdStr;
+                                    }
+                                }
+                                if (found == 0) {
+                                    continue;
+                                }
                                 if (dialogsType == DialogsActivity.DIALOGS_TYPE_BOT_REQUEST_PEER && (onlyDialogIds == null || !onlyDialogIds.contains(-chat.id))) {
                                     continue;
                                 }
@@ -17358,9 +17419,11 @@ public class MessagesStorage extends BaseController {
                                         tName = null;
                                     }
 
-                                    boolean ok = name.startsWith(q) || name.contains(" " + q) || tName != null && (tName.startsWith(q) || tName.contains(" " + q));
-                                    if (!ok) {
-                                        continue;
+                                    if (found == 1) {
+                                        boolean ok = name.startsWith(q) || name.contains(" " + q) || tName != null && (tName.startsWith(q) || tName.contains(" " + q));
+                                        if (!ok) {
+                                            continue;
+                                        }
                                     }
                                 }
 
@@ -17370,7 +17433,10 @@ public class MessagesStorage extends BaseController {
                                     if (found == 1) {
                                         dialogSearchResult.name = AndroidUtilities.generateSearchName(chat.monoforum ? ForumUtilities.getMonoForumTitle(currentAccount, chat):chat.title, null, q);
                                     } else {
-                                        dialogSearchResult.name = AndroidUtilities.generateSearchName("ID: " + chatId, null, q);
+                                        if (matchedId == null) {
+                                            matchedId = chatIdStr;
+                                        }
+                                        dialogSearchResult.name = AndroidUtilities.generateSearchName("ID: " + matchedId, null, q);
                                     }
                                     dialogSearchResult.object = chat;
                                     resultCount++;
@@ -17408,12 +17474,12 @@ public class MessagesStorage extends BaseController {
                         } else if (username != null && username.startsWith(q)) {
                             found = 2;
                         } else {
-                            try {
-                                int qInt = Integer.parseInt(q);
-                                if (qInt == user_id || q.length() > 3 && String.valueOf(user_id).contains(q)) {
+                            if (searchIdsValid[a]) {
+                                long qLong = searchIds[a];
+                                if (qLong == user_id || q.length() > 3 && String.valueOf(user_id).contains(q)) {
                                     found = 3;
                                 }
-                            } catch (NumberFormatException ignored) {}
+                            }
                         }
 
                         if (found != 0) {
@@ -17519,18 +17585,19 @@ public class MessagesStorage extends BaseController {
                         username = name.substring(usernamePos + 3);
                     }
                     int found = 0;
-                    for (String q : search) {
+                    for (int i = 0; i < search.length; i++) {
+                        String q = search[i];
                         if (name.startsWith(q) || name.contains(" " + q) || tName != null && (tName.startsWith(q) || tName.contains(" " + q))) {
                             found = 1;
                         } else if (username != null && username.startsWith(q)) {
                             found = 2;
                         } else {
-                            try {
-                                int qInt = Integer.parseInt(q);
-                                if (qInt == uid || q.length() > 3 && String.valueOf(uid).contains(q)) {
+                            if (searchIdsValid[i]) {
+                                long qLong = searchIds[i];
+                                if (qLong == uid || q.length() > 3 && String.valueOf(uid).contains(q)) {
                                     found = 3;
                                 }
-                            } catch (NumberFormatException ignored) {}
+                            }
                         }
                         if (found != 0) {
                             NativeByteBuffer data = cursor.byteBufferValue(0);
