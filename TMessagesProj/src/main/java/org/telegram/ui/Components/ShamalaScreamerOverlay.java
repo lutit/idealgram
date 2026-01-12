@@ -37,13 +37,19 @@ public class ShamalaScreamerOverlay extends View {
     private final RectF imageRect = new RectF();
     private final Random random = new Random();
 
+    private final String assetName;
     private Bitmap screamerBitmap;
     private long startedAt;
     private boolean started;
 
     public ShamalaScreamerOverlay(Context context) {
+        this(context, "hamza.jpg");
+    }
+
+    public ShamalaScreamerOverlay(Context context, String assetName) {
         super(context);
 
+        this.assetName = assetName == null || assetName.isEmpty() ? "hamza.jpg" : assetName;
         setVisibility(GONE);
         setClickable(false);
         setFocusable(false);
@@ -58,7 +64,7 @@ public class ShamalaScreamerOverlay extends View {
     }
 
     private void loadScreamerBitmap(Context context) {
-        try (InputStream stream = context.getAssets().open("hamza.jpg")) {
+        try (InputStream stream = context.getAssets().open(assetName)) {
             screamerBitmap = BitmapFactory.decodeStream(stream);
         } catch (IOException ignore) {
             screamerBitmap = null;

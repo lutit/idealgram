@@ -73,6 +73,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnUspdmpshmMode = 1015;
     public static int nkbtnEpsteinMode = 1016;
     public static int nkbtnQuantumShalavaMode = 1017;
+    public static int nkbtnDildavshvzhMode = 1018;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -385,6 +386,11 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
                     ? LocaleController.getString(R.string.DisableEpsteinMode)
                     : LocaleController.getString(R.string.EnableEpsteinMode);
             items.add(new Item(nkbtnEpsteinMode, epsteinLabel, R.drawable.msg_spoiler));
+
+            CharSequence dildavshvzhLabel = NekoConfig.isDildavshvzhModeActive()
+                    ? LocaleController.getString(R.string.DisableDildavshvzhMode)
+                    : LocaleController.getString(R.string.EnableDildavshvzhMode);
+            items.add(new Item(nkbtnDildavshvzhMode, dildavshvzhLabel, R.drawable.msg_spoiler));
 
             items.add(null);
         }
