@@ -10019,14 +10019,6 @@ public class Theme {
             boolean local
     ) {
         BackgroundDrawableSettings settings = new BackgroundDrawableSettings();
-        Drawable forced = getForcedWallpaper();
-        if (forced != null) {
-            settings.wallpaper = forced;
-            settings.isCustomTheme = true;
-            settings.isWallpaperMotion = false;
-            settings.isPatternWallpaper = false;
-            return settings;
-        }
         settings.wallpaper = local ? null : wallpaper;
         boolean overrideTheme = (!hasPreviousTheme || isApplyingAccent) && overrideWallpaper != null;
         if (overrideWallpaper != null) {
