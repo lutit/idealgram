@@ -187,6 +187,7 @@ import org.telegram.ui.Components.EmbedBottomSheet;
 import org.telegram.ui.Components.EmojiPacksAlert;
 import org.telegram.ui.Components.ChaosOverlay;
 import org.telegram.ui.Components.FireworksOverlay;
+import org.telegram.ui.Components.QuantumShalavaOverlay;
 import org.telegram.ui.Components.ShamalaFlyerOverlay;
 import org.telegram.ui.Components.ShamalaScreamerOverlay;
 import org.telegram.ui.Components.UspdmpshmOverlay;
@@ -338,6 +339,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private FireworksOverlay fireworksOverlay;
     private ChaosOverlay chaosOverlay;
     private UspdmpshmOverlay uspdmpshmOverlay;
+    private QuantumShalavaOverlay quantumShalavaOverlay;
     private ShamalaFlyerOverlay shamalaFlyerOverlay;
     private ShamalaScreamerOverlay shamalaScreamerOverlay;
     private boolean shamalaScreamerScheduled;
@@ -708,6 +710,33 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         MessagesController.getInstance(currentAccount).deleteDialog(dialogId, 0);
     }
 
+    private void startQuantumShalavaModeEffects() {
+        if (!isResumed) {
+            return;
+        }
+        if (quantumShalavaOverlay != null) {
+            quantumShalavaOverlay.start();
+        }
+    }
+
+    private void stopQuantumShalavaModeEffects() {
+        if (quantumShalavaOverlay != null) {
+            quantumShalavaOverlay.stop();
+        }
+    }
+
+    public void updateQuantumShalavaModeEffects() {
+        if (!isResumed) {
+            stopQuantumShalavaModeEffects();
+            return;
+        }
+        if (NekoConfig.isQuantumShalavaModeActive()) {
+            startQuantumShalavaModeEffects();
+        } else {
+            stopQuantumShalavaModeEffects();
+        }
+    }
+
     private void startUspdmpshmModeEffects() {
         if (!isResumed) {
             return;
@@ -1041,6 +1070,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         frameLayout.addView(bottomSheetTabsOverlay = new BottomSheetTabsOverlay(this));
         frameLayout.addView(chaosOverlay = new ChaosOverlay(this));
         frameLayout.addView(uspdmpshmOverlay = new UspdmpshmOverlay(this));
+        frameLayout.addView(quantumShalavaOverlay = new QuantumShalavaOverlay(this));
         frameLayout.addView(fireworksOverlay = new FireworksOverlay(this) {
             {
                 setVisibility(GONE);
@@ -1385,6 +1415,16 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     } else {
                         stopHyperShamalaModeEffects();
                     }
+                    drawerLayoutContainer.closeDrawer(false);
+                    NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                } else if (id == DrawerLayoutAdapter.nkbtnQuantumShalavaMode) {
+                    boolean willEnable = !NekoConfig.isQuantumShalavaModeActive();
+                    NekoConfig.toggleQuantumShalavaMode();
+                    CharSequence msg = LocaleController.getString(
+                            willEnable ? R.string.QuantumShalavaModeEnabled : R.string.QuantumShalavaModeDisabled
+                    );
+                    BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, msg).show();
+                    updateQuantumShalavaModeEffects();
                     drawerLayoutContainer.closeDrawer(false);
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
                 } else if (id == DrawerLayoutAdapter.nkbtnUspdmpshmMode) {
@@ -7739,6 +7779,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         stopUltraShamalaModeEffects();
         stopHyperShamalaModeEffects();
         stopUspdmpshmModeEffects();
+        stopQuantumShalavaModeEffects();
         updateShamalaScreamer();
         uspOfferShown = false;
         pipActivityHandler.onPause();
@@ -7958,6 +7999,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         handleCloseDmsFromAll();
         updateShamalaScreamer();
+        updateQuantumShalavaModeEffects();
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
             onResumeStaticCallback.run();

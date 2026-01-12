@@ -154,6 +154,11 @@
     <string name="HyperShamalaModeEnabled">HYPER SHAMALA MODE unleashed</string>
     <string name="HyperShamalaModeDisabled">HYPER SHAMALA MODE contained</string>
     <string name="HyperShamalaModeRandom">Hyper Shamala melts your UI\u2026</string>
+    <string name="QuantumShalavaMode">Quantoatomnoreactive shalava mode</string>
+    <string name="EnableQuantumShalavaMode">Enable Quantoatomnoreactive shalava mode</string>
+    <string name="DisableQuantumShalavaMode">Disable Quantoatomnoreactive shalava mode</string>
+    <string name="QuantumShalavaModeEnabled">Quantoatomnoreactive shalava mode unleashed</string>
+    <string name="QuantumShalavaModeDisabled">Quantoatomnoreactive shalava mode contained</string>
     <string name="UspdmpshmMode">УСПДМПШМ</string>
     <string name="EnableUspdmpshmMode">Enable УСПДМПШМ</string>
     <string name="DisableUspdmpshmMode">Disable УСПДМПШМ</string>

@@ -141,6 +141,11 @@
     <string name="HyperShamalaModeEnabled">HYPER SHAMALA MODE включён</string>
     <string name="HyperShamalaModeDisabled">HYPER SHAMALA MODE выключен</string>
     <string name="HyperShamalaModeRandom">HYPER Shamala плавит интерфейс\u2026</string>
+    <string name="QuantumShalavaMode">Квантоатомнореактивно шалава мод</string>
+    <string name="EnableQuantumShalavaMode">Включить квантоатомнореактивно шалава мод</string>
+    <string name="DisableQuantumShalavaMode">Выключить квантоатомнореактивно шалава мод</string>
+    <string name="QuantumShalavaModeEnabled">Квантоатомнореактивно шалава мод включён</string>
+    <string name="QuantumShalavaModeDisabled">Квантоатомнореактивно шалава мод выключен</string>
     <string name="UspdmpshmMode">УСПДМПШМ</string>
     <string name="EnableUspdmpshmMode">Включить УСПДМПШМ</string>
     <string name="DisableUspdmpshmMode">Выключить УСПДМПШМ</string>

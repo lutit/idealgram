@@ -223,6 +223,7 @@ public class NekoConfig {
     public static ConfigItem shamalaMode = addConfig("shamalaMode", configTypeBool, true);
     public static ConfigItem ultraShamalaMode = addConfig("ultraShamalaMode", configTypeBool, false);
     public static ConfigItem hyperShamalaMode = addConfig("hyperShamalaMode", configTypeBool, false);
+    public static ConfigItem quantumShalavaMode = addConfig("quantumShalavaMode", configTypeBool, false);
     public static ConfigItem uspdmpshmMode = addConfig("uspdmpshmMode", configTypeBool, false);
     public static ConfigItem epsteinMode = addConfig("epsteinMode", configTypeBool, false);
     public static ConfigItem closeDmsFromAll = addConfig("closeDmsFromAll", configTypeBool, false);
@@ -442,6 +443,16 @@ public class NekoConfig {
         hyperShamalaMode.toggleConfigBool();
     }
     // --- Hyper Shamala Mode ---
+
+    // --- Quantum Shalava Mode ---
+    public static boolean isQuantumShalavaModeActive() {
+        return quantumShalavaMode.Bool();
+    }
+
+    public static void toggleQuantumShalavaMode() {
+        quantumShalavaMode.toggleConfigBool();
+    }
+    // --- Quantum Shalava Mode ---
 
     // --- УСПДМПШМ (safe session mode) ---
     public static boolean isUspdmpshmModeActive() {
