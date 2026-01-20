@@ -16,7 +16,7 @@
     <string name="FirstLast">Pierwszy ostatni</string>
     <string name="LastFirst">Ostatni jako pierwszy</string>
     <string name="TypefaceUseDefault">Użyj czcionki systemowej</string>
-    <string name="NoQuoteForward">Przekaż bez śledzenia</string>
+    <string name="NoQuoteForward">Bez nadawcy</string>
     <string name="Repeat">Ponownie opublikować</string>
     <string name="AddToSavedMessages">Zapisz</string>
     <string name="CreateMention">Utwórz wzmiankę</string>
@@ -38,7 +38,7 @@
     <string name="StickerSizeDialogMessageBigOne">Duży</string>
     <string name="StickerSizeDialogMessageSmallOne">Mały</string>
     <string name="StickerSizeDialogMessageReplyTo">Miał</string>
-    <string name="StickerSizeDialogName">Duang</string>
+    <string name="StickerSizeDialogName">Chińskie</string>
     <string name="Experimental">Opcje eksperymentalne</string>
     <string name="UnlimitedFavoredStickers">Nieograniczona liczba ulubionych naklejek</string>
     <string name="UnlimitedFavoredStickersAbout">Dodaj nieograniczoną liczbę naklejek do ulubionych. Naklejki mogą nie być synchronizowane z innymi urządzeniami.</string>
@@ -49,7 +49,7 @@
     <string name="TranslationProvider">Dostawca tłumaczeń</string>
     <string name="ProviderGoogleTranslate">Tłumacz Google</string>
     <string name="TranslateApiUnsupported">Wybrany przez Ciebie dostawca usług tłumaczeniowych nie obsługuje Twojego języka.</string>
-    <string name="ProviderLingocloud">Tłumacz chmure językową</string>
+    <string name="ProviderLingocloud">Tłumacz chmurę językową</string>
     <string name="UndoTranslate">Ukryj tłumaczenie</string>
     <string name="DisablePhotoViewerSideAction">Wyłącz opcję przełączania zdjęć bocznym dotknięciem</string>
     <string name="BotToken">Żeton</string>
@@ -79,7 +79,7 @@
     <string name="SourceCode">Kod źródłowy</string>
     <string name="ResetStickerSize">Zresetuj rozmiar naklejki</string>
     <string name="RestartAppToTakeEffect">Zresetuj aplikację, aby zastosować zmiany.</string>
-    <string name="DisableAppBarShadow">Wyłącz cień paska tytułu</string>
+    <string name="DisableAppBarShadow">Ukryj górny panel rozdzielający</string>
     <string name="MediaPreview">Podgląd multimediów na liście czatów</string>
     <string name="AutoPauseVideo">Automatyczne wstrzymywanie wideo</string>
     <string name="AutoPauseVideoAbout">Podczas blokady ekranu/przełączenia na tło.</string>
@@ -108,7 +108,6 @@
     <string name="SaveToDownloadCount_many">Zapisywanie %1$d plików do pobrania</string>
     <string name="SaveToDownloadCount_other">Zapisywanie %1$d plików do pobrania</string>
     <string name="disableNotificationBubbles">Wyłącz dymki powiadomień</string>
-    <string name="ReactionsDisabled">Wyłączyć</string>
     <string name="customSavePath">Niestandardowa ścieżka do przechowywania</string>
     <string name="customSavePathHint">Pozostaw puste, aby zapisać bezpośrednio</string>
     <string name="channelLabel">kanał</string>
@@ -201,11 +200,6 @@
     <string name="ShowIdAndDc">Pokaż ID / DC w profilu</string>
     <string name="UseDefaultTheme">Użyj motywu domyślnego *</string>
     <string name="DialogsSettings">Dialogi</string>
-    <string name="SortMenu">Sortuj czaty</string>
-    <string name="SortByUnread">Sortuj według nieprzeczytanych</string>
-    <string name="SortByUnmuted">Sortuj według wyciszenia</string>
-    <string name="SortByUser">Sortuj według użytkownika</string>
-    <string name="SortByContacts">Sortuj według kontaktów</string>
     <string name="NagramXPushService">Usługa push</string>
     <string name="DisableSystemAccount">Wyłącz konto systemowe</string>
     <string name="FilterMenu">Wyłącz konto systemowe</string>

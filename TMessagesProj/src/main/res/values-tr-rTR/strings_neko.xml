@@ -108,7 +108,6 @@
     <string name="SaveToDownloadCount_many">%1$d dosya indirilenlere kaydediliyor</string>
     <string name="SaveToDownloadCount_other">%1$d dosya indirilenlere kaydediliyor</string>
     <string name="disableNotificationBubbles">Bildirim Baloncuklarını Devre Dışı Bırak</string>
-    <string name="ReactionsDisabled">Devre Dışı</string>
     <string name="customSavePath">Özel Depolama Yolu</string>
     <string name="customSavePathHint">Doğrudan kaydetmek için boş bırakın</string>
     <string name="channelLabel">kanal</string>
@@ -201,11 +200,6 @@
     <string name="ShowIdAndDc">Profilde ID / DC Göster</string>
     <string name="UseDefaultTheme">Varsayılan temayı kullan *</string>
     <string name="DialogsSettings">Sohbetler</string>
-    <string name="SortMenu">Sohbetleri Sırala</string>
-    <string name="SortByUnread">Okunmamışa Göre Sırala</string>
-    <string name="SortByUnmuted">Sessize Alınmamışa Göre Sırala</string>
-    <string name="SortByUser">Kullanıcıya Göre Sırala</string>
-    <string name="SortByContacts">Kişilere Göre Sırala</string>
     <string name="NagramXPushService">Anlık Bildirim Servisi</string>
     <string name="DisableSystemAccount">Sistem Hesabını Devre Dışı Bırak</string>
     <string name="FilterMenu">Sohbet Filtre Menüsü</string>

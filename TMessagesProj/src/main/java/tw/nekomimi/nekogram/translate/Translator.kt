@@ -73,14 +73,14 @@ interface Translator {
         @JvmStatic
         fun getInputTranslateLangForChat(chatId: Long): String {
             val key = "translateInputLang_$chatId"
-            return NekoConfig.preferences.getString(key, null)
+            return NekoConfig.getPreferences().getString(key, null)
                 ?: NekoConfig.translateInputLang.String()
         }
 
         @JvmStatic
         fun setInputTranslateLangForChat(chatId: Long, langCode: String) {
             val key = "translateInputLang_$chatId"
-            NekoConfig.preferences.edit {
+            NekoConfig.getPreferences().edit {
                 putString(key, langCode)
             }
         }
@@ -146,6 +146,44 @@ interface Translator {
                         to, query, entities, NekoConfig.translationProvider.Int()
                     )
 
+                    AndroidUtilities.runOnUIThread { translateCallBack.onSuccess(result) }
+                }.onFailure {
+                    AndroidUtilities.runOnUIThread {
+                        translateCallBack.onFailed(
+                            it is UnsupportedOperationException,
+                            it.message ?: it.javaClass.simpleName
+                        )
+                    }
+                }
+            }
+        }
+
+        @JvmStatic
+        fun translateWithContext(
+            to: Locale,
+            query: String,
+            entities: ArrayList<TLRPC.MessageEntity>,
+            context: String?,
+            translateCallBack: TranslateCallBack2
+        ) {
+            translateWithContext(to, query, entities, context, 0, translateCallBack)
+        }
+
+        @JvmStatic
+        fun translateWithContext(
+            to: Locale,
+            query: String,
+            entities: ArrayList<TLRPC.MessageEntity>,
+            context: String?,
+            provider: Int,
+            translateCallBack: TranslateCallBack2
+        ) {
+            AppScope.io.launch {
+                runCatching {
+                    val effectiveProvider = provider.takeIf { it != 0 } ?: NekoConfig.translationProvider.Int()
+                    val result = LLMTranslator.withTranslationContext(context) {
+                        translateBase(to, query, entities, effectiveProvider)
+                    }
                     AndroidUtilities.runOnUIThread { translateCallBack.onSuccess(result) }
                 }.onFailure {
                     AndroidUtilities.runOnUIThread {

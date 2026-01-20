@@ -2,12 +2,15 @@ package tw.nekomimi.nekogram.utils;
 
 import static org.telegram.messenger.LocaleController.getString;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.os.Build;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -16,6 +19,7 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.BotWebViewVibrationEffect;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
@@ -30,10 +34,12 @@ import org.telegram.ui.LaunchActivity;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import tw.nekomimi.nekogram.NekoConfig;
+import tw.nekomimi.nekogram.helpers.MessageHelper;
 import xyz.nextalone.nagram.NaConfig;
 
 public class AndroidUtil {
@@ -90,11 +96,11 @@ public class AndroidUtil {
         if (diff > 0) {
             return Theme.getColor(Theme.key_chats_onlineCircle, resourcesProvider);
         } else if (diff > -15 * 60) {
-            return android.graphics.Color.argb(255, 234, 234, 30);
+            return Color.argb(255, 234, 234, 30);
         } else if (diff > -30 * 60) {
-            return android.graphics.Color.argb(255, 234, 132, 30);
+            return Color.argb(255, 234, 132, 30);
         } else if (diff > -60 * 60) {
-            return android.graphics.Color.argb(255, 234, 30, 30);
+            return Color.argb(255, 234, 30, 30);
         }
         return 0;
     }
@@ -164,26 +170,21 @@ public class AndroidUtil {
     }
 
     public static void showErrorDialog(Exception e) {
+        showErrorDialog(e.getLocalizedMessage());
+    }
+
+    public static void showErrorDialog(String message) {
         var fragment = LaunchActivity.getSafeLastFragment();
-        var message = e.getLocalizedMessage();
         if (!BulletinFactory.canShowBulletin(fragment) || message == null) {
             return;
         }
-        if (message.length() > 45) {
-            AlertsCreator.showSimpleAlert(fragment, getString(R.string.ErrorOccurred), e.getMessage());
-        } else {
-            BulletinFactory.of(fragment).createErrorBulletin(message).show();
-        }
-    }
-
-    public static String getFileNameWithoutEx(String filename) {
-        if ((filename != null) && (filename.length() > 0)) {
-            int dot = filename.lastIndexOf('.');
-            if ((dot > -1) && (dot < (filename.length()))) {
-                return filename.substring(0, dot);
+        AndroidUtilities.runOnUIThread(() -> {
+            if (message.length() > 45) {
+                AlertsCreator.showSimpleAlert(fragment, getString(R.string.ErrorOccurred), message);
+            } else {
+                BulletinFactory.of(fragment).createSimpleBulletin(R.raw.error, message).show();
             }
-        }
-        return filename;
+        });
     }
 
     public static void toggleLogs() {
@@ -223,5 +224,32 @@ public class AndroidUtil {
             return resources.getInteger(resourceId);
         }
         return 0;
+    }
+
+    public static boolean openForView(MessageObject message, Activity activity, Theme.ResourcesProvider resourcesProvider) {
+        File f = null;
+        String path = MessageHelper.getPathToMessage(message);
+        if (!TextUtils.isEmpty(path)) {
+            f = new File(path);
+        }
+        if (f == null || !f.exists()) {
+            return false;
+        }
+        String mimeType = message.type == MessageObject.TYPE_FILE || message.type == MessageObject.TYPE_TEXT ? message.getMimeType() : null;
+        return AndroidUtilities.openForView(f, message.getFileName(), mimeType, activity, resourcesProvider, false);
+    }
+
+    public static void performHapticFeedback() {
+        if (!NekoConfig.disableVibration.Bool()) {
+            try {
+                Optional.ofNullable(LaunchActivity.getSafeLastFragment())
+                        .ifPresent(fragment ->
+                                fragment.getFragmentView()
+                                        .performHapticFeedback(HapticFeedbackConstants.LONG_PRESS,
+                                                HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING)
+                        );
+            } catch (Exception ignored) {
+            }
+        }
     }
 }

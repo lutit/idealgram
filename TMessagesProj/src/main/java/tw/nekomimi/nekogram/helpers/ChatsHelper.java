@@ -1,12 +1,3 @@
-/**
- * This is the source code of Cherrygram for Android.
- * It is licensed under GNU GPL v. 2 or later.
- * You should have received a copy of the license in this archive (see LICENSE).
- * Please, be respectful and credit the original author if you use this code.
- * <p>
- * Copyright github.com/arsLan4k1390, 2022-2025.
- */
-
 package tw.nekomimi.nekogram.helpers;
 
 import static org.telegram.messenger.LocaleController.getString;
@@ -26,7 +17,9 @@ import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
+import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.TLRPC;
+import org.telegram.tgnet.Vector;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ChatActivity;
@@ -332,5 +325,82 @@ public class ChatsHelper extends BaseController {
         }
 
         return chatName;
+    }
+
+    public boolean isUnreadSortPriority(TLRPC.Dialog dialog) {
+        if (dialog == null || dialog instanceof TLRPC.TL_dialogFolder) {
+            return false;
+        }
+        int unreadCount;
+        int mentionCount;
+        int reactionCount;
+        boolean counterMuted;
+        if (dialog.id < 0) {
+            TLRPC.Chat chat = MessagesController.getInstance(currentAccount).getChat(-dialog.id);
+            if (chat != null && (chat.forum || chat.monoforum && ChatObject.canManageMonoForum(currentAccount, chat))) {
+                int[] counts = MessagesController.getInstance(currentAccount).getTopicsController().getForumUnreadCount(chat.id);
+                unreadCount = counts[0];
+                mentionCount = counts[1];
+                reactionCount = counts[2];
+                counterMuted = counts[3] == 0;
+            } else {
+                unreadCount = dialog.unread_count;
+                mentionCount = dialog.unread_mentions_count;
+                reactionCount = dialog.unread_reactions_count;
+                counterMuted = MessagesController.getInstance(currentAccount).isDialogMuted(dialog.id);
+            }
+            if (ChatObject.isMonoForum(chat)) {
+                mentionCount = 0;
+            }
+        } else {
+            unreadCount = dialog.unread_count;
+            mentionCount = dialog.unread_mentions_count;
+            reactionCount = dialog.unread_reactions_count;
+            counterMuted = MessagesController.getInstance(currentAccount).isDialogMuted(dialog.id);
+        }
+        if (mentionCount > 0) {
+            return true;
+        }
+        if (reactionCount > 0) {
+            return true;
+        }
+        return unreadCount > 0 && !counterMuted;
+    }
+
+    @SuppressWarnings("rawtypes")
+    public int loadServerUserName(long userId, int classGuid, Utilities.Callback2<String, TLRPC.TL_error> callback) {
+        if (callback == null) {
+            return 0;
+        }
+        TLRPC.InputUser inputUser = getMessagesController().getInputUser(userId);
+        if (inputUser == null) {
+            AndroidUtilities.runOnUIThread(() -> callback.run(null, null));
+            return 0;
+        }
+        TLRPC.TL_users_getUsers req = new TLRPC.TL_users_getUsers();
+        req.id.add(inputUser);
+        int reqId = getConnectionsManager().sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            if (error != null) {
+                callback.run(null, error);
+                return;
+            }
+            if (!(response instanceof Vector vector)) {
+                callback.run(null, null);
+                return;
+            }
+            String name = null;
+            for (int a = 0; a < vector.objects.size(); a++) {
+                Object obj = vector.objects.get(a);
+                if (obj instanceof TLRPC.User u && u.id == userId) {
+                    name = UserObject.getUserName(u);
+                    break;
+                }
+            }
+            callback.run(name, null);
+        }));
+        if (classGuid != 0) {
+            getConnectionsManager().bindRequestToGuid(reqId, classGuid);
+        }
+        return reqId;
     }
 }

@@ -69,11 +69,12 @@ public abstract class AyuMessageUtils {
 
     public static void map(AyuMessageBase source, TLRPC.Message target, int accountId) {
         MessagesController messagesController = MessagesController.getInstance(accountId);
+        TLRPC.Chat dialogChat = source.dialogId < 0 ? messagesController.getChat(-source.dialogId) : null;
         int flags = source.flags;
         target.dialog_id = source.dialogId;
         target.grouped_id = source.groupedId;
         target.peer_id = messagesController.getPeer(source.peerId);
-        target.from_id = messagesController.getPeer(source.fromId);
+        target.from_id = getFromPeer(messagesController, source.fromId, dialogChat);
         int messageId = source.messageId;
         target.id = messageId;
         target.realId = messageId;
@@ -92,6 +93,7 @@ public abstract class AyuMessageUtils {
         target.noforwards = false;
         target.edit_date = source.editDate;
         target.views = source.views;
+        target.forwards = source.forwards;
         if ((flags & 4) != 0) {
             TLRPC.TL_messageFwdHeader forwardHeader = new TLRPC.TL_messageFwdHeader();
             target.fwd_from = forwardHeader;
@@ -182,6 +184,7 @@ public abstract class AyuMessageUtils {
         out.flags = message.flags;
         out.editDate = message.edit_date;
         out.views = message.views;
+        out.forwards = message.forwards;
         TLRPC.MessageFwdHeader fwdHeader = message.fwd_from;
         if (fwdHeader != null) {
             out.fwdFlags = fwdHeader.flags;
@@ -830,6 +833,9 @@ public abstract class AyuMessageUtils {
 
     private static String ensureAttachmentAndUpdateMediaPath(AyuMessageBase base, TLRPC.Message message, int accountId) {
         try {
+            final long userId = base.userId;
+            final long dialogId = base.dialogId;
+            final int messageId = base.messageId;
             String baseName = AyuUtils.getBaseFilename(message);
             if (TextUtils.isEmpty(baseName)) {
                 return null;
@@ -851,7 +857,7 @@ public abstract class AyuMessageUtils {
                         }
                         if (resolved != null && resolved.exists() && resolved.length() > 0) {
                             String newPath = resolved.getAbsolutePath();
-                            AyuMessagesController.getInstance().updateMediaPath(base.userId, base.dialogId, base.messageId, newPath);
+                            AyuMessagesController.getInstance().updateMediaPath(userId, dialogId, messageId, newPath);
                         }
                     });
                     File found = findExistingFileByBaseNameFast(baseName);
@@ -865,7 +871,7 @@ public abstract class AyuMessageUtils {
             if (found != null) {
                 // update mediaPath in db when we discover an attachments copy
                 final String newPath = found.getAbsolutePath();
-                Utilities.globalQueue.postRunnable(() -> AyuMessagesController.getInstance().updateMediaPath(base.userId, base.dialogId, base.messageId, newPath));
+                Utilities.globalQueue.postRunnable(() -> AyuMessagesController.getInstance().updateMediaPath(userId, dialogId, messageId, newPath));
                 return newPath;
             }
         } catch (Exception e) {
@@ -891,4 +897,20 @@ public abstract class AyuMessageUtils {
         return msg.messageOwner.media instanceof TLRPC.TL_messageMediaPhoto
                 && msg.messageOwner.media.photo instanceof TLRPC.TL_photoEmpty;
     }
+
+    public static TLRPC.Peer getFromPeer(MessagesController messagesController, long peerId, TLRPC.Chat dialogChat) {
+        if (peerId < 0) {
+            TLRPC.Chat chat = messagesController.getChat(-peerId);
+            if (chat == null && dialogChat != null) {
+                boolean isGroup = ChatObject.isChannel(dialogChat) && dialogChat.megagroup;
+                if (isGroup) {
+                    TLRPC.TL_peerChannel peerChannel = new TLRPC.TL_peerChannel();
+                    peerChannel.channel_id = -peerId;
+                    return peerChannel;
+                }
+            }
+        }
+        return messagesController.getPeer(peerId);
+    }
+
 }

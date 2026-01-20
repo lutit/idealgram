@@ -55,6 +55,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.transition.ChangeBounds;
 import android.transition.TransitionManager;
+import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.Property;
 import android.util.StateSet;
@@ -92,6 +93,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScrollerCustom;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
+
+import com.radolyn.ayugram.utils.LastSeenHelper;
 
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
@@ -2823,6 +2826,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             getNotificationCenter().addObserver(this, NotificationCenter.forceImportContactsStart);
             getNotificationCenter().addObserver(this, NotificationCenter.userEmojiStatusUpdated);
             getNotificationCenter().addObserver(this, NotificationCenter.currentUserPremiumStatusChanged);
+            getNotificationCenter().addObserver(this, NotificationCenter.mainUserInfoChanged);
 
             NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.didSetPasscode);
             NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.appUpdateAvailable);
@@ -2872,6 +2876,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
         BirthdayController.getInstance(currentAccount).check();
 
+        LastSeenHelper.preload();
+
         return true;
     }
 
@@ -2894,9 +2900,43 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private Drawable premiumStar;
+    private Drawable ghostDrawable;
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     public void updateStatus(TLRPC.User user, boolean animated) {
         if (statusDrawable == null || actionBar == null) {
+            return;
+        }
+        if (NekoConfig.isGhostModeActive() && NekoConfig.showGhostModeStatus.Bool()) {
+            if (ghostDrawable == null) {
+                ghostDrawable = getContext().getResources().getDrawable(R.drawable.ayu_ghost).mutate();
+                ghostDrawable = new AnimatedEmojiDrawable.WrapSizeDrawable(ghostDrawable, dp(20), dp(20)) {
+                    @Override
+                    public void draw(@NonNull Canvas canvas) {
+                        canvas.save();
+                        canvas.translate(dp(-1), dp(1));
+                        super.draw(canvas);
+                        canvas.restore();
+                    }
+                };
+            }
+            ghostDrawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_profile_verifiedBackground), PorterDuff.Mode.SRC_IN));
+            statusDrawable.set(ghostDrawable, animated);
+            statusDrawable.setParticles(false, animated);
+            statusDrawableGiftId = null;
+            actionBar.setRightDrawableOnClick(null);
+            boolean isOnDefaultTab = filterTabsView == null || filterTabsView.getCurrentTabId() == filterTabsView.getDefaultTabId();
+            if (!NaConfig.INSTANCE.getFolderNameAsTitle().Bool() || isOnDefaultTab) {
+                SimpleTextView titleTextView = actionBar.getTitleTextView();
+                if (titleTextView != null && titleTextView.getRightDrawable() != statusDrawable) {
+                    titleTextView.setRightDrawable(statusDrawable);
+                    statusDrawable.setParentView(titleTextView);
+                }
+            }
+            statusDrawable.setColor(Theme.getColor(Theme.key_profile_verifiedBackground));
+            if (animatedStatusView != null) {
+                animatedStatusView.setColor(Theme.getColor(Theme.key_profile_verifiedBackground));
+            }
             return;
         }
         Long emojiStatusId = UserObject.getEmojiStatusDocumentId(user);
@@ -2993,6 +3033,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             getNotificationCenter().removeObserver(this, NotificationCenter.forceImportContactsStart);
             getNotificationCenter().removeObserver(this, NotificationCenter.userEmojiStatusUpdated);
             getNotificationCenter().removeObserver(this, NotificationCenter.currentUserPremiumStatusChanged);
+            getNotificationCenter().removeObserver(this, NotificationCenter.mainUserInfoChanged);
 
             NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.didSetPasscode);
             NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.appUpdateAvailable);
@@ -3267,6 +3308,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     }
                     showSearch(false, false, true);
                 }
+                updateFilterTabs(false, true);
                 updateProxyButton(false, false);
                 updatePasscodeButton();
                 if (menuDrawable != null) {
@@ -3485,6 +3527,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     }
                 }
             };
+//            filterTabsView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
             filterTabsViewIsVisible = false;
             filterTabsView.setVisibility(View.GONE);
@@ -3688,7 +3731,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     }
 
                     filterOptions = ItemOptions.makeOptions(DialogsActivity.this, tabView)
-                            .setScrimViewBackground(Theme.createRoundRectDrawable(dp(6), 0, Theme.getColor(Theme.key_actionBarDefault)))
+                            .setScrimViewBackground(Theme.createRoundRectDrawable(dp(NaConfig.INSTANCE.getSmoothRoundedMenu().Bool() ? SharedConfig.bubbleRadius : 10), dp(NaConfig.INSTANCE.getSmoothRoundedMenu().Bool() ? SharedConfig.bubbleRadius : 10), Theme.getColor(Theme.key_actionBarDefault)))
                             .addIf(getMessagesController().getDialogFilters().size() > 1, R.drawable.tabs_reorder, LocaleController.getString(R.string.FilterReorder), () -> {
                                 resetScroll();
                                 filterTabsView.setIsEditing(true);
@@ -5453,7 +5496,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 if (!hasStories) {
                     DialogsActivity.this.setScrollY(0);
                 }
-                if (!hasFragment()) {
+                if (!hasFragment() && hasStories) {
                     invalidateScrollY = true;
                     fixScrollYAfterArchiveOpened = true;
                     if (fragmentView != null) {
@@ -6063,6 +6106,22 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 false,
                 true
             );
+            updateAuthHintCellVisibility(false);
+        } else if (folderId == 0 && getMessagesController().pendingSuggestions.contains("SETUP_PASSKEY") && BuildVars.SUPPORTS_PASSKEYS) {
+            dialogsHintCellVisible = true;
+            dialogsHintCell.setVisibility(View.VISIBLE);
+            dialogsHintCell.setCompact(true);
+            dialogsHintCell.setOnClickListener(v -> {
+                PasskeysActivity.showLearnSheet(getContext(), currentAccount, resourceProvider, true);
+            });
+            dialogsHintCell.setText(Emoji.replaceWithRestrictedEmoji(getString(R.string.PasskeyPopupTitle), dialogsHintCell.titleView, this::updateDialogsHint), getString(R.string.PasskeyPopupText));
+            dialogsHintCell.setOnCloseListener(v -> {
+                MessagesController.getInstance(currentAccount).removeSuggestion(0, "SETUP_PASSKEY");
+                ChangeBounds transition = new ChangeBounds();
+                transition.setDuration(200);
+                TransitionManager.beginDelayedTransition((ViewGroup) dialogsHintCell.getParent(), transition);
+                updateDialogsHint();
+            });
             updateAuthHintCellVisibility(false);
         } else if (BuildConfig.DEBUG && folderId == 0 && getMessagesController().pendingSuggestions.contains("PREMIUM_GRACE")) {
             dialogsHintCellVisible = true;
@@ -11137,6 +11196,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         } else if (id == NotificationCenter.currentUserPremiumStatusChanged) {
             updateStatus(UserConfig.getInstance(account).getCurrentUser(), true);
             updateStoriesPosting();
+        } else if (id == NotificationCenter.mainUserInfoChanged) {
+            updateStatus(UserConfig.getInstance(account).getCurrentUser(), true);
         } else if (id == NotificationCenter.onDatabaseReset) {
             dialogsLoaded[currentAccount] = false;
             loadDialogs(getAccountInstance());
@@ -12370,6 +12431,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             if (dialogStoriesCell != null) {
                 dialogStoriesCell.updateColors();
             }
+            actionBarDefaultPaint.setColor(Theme.getColor(folderId == 0 ? Theme.key_actionBarDefault : Theme.key_actionBarDefaultArchived));
+            if (fragmentView instanceof SizeNotifierFrameLayout) {
+                ((SizeNotifierFrameLayout) fragmentView).invalidateBlurredViews();
+            }
         };
 
         ArrayList<ThemeDescription> arrayList = new ArrayList<>();
@@ -12833,7 +12898,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     float slideFragmentProgress = 1f;
-    final int slideAmplitudeDp = 40;
+    final int slideAmplitudeDp = 120;
     boolean slideFragmentLite;
     boolean isSlideBackTransition;
     boolean isDrawerTransition;
@@ -12925,7 +12990,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
 
     @Override
     public void onSlideProgress(boolean isOpen, float progress) {
-        if (SharedConfig.getDevicePerformanceClass() <= SharedConfig.PERFORMANCE_CLASS_LOW) {
+        if (SharedConfig.getDevicePerformanceClass() <= SharedConfig.PERFORMANCE_CLASS_LOW && !BuildVars.DEBUG_PRIVATE_VERSION) {
             return;
         }
         if (isSlideBackTransition && slideBackTransitionAnimator == null) {
@@ -12934,7 +12999,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
     }
 
     private void setSlideTransitionProgress(float progress) {
-        if (SharedConfig.getDevicePerformanceClass() <= SharedConfig.PERFORMANCE_CLASS_LOW || slideFragmentProgress == progress) {
+        if (SharedConfig.getDevicePerformanceClass() <= SharedConfig.PERFORMANCE_CLASS_LOW && !BuildVars.DEBUG_PRIVATE_VERSION || slideFragmentProgress == progress) {
             return;
         }
 

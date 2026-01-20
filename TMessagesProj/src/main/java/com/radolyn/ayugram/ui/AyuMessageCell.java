@@ -5,6 +5,8 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.text.Spanned;
+import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
@@ -19,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.radolyn.ayugram.database.entities.EditedMessage;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.CodeHighlighting;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.ImageLoader;
 import org.telegram.messenger.ImageLocation;
@@ -40,6 +43,7 @@ public class AyuMessageCell extends ChatMessageCell {
     private float downX, downY;
     private boolean urlLongPressHandled;
     private boolean avatarPressedDown;
+    private boolean showAyuDeletedMark = true;
     @Nullable
     private AyuMessageCellDelegate ayuDelegate;
 
@@ -82,6 +86,23 @@ public class AyuMessageCell extends ChatMessageCell {
             }
 
             @Override
+            public void didPressCodeCopy(ChatMessageCell cell, MessageObject.TextLayoutBlock block) {
+                if (block == null || block.textLayout == null) {
+                    return;
+                } else {
+                    block.textLayout.getText();
+                }
+                String string = block.textLayout.getText().toString();
+                if (TextUtils.isEmpty(string)) {
+                    return;
+                }
+                SpannableString code = new SpannableString(string);
+                code.setSpan(new CodeHighlighting.Span(false, 0, null, block.language, string), 0, code.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                AndroidUtilities.addToClipboard(code);
+                Optional.ofNullable(ayuDelegate).ifPresent(AyuMessageCellDelegate::onTextCopied);
+            }
+
+            @Override
             public void didPressImage(ChatMessageCell cell, float x, float y, boolean fullPreview) {
                 Optional.ofNullable(ayuDelegate).ifPresent(d -> d.onImagePressed(cell));
             }
@@ -107,6 +128,14 @@ public class AyuMessageCell extends ChatMessageCell {
             public boolean didLongPressBotButton(ChatMessageCell cell, TLRPC.KeyboardButton button) {
                 if (ayuDelegate != null) {
                     return ayuDelegate.didLongPressBotButton(cell, button);
+                }
+                return false;
+            }
+
+            @Override
+            public boolean needPlayMessage(ChatMessageCell cell, MessageObject messageObject, boolean muted) {
+                if (ayuDelegate != null) {
+                    return ayuDelegate.needPlayMessage(cell, messageObject, muted);
                 }
                 return false;
             }
@@ -142,8 +171,17 @@ public class AyuMessageCell extends ChatMessageCell {
         return false;
     }
 
+    @Override
+    protected boolean shouldShowAyuDeletedMark(MessageObject messageObject) {
+        return showAyuDeletedMark;
+    }
+
     public void setEditedMessage(EditedMessage editedMessage) {
         this.editedMessage = editedMessage;
+    }
+
+    public void setShowAyuDeletedMark(boolean show) {
+        showAyuDeletedMark = show;
     }
 
     public void setAyuDelegate(@Nullable AyuMessageCellDelegate ayuDelegate) {
@@ -321,5 +359,7 @@ public class AyuMessageCell extends ChatMessageCell {
         void didPressBotButton(ChatMessageCell cell, TLRPC.KeyboardButton button);
 
         boolean didLongPressBotButton(ChatMessageCell cell, TLRPC.KeyboardButton button);
+
+        boolean needPlayMessage(ChatMessageCell cell, MessageObject messageObject, boolean muted);
     }
 }

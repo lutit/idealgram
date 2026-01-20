@@ -235,6 +235,7 @@ import org.json.JSONObject;
 
 import kotlin.Unit;
 import tw.nekomimi.nekogram.helpers.ChatsHelper;
+import tw.nekomimi.nekogram.utils.AndroidUtil;
 import tw.nekomimi.nekogram.utils.StringUtils;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.translate.Translator;
@@ -447,6 +448,12 @@ public class ChatActivityEnterView extends FrameLayout implements
         default boolean onceVoiceAvailable() {
             return false;
         }
+        default void setVideoRecordingCameraFront(boolean front) { // nax
+        }
+
+        default boolean isAttachItemVisible() { // nax
+            return false;
+        }
     }
 
     public final static int RECORD_STATE_ENTER = 0;
@@ -621,6 +628,7 @@ public class ChatActivityEnterView extends FrameLayout implements
     private long sentFromPreview;
     private ActionBarPopupWindow sendPopupWindow;
     private ActionBarPopupWindow.ActionBarPopupWindowLayout sendPopupLayout;
+    private ActionBarPopupWindow cameraSelectionPopup; // nax
     private ImageView cancelBotButton;
     private ChatActivityEnterViewAnimatedIconView emojiButton;
     @Nullable
@@ -891,10 +899,16 @@ public class ChatActivityEnterView extends FrameLayout implements
     private AnimatedArrowDrawable stickersArrow;
     private boolean removeEmojiViewAfterAnimation;
 
+    private Boolean pendingCameraFront = null; // nax
+
     private Runnable onFinishInitCameraRunnable = new Runnable() {
         @Override
         public void run() {
             if (delegate != null) {
+                if (pendingCameraFront != null) {
+                    delegate.setVideoRecordingCameraFront(pendingCameraFront);
+                    pendingCameraFront = null;
+                }
                 delegate.needStartRecordVideo(0, true, 0, 0, 0, 0, 0);
             }
         }
@@ -908,7 +922,7 @@ public class ChatActivityEnterView extends FrameLayout implements
             if (delegate == null || parentActivity == null) {
                 return;
             }
-            delegate.onPreAudioVideoRecord();
+            /*delegate.onPreAudioVideoRecord();
             calledRecordRunnable = true;
             recordAudioVideoRunnableStarted = false;
             if (slideText != null) {
@@ -916,7 +930,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 slideText.setTranslationY(0);
             }
             audioToSendPath = null;
-            audioToSend = null;
+            audioToSend = null;*/
             if (isInVideoMode()) {
                 if (Build.VERSION.SDK_INT >= 23) {
                     boolean hasAudio = parentActivity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
@@ -935,6 +949,35 @@ public class ChatActivityEnterView extends FrameLayout implements
                         return;
                     }
                 }
+                // 0 = front, 1 = rear, 2 = ask
+                int cameraMode = NaConfig.INSTANCE.getCameraInVideoMessages().Int();
+                if (cameraMode == 2 && pendingCameraFront == null) {
+                    recordAudioVideoRunnableStarted = false;
+                    calledRecordRunnable = false;
+                    showCameraSelectionPopup(audioVideoButtonContainer, () -> {
+                        pendingCameraFront = true;
+                        proceedWithVideoRecording();
+                    }, () -> {
+                        pendingCameraFront = false;
+                        proceedWithVideoRecording();
+                    });
+                    return;
+                } else if (cameraMode != 2) {
+                    pendingCameraFront = (cameraMode == 0);
+                }
+            }
+
+            delegate.onPreAudioVideoRecord();
+            calledRecordRunnable = true;
+            recordAudioVideoRunnableStarted = false;
+            if (slideText != null) {
+                slideText.setAlpha(1.0f);
+                slideText.setTranslationY(0);
+            }
+            audioToSendPath = null;
+            audioToSend = null;
+
+            if (isInVideoMode()) {
                 if (!CameraController.getInstance().isCameraInitied()) {
                     CameraController.getInstance().initCamera(onFinishInitCameraRunnable);
                 } else {
@@ -1573,6 +1616,17 @@ public class ChatActivityEnterView extends FrameLayout implements
             float locCx = rectF.centerX();
             float locCy = rectF.centerY();
             canvas.save();
+
+            final float transformToResume = Utilities.clamp(transformToSeekbar * 2f, 1, 0);
+            final int wasAlpha = lockPaint.getAlpha();
+            final int saveToLayer = canvas.saveLayerAlpha(
+                    locCx - dp(24),
+                    locCy - dp(24),
+                    locCx + dp(24),
+                    locCy + dp(24), (int) (wasAlpha * (1f - transformToResume)), Canvas.ALL_SAVE_FLAG);
+            lockOutlinePaint.setAlpha(255);
+            lockPaint.setAlpha(255);
+
             canvas.translate(0, dpf2(2) * (1f - moveProgress));
             canvas.rotate(lockRotation, locCx, locCy);
 
@@ -1595,13 +1649,10 @@ public class ChatActivityEnterView extends FrameLayout implements
             }
 
             Drawable resumeDrawable = null;
-            float transformToResume = Utilities.clamp(transformToSeekbar * 2f, 1, 0);
             if (transformToResume > 0) {
                 resumeDrawable = isInVideoMode ? vidDrawable : micDrawable;
             }
 
-            int wasAlpha = lockPaint.getAlpha();
-            lockPaint.setAlpha((int) (wasAlpha * (1f - transformToResume)));
             if (transformToPauseProgress > 0) {
                 if (periodBackgroundDrawable == null) {
                     canvas.drawRoundRect(rectF, dpf2(3), dpf2(3), lockBackgroundPaint);
@@ -1623,6 +1674,8 @@ public class ChatActivityEnterView extends FrameLayout implements
                 canvas.drawRoundRect(rectF, dpf2(3), dpf2(3), lockPaint);
             }
             lockPaint.setAlpha(wasAlpha);
+            lockOutlinePaint.setAlpha(wasAlpha);
+            canvas.restoreToCount(saveToLayer);
 
             if (resumeDrawable != null) {
                 final float _s = 0.9285f;
@@ -2683,6 +2736,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     int x = getWidth() / 2 + dp(4 + 5);
                     int y = getHeight() / 2 - dp(13 - 5);
                     canvas.drawCircle(x, y, dp(5), dotPaint);
+
                 }
             }
         };
@@ -2918,6 +2972,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                         if (slideToCancelProgress < 0.7f) {
                             if (hasRecordVideo && isInVideoMode()) {
                                 CameraController.getInstance().cancelOnInitRunnable(onFinishInitCameraRunnable);
+                                pendingCameraFront = null;
                                 delegate.needStartRecordVideo(2, true, 0, 0, voiceOnce ? 0x7FFFFFFF : 0, effectId, 0);
                                 sendButton.setEffect(effectId = 0);
                             } else {
@@ -2946,6 +3001,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     if (alpha < 0.45) {
                         if (hasRecordVideo && isInVideoMode()) {
                             CameraController.getInstance().cancelOnInitRunnable(onFinishInitCameraRunnable);
+                            pendingCameraFront = null;
                             delegate.needStartRecordVideo(2, true, 0, 0, voiceOnce ? 0x7FFFFFFF : 0, effectId, 0);
                             sendButton.setEffect(effectId = 0);
                         } else {
@@ -2980,6 +3036,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                                     return true;
                                 }
                                 CameraController.getInstance().cancelOnInitRunnable(onFinishInitCameraRunnable);
+                                pendingCameraFront = null;
                                 delegate.needStartRecordVideo(NekoConfig.confirmAVMessage.Bool() ? 3 : 1, true, 0, 0, voiceOnce ? 0x7FFFFFFF : 0, effectId, 0);
                                 sendButton.setEffect(effectId = 0);
                             } else if (!sendVoiceEnabled) {
@@ -3064,14 +3121,15 @@ public class ChatActivityEnterView extends FrameLayout implements
                         setSlideToCancelProgress(alpha);
                     }
 
-                    if (alpha == 0) {
-                        if (hasRecordVideo && isInVideoMode()) {
-                            CameraController.getInstance().cancelOnInitRunnable(onFinishInitCameraRunnable);
-                            delegate.needStartRecordVideo(2, true, 0, 0, voiceOnce ? 0x7FFFFFFF : 0, effectId, 0);
-                            sendButton.setEffect(effectId = 0);
-                        } else {
-                            delegate.needStartRecordAudio(0);
-                            MediaController.getInstance().stopRecording(0, false, 0, voiceOnce, 0);
+                        if (alpha == 0) {
+                            if (hasRecordVideo && isInVideoMode()) {
+                                CameraController.getInstance().cancelOnInitRunnable(onFinishInitCameraRunnable);
+                                pendingCameraFront = null;
+                                delegate.needStartRecordVideo(2, true, 0, 0, voiceOnce ? 0x7FFFFFFF : 0, effectId, 0);
+                                sendButton.setEffect(effectId = 0);
+                            } else {
+                                delegate.needStartRecordAudio(0);
+                                MediaController.getInstance().stopRecording(0, false, 0, voiceOnce, 0);
                         }
                         recordingAudioVideo = false;
                         updateRecordInterface(RECORD_STATE_CANCEL_BY_GESTURE, true);
@@ -3527,6 +3585,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         });
     }
 
+    @SuppressLint("AppCompatCustomView")
     private void createGiftButton() {
         if (giftButton != null || parentFragment == null) {
             return;
@@ -3734,6 +3793,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         textFieldContainer.addView(doneButton, LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.BOTTOM | Gravity.RIGHT));
     }
 
+    @SuppressLint("AppCompatCustomView")
     private void createExpandStickersButton() {
         if (expandStickersButton != null) {
             return;
@@ -3753,7 +3813,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         expandStickersButton.setScaleX(0.1f);
         expandStickersButton.setScaleY(0.1f);
         expandStickersButton.setAlpha(0.0f);
-        expandStickersButton.setBackgroundDrawable(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
+        expandStickersButton.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector)));
         sendButtonContainer.addView(expandStickersButton, LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.RIGHT | Gravity.BOTTOM));
         expandStickersButton.setOnClickListener(v -> {
             if (expandStickersButton.getVisibility() != VISIBLE || expandStickersButton.getAlpha() != 1.0f || waitingForKeyboardOpen || (keyboardVisible && messageEditText != null && messageEditText.isFocused())) {
@@ -3866,6 +3926,7 @@ public class ChatActivityEnterView extends FrameLayout implements
         }
         if (videoToSendMessageObject != null) {
             CameraController.getInstance().cancelOnInitRunnable(onFinishInitCameraRunnable);
+            pendingCameraFront = null;
             delegate.needStartRecordVideo(2, true, 0, 0, voiceOnce ? 0x7FFFFFFF : 0, effectId, 0);
             sendButton.setEffect(effectId = 0);
         } else {
@@ -4565,10 +4626,11 @@ public class ChatActivityEnterView extends FrameLayout implements
     private ActionBarPopupWindow menuPopupWindow;
 
     private boolean checkMenuPermissions() {
-        if (Build.VERSION.SDK_INT < 23) {
-            return true;
-        }
-        if (isInVideoMode()) {
+        return checkMenuPermissions(isInVideoMode());
+    }
+
+    private boolean checkMenuPermissions(boolean isVideoMode) {
+        if (isVideoMode) {
             boolean hasAudio = parentActivity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
             boolean hasVideo = parentActivity.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
             if (!hasAudio || !hasVideo) {
@@ -4593,8 +4655,9 @@ public class ChatActivityEnterView extends FrameLayout implements
         return true;
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void onMenuClick(View view) {
-        if (parentFragment == null || slowModeTimer > 0) {
+        if (parentFragment == null || slowModeTimer > 0 || delegate == null) {
             return;
         }
         ActionBarPopupWindow.ActionBarPopupWindowLayout menuPopupLayout = new ActionBarPopupWindow.ActionBarPopupWindowLayout(parentActivity);
@@ -4621,10 +4684,10 @@ public class ChatActivityEnterView extends FrameLayout implements
         int a = 0;
 
         ActionBarMenuSubItem cell = new ActionBarMenuSubItem(getContext(), true, false);
-        int dlps = delegate.getDisableLinkPreviewStatus();
+        int disableLinkPreviewStatus = delegate.getDisableLinkPreviewStatus();
 
         if (!isInInput) {
-            cell.setTextAndIcon(LocaleController.getString(R.string.ChatAttachEnterMenuRecordAudio), R.drawable.input_mic);
+            cell.setTextAndIcon(getString(R.string.ChatAttachEnterMenuRecordAudio), R.drawable.input_mic);
             cell.setOnClickListener(v -> {
                 if (menuPopupWindow != null && menuPopupWindow.isShowing()) {
                     menuPopupWindow.dismiss();
@@ -4652,8 +4715,8 @@ public class ChatActivityEnterView extends FrameLayout implements
             menuPopupLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 0, 48 * a++, 0, 0));
 
             if (SharedConfig.inappCamera) {
-                cell = new ActionBarMenuSubItem(getContext(), false, dlps == 0);
-                cell.setTextAndIcon(LocaleController.getString(R.string.ChatAttachEnterMenuRecordVideo), R.drawable.input_video);
+                cell = new ActionBarMenuSubItem(getContext(), false, true);
+                cell.setTextAndIcon(getString(R.string.ChatAttachEnterMenuRecordVideo), R.drawable.input_video);
                 cell.setOnClickListener(v -> {
                     if (menuPopupWindow != null && menuPopupWindow.isShowing()) {
                         menuPopupWindow.dismiss();
@@ -4667,8 +4730,19 @@ public class ChatActivityEnterView extends FrameLayout implements
                         }
                     }
 
-                    isInVideoMode = true;
-                    if (checkMenuPermissions()) {
+                    if (checkMenuPermissions(true)) {
+                        int cameraMode = NaConfig.INSTANCE.getCameraInVideoMessages().Int();
+                        if (cameraMode == 2) {
+                            showCameraSelectionPopup(audioVideoButtonContainer, () -> {
+                                pendingCameraFront = true;
+                                proceedWithVideoRecording();
+                            }, () -> {
+                                pendingCameraFront = false;
+                                proceedWithVideoRecording();
+                            });
+                            return;
+                        }
+                        isInVideoMode = true;
                         recordAudioVideoRunnable.run();
                         delegate.onSwitchRecordMode(isInVideoMode);
                         setRecordVideoButtonVisible(isInVideoMode, true);
@@ -4684,8 +4758,32 @@ public class ChatActivityEnterView extends FrameLayout implements
         } else {
             long chatId = ChatsHelper.getChatId();
             String languageText = Translator.getInputTranslateLangForChat(chatId).toUpperCase();
+
+            // LinkPreview toggle
+            if (disableLinkPreviewStatus > 0) {
+                cell.setTextAndIcon(disableLinkPreviewStatus != 1 ?
+                        getString(R.string.ChatAttachEnterMenuEnableLinkPreview) :
+                        getString(R.string.ChatAttachEnterMenuDisableLinkPreview), R.drawable.msg_link);
+                final ActionBarMenuSubItem linkPreviewCell = cell;
+                cell.setOnClickListener(v -> {
+                    if (menuPopupWindow != null && menuPopupWindow.isShowing()) {
+                        menuPopupWindow.dismiss();
+                    }
+                    delegate.toggleDisableLinkPreview();
+                    messageWebPageSearch = delegate.getDisableLinkPreviewStatus() == 1;
+
+                    linkPreviewCell.setTextAndIcon(delegate.getDisableLinkPreviewStatus() != 1 ?
+                            getString(R.string.ChatAttachEnterMenuEnableLinkPreview) :
+                            getString(R.string.ChatAttachEnterMenuDisableLinkPreview), R.drawable.msg_link);
+                });
+                cell.setMinimumWidth(AndroidUtilities.dp(196));
+                menuPopupLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 0, 48 * a++, 0, 0));
+                cell = new ActionBarMenuSubItem(getContext(), true, false);
+            }
+
+            // AI Translate
             if (NaConfig.INSTANCE.isLLMTranslatorAvailable() && !NaConfig.INSTANCE.llmIsDefaultProvider()) {
-                cell.setTextAndIcon(LocaleController.getString(R.string.TranslateMessageLLM) + " (" + languageText + ")", R.drawable.magic_stick_solar);
+                cell.setTextAndIcon(getString(R.string.TranslateMessageLLM) + " (" + languageText + ")", R.drawable.magic_stick_solar);
                 cell.setOnClickListener(v -> {
                     if (menuPopupWindow != null && menuPopupWindow.isShowing()) {
                         menuPopupWindow.dismiss();
@@ -4706,9 +4804,11 @@ public class ChatActivityEnterView extends FrameLayout implements
                 });
                 cell.setMinimumWidth(AndroidUtilities.dp(196));
                 menuPopupLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 0, 48 * a++, 0, 0));
+                cell = new ActionBarMenuSubItem(getContext(), false, false);
             }
-            cell = new ActionBarMenuSubItem(getContext(), false, dlps == 0);
-            cell.setTextAndIcon(LocaleController.getString(R.string.TranslateMessage) + " (" + languageText + ")", NaConfig.INSTANCE.llmIsDefaultProvider() ? R.drawable.magic_stick_solar : R.drawable.ic_translate);
+
+            // Normal Translate
+            cell.setTextAndIcon(getString(R.string.TranslateMessage) + " (" + languageText + ")", NaConfig.INSTANCE.llmIsDefaultProvider() ? R.drawable.magic_stick_solar : R.drawable.ic_translate);
             cell.setOnClickListener(v -> {
                 if (menuPopupWindow != null && menuPopupWindow.isShowing()) {
                     menuPopupWindow.dismiss();
@@ -4730,8 +4830,9 @@ public class ChatActivityEnterView extends FrameLayout implements
             cell.setMinimumWidth(AndroidUtilities.dp(196));
             menuPopupLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 0, 48 * a++, 0, 0));
 
-            cell = new ActionBarMenuSubItem(getContext(), false, dlps == 0);
-            cell.setTextAndIcon(LocaleController.getString(R.string.ReplaceText), R.drawable.msg_edit);
+            // Replace Text
+            cell = new ActionBarMenuSubItem(getContext(), false, false);
+            cell.setTextAndIcon(getString(R.string.ReplaceText), R.drawable.msg_edit);
             cell.setOnClickListener(v -> {
                 if (menuPopupWindow != null && menuPopupWindow.isShowing()) {
                     menuPopupWindow.dismiss();
@@ -4740,27 +4841,25 @@ public class ChatActivityEnterView extends FrameLayout implements
             });
             cell.setMinimumWidth(AndroidUtilities.dp(196));
             menuPopupLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 0, 48 * a++, 0, 0));
-        }
 
-        if (dlps > 0) {
-            cell = new ActionBarMenuSubItem(getContext(), false, true);
-            cell.setTextAndIcon(dlps != 1 ?
-                    LocaleController.getString(R.string.ChatAttachEnterMenuEnableLinkPreview) :
-                    LocaleController.getString(R.string.ChatAttachEnterMenuDisableLinkPreview), R.drawable.msg_link);
-            final ActionBarMenuSubItem linkPreviewCell = cell;
-            cell.setOnClickListener(v -> {
-                if (menuPopupWindow != null && menuPopupWindow.isShowing()) {
-                    menuPopupWindow.dismiss();
-                }
-                delegate.toggleDisableLinkPreview();
-                messageWebPageSearch = delegate.getDisableLinkPreviewStatus() == 1;
-
-                linkPreviewCell.setTextAndIcon(delegate.getDisableLinkPreviewStatus() != 1 ?
-                        LocaleController.getString(R.string.ChatAttachEnterMenuEnableLinkPreview) :
-                        LocaleController.getString(R.string.ChatAttachEnterMenuDisableLinkPreview), R.drawable.msg_link);
-            });
-            cell.setMinimumWidth(AndroidUtilities.dp(196));
-            menuPopupLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 0, 48 * a++, 0, 0));
+            // Attach
+            if (delegate.isAttachItemVisible()) {
+                cell = new ActionBarMenuSubItem(getContext(), false, true);
+                cell.setTextAndIcon(getString(R.string.AttachMenu), R.drawable.input_attach);
+                cell.setOnClickListener(v -> {
+                    if (menuPopupWindow != null && menuPopupWindow.isShowing()) {
+                        menuPopupWindow.dismiss();
+                    }
+                    if (adjustPanLayoutHelper != null && adjustPanLayoutHelper.animationInProgress()) {
+                        return;
+                    }
+                    if (delegate != null) {
+                        delegate.didPressAttachButton();
+                    }
+                });
+                cell.setMinimumWidth(AndroidUtilities.dp(196));
+                menuPopupLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 0, 48 * a++, 0, 0));
+            }
         }
 
         menuPopupLayout.setupRadialSelectors(Theme.getColor(Theme.key_dialogButtonSelector));
@@ -6200,40 +6299,106 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         }
 
         String origin = text.toString();
-        Translator.translate(target, origin, provider, new Translator.Companion.TranslateCallBack() {
+        String llmContext = buildInputTranslationContext(provider);
 
-            final AtomicBoolean cancel = new AtomicBoolean();
-            AlertDialog status = AlertUtil.showProgress(parentActivity);
+        if (llmContext != null) {
+            Translator.translateWithContext(target, origin, new ArrayList<>(), llmContext, provider, new Translator.Companion.TranslateCallBack2() {
+                final AtomicBoolean cancel = new AtomicBoolean();
+                AlertDialog status = AlertUtil.showProgress(parentActivity);
 
-            {
-
-                status.setOnCancelListener((__) -> {
-                    cancel.set(true);
-                });
-
-                status.show();
-
-            }
-
-            @Override
-            public void onSuccess(@NotNull String translation) {
-                status.dismiss();
-                if (start == end) messageEditText.setText(translation);
-                else messageEditText.getText().replace(start, end, translation);
-            }
-
-            @Override
-            public void onFailed(boolean unsupported, @NotNull String message) {
-                status.dismiss();
-                AlertUtil.showTransFailedDialog(parentActivity, unsupported, message, () -> {
-                    status = AlertUtil.showProgress(parentActivity);
+                {
+                    status.setOnCancelListener((__) -> {
+                        cancel.set(true);
+                    });
                     status.show();
-                    Translator.translate(origin, this);
-                });
+                }
+
+                @Override
+                public void onSuccess(@NotNull TLRPC.TL_textWithEntities finalText) {
+                    status.dismiss();
+                    String translation = finalText.text;
+                    if (start == end) messageEditText.replaceTextInternal(0, messageEditText.getText().length(), translation);
+                    else messageEditText.replaceTextInternal(start, end, translation);
+                }
+
+                @Override
+                public void onFailed(boolean unsupported, @NotNull String message) {
+                    status.dismiss();
+                    AlertUtil.showTransFailedDialog(parentActivity, unsupported, message, () -> {
+                        status = AlertUtil.showProgress(parentActivity);
+                        status.show();
+                        Translator.translateWithContext(target, origin, new ArrayList<>(), null, provider, this);
+                    });
+                }
+            });
+        } else {
+            Translator.translate(target, origin, provider, new Translator.Companion.TranslateCallBack() {
+
+                final AtomicBoolean cancel = new AtomicBoolean();
+                AlertDialog status = AlertUtil.showProgress(parentActivity);
+
+                {
+
+                    status.setOnCancelListener((__) -> {
+                        cancel.set(true);
+                    });
+
+                    status.show();
+
+                }
+
+                @Override
+                public void onSuccess(@NotNull String translation) {
+                    status.dismiss();
+                    if (start == end) messageEditText.replaceTextInternal(0, messageEditText.getText().length(), translation);
+                    else messageEditText.replaceTextInternal(start, end, translation);
+                }
+
+                @Override
+                public void onFailed(boolean unsupported, @NotNull String message) {
+                    status.dismiss();
+                    AlertUtil.showTransFailedDialog(parentActivity, unsupported, message, () -> {
+                        status = AlertUtil.showProgress(parentActivity);
+                        status.show();
+                        Translator.translate(target, origin, 0, this);
+                    });
+                }
+
+            });
+        }
+    }
+
+    @Nullable
+    private String buildInputTranslationContext(int provider) {
+        if (!NaConfig.INSTANCE.getLlmUseContext().Bool()) {
+            return null;
+        }
+        int effectiveProvider = provider != 0 ? provider : NekoConfig.translationProvider.Int();
+        if (effectiveProvider != Translator.providerLLMTranslator) {
+            return null;
+        }
+        if (replyingMessageObject == null || replyingMessageObject.messageOwner == null) {
+            return null;
+        }
+
+        String replyText = replyingMessageObject.messageOwner.message;
+        if (TextUtils.isEmpty(replyText)) {
+            return null;
+        }
+        replyText = replyText.trim();
+        if (replyText.isEmpty()) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        if (parentFragment != null && dialog_id != 0) {
+            String dialogTitle = DialogObject.getName(currentAccount, dialog_id).trim();
+            if (!TextUtils.isEmpty(dialogTitle)) {
+                sb.append("Chat: ").append(dialogTitle).append("\n\n");
             }
-
-        });
-
+        }
+        sb.append("Replying to message:\n").append(replyText);
+        return sb.toString();
     }
 
     private void showReplace() {
@@ -6247,24 +6412,21 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
 
         BottomBuilder builder = new BottomBuilder(getContext());
 
-        builder.addTitle(LocaleController.getString("ReplaceText", R.string.ReplaceText), true);
+        builder.addTitle(getString(R.string.ReplaceText), true);
 
-        TextCheckCell regex = builder.addCheckItem(LocaleController.getString("ReplaceRegex", R.string.ReplaceRegex), false, false, null);
-        EditText origin = builder.addEditText(LocaleController.getString("TextOrigin", R.string.TextOrigin));
-        EditText replace = builder.addEditText(LocaleController.getString("TextReplace", R.string.TextReplace));
-
+        TextCheckCell regexCheckCell = builder.addCheckItem(getString(R.string.ReplaceRegex), false, false, null);
+        EditText fromField = builder.addEditText(getString(R.string.TextOrigin));
+        EditText toField = builder.addEditText(getString(R.string.TextReplace));
 
         String finalText = text.toString();
-        builder.addButton(LocaleController.getString("TextReplace", R.string.TextReplace), true, it -> {
-
-            String originText = origin.getText().toString();
-            String replaceText = replace.getText().toString();
-
+        builder.addButton(getString(R.string.TextReplace), true, it -> {
+            String originText = fromField.getText().toString();
+            String replaceText = toField.getText().toString();
             if (originText.isEmpty()) {
-                AndroidUtilities.showKeyboard(origin);
+                AndroidUtil.showInputError(fromField);
+                return Unit.INSTANCE;
             }
-
-            boolean useRegex = regex.isChecked();
+            boolean useRegex = regexCheckCell.isChecked();
             AlertDialog progress = AlertUtil.showProgress(getContext());
             progress.show();
             Utilities.globalQueue.postRunnable(() -> {
@@ -6287,13 +6449,16 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                     builder.dismiss();
                 });
             });
-
             return Unit.INSTANCE;
         });
-
         builder.addCancelButton();
+        builder.setOnShowListener(dialog -> {
+            fromField.setFocusable(true);
+            fromField.setFocusableInTouchMode(true);
+            fromField.requestFocus();
+            AndroidUtilities.runOnUIThread(() -> AndroidUtilities.showKeyboard(fromField), 200);
+        });
         builder.show();
-
     }
     // --- Input Menu End---
 
@@ -6337,6 +6502,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
     public void cancelRecordingAudioVideo() {
         if (hasRecordVideo && isInVideoMode()) {
             CameraController.getInstance().cancelOnInitRunnable(onFinishInitCameraRunnable);
+            pendingCameraFront = null;
             delegate.needStartRecordVideo(5, true, 0, 0, voiceOnce ? 0x7FFFFFFF : 0, effectId, 0);
             sendButton.setEffect(effectId = 0);
         } else {
@@ -6681,6 +6847,11 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             senderSelectPopupWindow.setPauseNotifications(false);
             senderSelectPopupWindow.dismiss();
         }
+        if (cameraSelectionPopup != null) {
+            cameraSelectionPopup.dismiss();
+            cameraSelectionPopup = null;
+            pendingCameraFront = null;
+        }
     }
 
     public void checkChannelRights() {
@@ -6745,6 +6916,11 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             senderSelectPopupWindow.setPauseNotifications(false);
             senderSelectPopupWindow.dismiss();
         }
+        if (cameraSelectionPopup != null) {
+            cameraSelectionPopup.dismiss();
+            cameraSelectionPopup = null;
+            pendingCameraFront = null;
+        }
     }
 
     private Runnable hideKeyboardRunnable;
@@ -6754,6 +6930,11 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         if (senderSelectPopupWindow != null) {
             senderSelectPopupWindow.setPauseNotifications(false);
             senderSelectPopupWindow.dismiss();
+        }
+        if (cameraSelectionPopup != null) {
+            cameraSelectionPopup.dismiss();
+            cameraSelectionPopup = null;
+            pendingCameraFront = null;
         }
         if (keyboardVisible) {
             showKeyboardOnResume = true;
@@ -6989,16 +7170,16 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         } else if (botKeyboardViewVisible && botButtonsMessageObject != null && botButtonsMessageObject.messageOwner.reply_markup != null && !TextUtils.isEmpty(botButtonsMessageObject.messageOwner.reply_markup.placeholder)) {
             messageEditText.setHintText(botButtonsMessageObject.messageOwner.reply_markup.placeholder, animated);
         } else if (parentFragment != null && parentFragment.isForumInViewAsMessagesMode()) {
+            String topicTitle;
             if (replyingTopMessage != null && replyingTopMessage.replyToForumTopic != null && replyingTopMessage.replyToForumTopic.title != null) {
-                messageEditText.setHintText(LocaleController.formatString(R.string.TypeMessageIn, replyingTopMessage.replyToForumTopic.title), animated);
+                topicTitle = replyingTopMessage.replyToForumTopic.title;
             } else {
                 final TLRPC.TL_forumTopic topic = MessagesController.getInstance(currentAccount).getTopicsController().findTopic(parentFragment.getCurrentChat().id, 1);
-                if (topic != null && topic.title != null) {
-                    messageEditText.setHintText(LocaleController.formatString(R.string.TypeMessageIn, topic.title), animated);
-                } else {
-                    messageEditText.setHintText(getString(R.string.TypeMessage), animated);
-                }
+                topicTitle = (topic != null && topic.title != null) ? topic.title : null;
             }
+            SpannableStringBuilder hintText = new SpannableStringBuilder(topicTitle != null ? LocaleController.formatString(R.string.TypeMessageIn, topicTitle) : getString(R.string.TypeMessage));
+            maybeAppendSendAsUnderMessageHint(hintText);
+            messageEditText.setHintText(hintText, animated);
         } else {
             boolean isChannel = false;
             boolean anonymously = false;
@@ -7024,48 +7205,55 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                         messageEditText.setHintText(getString(R.string.ChannelBroadcast), animated);
                     }
                 } else {
-                    TLRPC.Chat chat = accountInstance.getMessagesController().getChat(-dialog_id);
-                    TLRPC.User us = accountInstance.getMessagesController().getUser(dialog_id);
                     SpannableStringBuilder messageEditTextText = SpannableStringBuilder.valueOf(getString(R.string.TypeMessage));
-                    SpannableString sendAsText = null;
                     if (NaConfig.INSTANCE.getTypeMessageHintUseGroupName().Bool()) {
+                        TLRPC.Chat chat = accountInstance.getMessagesController().getChat(-dialog_id);
+                        TLRPC.User user = accountInstance.getMessagesController().getUser(dialog_id);
                         if (chat != null) {
                             messageEditTextText = SpannableStringBuilder.valueOf(chat.title);
-                        } else if (us != null && us != accountInstance.getUserConfig().getCurrentUser()) {
-                            messageEditTextText = SpannableStringBuilder.valueOf((us.first_name != null ? us.first_name : "") + " " + (us.last_name != null ? us.last_name : ""));
+                        } else if (user != null && user != accountInstance.getUserConfig().getCurrentUser()) {
+                            messageEditTextText = SpannableStringBuilder.valueOf((user.first_name != null ? user.first_name : "") + " " + (user.last_name != null ? user.last_name : ""));
                         }
                     }
-                    if (NaConfig.INSTANCE.getShowSendAsUnderMessageHint().Bool() && delegate != null) {
-                        TLRPC.ChatFull full = accountInstance.getMessagesController().getChatFull(-dialog_id);
-                        TLRPC.Peer defPeer = full != null ? full.default_send_as : null;
-                        if (defPeer == null && delegate.getSendAsPeers() != null && !delegate.getSendAsPeers().peers.isEmpty()) {
-                            defPeer = delegate.getSendAsPeers().peers.get(0).peer;
-                        }
-                        if (defPeer != null) {
-                            if (defPeer.channel_id != 0) {
-                                TLRPC.Chat ch = accountInstance.getMessagesController().getChat(defPeer.channel_id);
-                                sendAsText = new SpannableString(ch != null ? "\nas " + ch.title : "");
-                            } else {
-                                TLRPC.User user = accountInstance.getMessagesController().getUser(defPeer.user_id);
-                                sendAsText = new SpannableString(user != null ? "\nas " + UserObject.getUserName(user) : "");
-                            }
-                        } else {
-                            TLRPC.User user = UserConfig.getInstance(currentAccount).getCurrentUser();
-                            sendAsText = new SpannableString(user != null ? "\nas " + UserObject.getUserName(user) : "");
-                        }
-                    }
-                    SpannableStringBuilder builder;
-                    if (sendAsText != null) {
-                        messageEditTextText.setSpan(new RelativeSizeSpan(0.9f), 0, messageEditTextText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        sendAsText.setSpan(new RelativeSizeSpan(0.6f), 0, sendAsText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        builder = new SpannableStringBuilder(messageEditTextText);
-                        builder.append(sendAsText);
-                    } else {
-                        builder = new SpannableStringBuilder(messageEditTextText);
-                    }
-                    messageEditText.setHintText(builder, animated);
+                    maybeAppendSendAsUnderMessageHint(messageEditTextText);
+                    messageEditText.setHintText(messageEditTextText, animated);
                 }
             }
+        }
+    }
+
+    private void maybeAppendSendAsUnderMessageHint(SpannableStringBuilder hintText) {
+        SpannableString sendAsText = getSendAsUnderMessageHintText();
+        if (sendAsText == null) {
+            return;
+        }
+        hintText.setSpan(new RelativeSizeSpan(0.9f), 0, hintText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sendAsText.setSpan(new RelativeSizeSpan(0.6f), 0, sendAsText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        hintText.append(sendAsText);
+    }
+
+    private SpannableString getSendAsUnderMessageHintText() {
+        if (!NaConfig.INSTANCE.getShowSendAsUnderMessageHint().Bool() || delegate == null) {
+            return null;
+        }
+
+        TLRPC.ChatFull full = accountInstance.getMessagesController().getChatFull(-dialog_id);
+        TLRPC.Peer defPeer = full != null ? full.default_send_as : null;
+        if (defPeer == null && delegate.getSendAsPeers() != null && !delegate.getSendAsPeers().peers.isEmpty()) {
+            defPeer = delegate.getSendAsPeers().peers.get(0).peer;
+        }
+
+        if (defPeer != null) {
+            if (defPeer.channel_id != 0) {
+                TLRPC.Chat ch = accountInstance.getMessagesController().getChat(defPeer.channel_id);
+                return new SpannableString(ch != null ? "\nas " + ch.title : "");
+            } else {
+                TLRPC.User user = accountInstance.getMessagesController().getUser(defPeer.user_id);
+                return new SpannableString(user != null ? "\nas " + UserObject.getUserName(user) : "");
+            }
+        } else {
+            TLRPC.User user = UserConfig.getInstance(currentAccount).getCurrentUser();
+            return new SpannableString(user != null ? "\nas " + UserObject.getUserName(user) : "");
         }
     }
 
@@ -8894,7 +9082,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                     }
                 }
             }
-        } else if (emojiView != null && emojiViewVisible && (stickersTabOpen || emojiTabOpen && searchingType == 2) && !AndroidUtilities.isInMultiwindow) {
+        } else if (emojiView != null && emojiViewVisible && (stickersTabOpen || emojiTabOpen && searchingType == 2) && !AndroidUtilities.isInMultiwindow && !isLiveComment) {
             if (animated) {
                 if (runningAnimationType == 4) {
                     return;
@@ -8961,9 +9149,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 }
 
                 createExpandStickersButton();
-                if (!isLiveComment) {
-                    expandStickersButton.setVisibility(VISIBLE);
-                }
+                expandStickersButton.setVisibility(VISIBLE);
                 runningAnimation = new AnimatorSet();
                 runningAnimationType = 4;
 
@@ -9034,9 +9220,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 expandStickersButton.setScaleX(1.0f);
                 expandStickersButton.setScaleY(1.0f);
                 expandStickersButton.setAlpha(1.0f);
-                if (!isLiveComment) {
-                    expandStickersButton.setVisibility(VISIBLE);
-                }
+                expandStickersButton.setVisibility(VISIBLE);
                 if (attachLayout != null) {
                     if (getVisibility() == VISIBLE) {
                         delegate.onAttachButtonShow();
@@ -10804,6 +10988,9 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
     }
 
     public void updateColors() {
+        if (messageEditText != null) {
+            messageEditText.setHintColor(getThemedColor(Theme.key_chat_messagePanelHint));
+        }
         if (messageSendPreview != null) {
             messageSendPreview.updateColors();
         }
@@ -11906,6 +12093,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 }
             }
         };
+        emojiView.shouldDrawStickerSettings = true;
         if (!shouldDrawBackground) {
             emojiView.updateColors();
         }
@@ -12550,7 +12738,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 }
             }
             if (windowInsetsInAppController != null) {
-                windowInsetsInAppController.requestInAppKeyboardHeight(currentHeight + AndroidUtilities.navigationBarHeight);
+                windowInsetsInAppController.requestInAppKeyboardHeightIncludeNavbar(currentHeight);
             }
         } else {
             if (emojiButton != null) {
@@ -12983,7 +13171,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             if (botKeyboardView != null) {
                 botKeyboardView.setPanelHeight(newHeight);
                 if (windowInsetsInAppController != null && newHeight > 0) {
-                    windowInsetsInAppController.requestInAppKeyboardHeight(newHeight + AndroidUtilities.navigationBarHeight);
+                    windowInsetsInAppController.requestInAppKeyboardHeightIncludeNavbar(newHeight);
                 }
             }
 
@@ -13462,7 +13650,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         }
 
         if (windowInsetsInAppController != null) {
-            windowInsetsInAppController.requestInAppKeyboardHeight(newHeight + AndroidUtilities.navigationBarHeight);
+            windowInsetsInAppController.requestInAppKeyboardHeightIncludeNavbar(newHeight);
         }
     }
 
@@ -13559,7 +13747,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             }
 
             if (windowInsetsInAppController != null) {
-                windowInsetsInAppController.requestInAppKeyboardHeight(stickersExpandedHeight + AndroidUtilities.navigationBarHeight);
+                windowInsetsInAppController.requestInAppKeyboardHeightIncludeNavbar(stickersExpandedHeight);
             }
 
         } else {
@@ -13638,7 +13826,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             }
 
             if (windowInsetsInAppController != null) {
-                windowInsetsInAppController.requestInAppKeyboardHeight(origHeight + AndroidUtilities.navigationBarHeight);
+                windowInsetsInAppController.requestInAppKeyboardHeightIncludeNavbar(origHeight);
             }
         }
         if (expandStickersButton != null) {
@@ -13800,6 +13988,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         public void onCancelButtonPressed() {
             if (hasRecordVideo && isInVideoMode()) {
                 CameraController.getInstance().cancelOnInitRunnable(onFinishInitCameraRunnable);
+                pendingCameraFront = null;
                 delegate.needStartRecordVideo(5, true, 0, 0, voiceOnce ? 0x7FFFFFFF : 0, effectId, 0);
                 sendButton.setEffect(effectId = 0);
             } else {
@@ -15149,5 +15338,126 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         }
         updateFieldRight(lastAttachVisible);
         checkSendButton(false);
+    }
+
+    private void proceedWithVideoRecording() {
+        if (delegate == null || parentActivity == null) {
+            pendingCameraFront = null;
+            return;
+        }
+        if (!checkMenuPermissions(true)) {
+            pendingCameraFront = null;
+            return;
+        }
+        isInVideoMode = true;
+        // initialize state that would have been set in recordAudioVideoRunnable
+        delegate.onPreAudioVideoRecord();
+        calledRecordRunnable = true;
+        recordAudioVideoRunnableStarted = false;
+        if (slideText != null) {
+            slideText.setAlpha(1.0f);
+            slideText.setTranslationY(0);
+        }
+        audioToSendPath = null;
+        audioToSend = null;
+        // initialize camera and start recording
+        if (!CameraController.getInstance().isCameraInitied()) {
+            CameraController.getInstance().initCamera(onFinishInitCameraRunnable);
+        } else {
+            onFinishInitCameraRunnable.run();
+        }
+        if (!recordingAudioVideo) {
+            recordingAudioVideo = true;
+            updateRecordInterface(RECORD_STATE_ENTER, true);
+            if (recordCircle != null) {
+                recordCircle.showWaves(false, false);
+            }
+            if (recordTimerView != null) {
+                recordTimerView.reset();
+            }
+        }
+        // setup recording mode
+        delegate.onSwitchRecordMode(isInVideoMode());
+        setRecordVideoButtonVisible(isInVideoMode(), true);
+        if (!NekoConfig.disableVibration.Bool()) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+        sendButtonVisible = true;
+        startLockTransition();
+    }
+
+    private void showCameraSelectionPopup(View anchorView, Runnable onFrontSelected, Runnable onRearSelected) {
+        if (parentActivity == null) {
+            return;
+        }
+
+        final boolean[] cameraSelected = {false};
+
+        ActionBarPopupWindow.ActionBarPopupWindowLayout popupLayout = new ActionBarPopupWindow.ActionBarPopupWindowLayout(parentActivity);
+        popupLayout.setAnimationEnabled(false);
+
+        // front camera option
+        ActionBarMenuSubItem frontItem = new ActionBarMenuSubItem(getContext(), true, false);
+        frontItem.setTextAndIcon(getString(R.string.CameraInVideoMessagesFront), R.drawable.msg_openprofile_solar);
+        frontItem.setOnClickListener(v -> {
+            cameraSelected[0] = true;
+            if (cameraSelectionPopup != null && cameraSelectionPopup.isShowing()) {
+                cameraSelectionPopup.dismiss();
+            }
+            onFrontSelected.run();
+        });
+        frontItem.setMinimumWidth(dp(196));
+        popupLayout.addView(frontItem, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 0, 0, 0, 0));
+        // rear camera option
+        ActionBarMenuSubItem rearItem = new ActionBarMenuSubItem(getContext(), false, true);
+        rearItem.setTextAndIcon(getString(R.string.CameraInVideoMessagesRear), R.drawable.msg_rear_camera_solar);
+        rearItem.setOnClickListener(v -> {
+            cameraSelected[0] = true;
+            if (cameraSelectionPopup != null && cameraSelectionPopup.isShowing()) {
+                cameraSelectionPopup.dismiss();
+            }
+            onRearSelected.run();
+        });
+        rearItem.setMinimumWidth(dp(196));
+        popupLayout.addView(rearItem, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 0, 48, 0, 0));
+        popupLayout.setupRadialSelectors(Theme.getColor(Theme.key_dialogButtonSelector));
+
+        cameraSelectionPopup = new ActionBarPopupWindow(popupLayout, LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT);
+        cameraSelectionPopup.setAnimationEnabled(false);
+        cameraSelectionPopup.setAnimationStyle(R.style.PopupContextAnimation2);
+        cameraSelectionPopup.setOutsideTouchable(true);
+        cameraSelectionPopup.setClippingEnabled(true);
+        cameraSelectionPopup.setInputMethodMode(ActionBarPopupWindow.INPUT_METHOD_NOT_NEEDED);
+        cameraSelectionPopup.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED);
+        cameraSelectionPopup.getContentView().setFocusableInTouchMode(true);
+        cameraSelectionPopup.setOnDismissListener(() -> {
+            if (!cameraSelected[0]) {
+                // reset state only when popup is dismissed without selection
+                calledRecordRunnable = false;
+                pendingCameraFront = null;
+            }
+            cameraSelectionPopup = null;
+        });
+
+        popupLayout.measure(MeasureSpec.makeMeasureSpec(dp(1000), MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(dp(1000), MeasureSpec.AT_MOST));
+        cameraSelectionPopup.setFocusable(true);
+        int[] location = new int[2];
+        anchorView.getLocationInWindow(location);
+        int popupWidth = popupLayout.getMeasuredWidth();
+        int popupHeight = popupLayout.getMeasuredHeight();
+
+        int y = location[1] - popupHeight - dp(2);
+        if (y < 0) {
+            y = location[1] + anchorView.getMeasuredHeight() + dp(2);
+        }
+        int x = location[0] + anchorView.getMeasuredWidth() - popupWidth + dp(8);
+
+        if (AndroidUtilities.displaySize.x > 0) {
+            x = Math.max(0, Math.min(x, AndroidUtilities.displaySize.x - popupWidth));
+        }
+        if (AndroidUtilities.displaySize.y > 0) {
+            y = Math.max(0, Math.min(y, AndroidUtilities.displaySize.y - popupHeight));
+        }
+        cameraSelectionPopup.showAtLocation(anchorView, Gravity.LEFT | Gravity.TOP, x, y);
+        cameraSelectionPopup.dimBehind();
+        if (!NekoConfig.disableVibration.Bool()) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
     }
 }

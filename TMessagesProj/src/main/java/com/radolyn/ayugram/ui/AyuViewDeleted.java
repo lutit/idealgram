@@ -10,6 +10,7 @@ import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -63,6 +64,10 @@ import org.telegram.ui.Components.ChatScrimPopupContainerLayout;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.SizeNotifierFrameLayout;
+import org.telegram.ui.Components.blur3.BlurredBackgroundDrawableViewFactory;
+import org.telegram.ui.Components.blur3.drawable.color.BlurredBackgroundColorProviderThemed;
+import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceColor;
+import org.telegram.ui.Components.chat.layouts.ChatActivitySideControlsButtonsLayout;
 import org.telegram.ui.Components.inset.WindowInsetsStateHolder;
 
 import java.io.File;
@@ -71,8 +76,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import kotlin.Unit;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
+import tw.nekomimi.nekogram.translate.Translator;
 import tw.nekomimi.nekogram.ui.MessageDetailsActivity;
+import xyz.nextalone.nagram.NaConfig;
 
 public class AyuViewDeleted extends AyuMessageDelegateFragment {
     private static final int OPTION_SHOW_IN_CHAT = 1;
@@ -83,16 +91,20 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
     private static final int OPTION_DETAILS = 6;
     private static final int OPTION_SAVE_TO_GALLERY = 7;
     private static final int OPTION_SAVE_TO_DOWNLOADS = 8;
+    private static final int OPTION_TRANSLATE = 9;
     private final long dialogId;
     private final boolean isEncrypted;
     private final ArrayList<DeletedMessageFull> deletedMessages = new ArrayList<>();
     private final ArrayList<DeletedMessageFull> filteredMessages = new ArrayList<>();
+    private final ArrayList<MessageObject> messageObjects = new ArrayList<>();
     private final SparseArray<DeletedMessageFull> messageIdMap = new SparseArray<>();
     private final int pageSize = 50;
     private final int pageSizeEncrypted = Integer.MAX_VALUE;
     private int rowCount;
     private RecyclerListView listView;
     private LinearLayoutManager layoutManager;
+    private ChatActivitySideControlsButtonsLayout sideControlsButtonsLayout;
+    private boolean pagedownButtonManuallyHidden;
     private boolean loading;
     private boolean noMoreOlder;
     private int oldestId = Integer.MAX_VALUE;
@@ -115,19 +127,60 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
         if (listView != null) {
             listView.setPadding(0, 0, 0, windowInsetsStateHolder.getCurrentNavigationBarInset() + dp(8));
         }
+        updatePagedownButtonPosition();
+    }
+
+    private void updatePagedownButtonPosition() {
+        if (sideControlsButtonsLayout == null) {
+            return;
+        }
+        ViewGroup.LayoutParams lp = sideControlsButtonsLayout.getLayoutParams();
+        if (!(lp instanceof ViewGroup.MarginLayoutParams params)) {
+            return;
+        }
+        int bottomMargin = windowInsetsStateHolder.getCurrentNavigationBarInset() + dp(16);
+        if (params.bottomMargin != bottomMargin) {
+            params.bottomMargin = bottomMargin;
+            sideControlsButtonsLayout.setLayoutParams(params);
+        }
+    }
+
+    private void updatePagedownButtonVisibility(boolean animated) {
+        if (sideControlsButtonsLayout == null || listView == null) {
+            return;
+        }
+        boolean canScrollDown = rowCount > 0 && listView.canScrollVertically(1);
+        if (!canScrollDown) {
+            pagedownButtonManuallyHidden = false;
+        }
+        boolean show = canScrollDown && !pagedownButtonManuallyHidden;
+        sideControlsButtonsLayout.showButton(ChatActivitySideControlsButtonsLayout.BUTTON_PAGE_DOWN, show, animated);
+    }
+
+    private void onPageDownClicked() {
+        if (listView == null || rowCount <= 0) {
+            return;
+        }
+        pagedownButtonManuallyHidden = true;
+        updatePagedownButtonVisibility(true);
+        listView.smoothScrollToPosition(rowCount - 1);
     }
 
     private final RecyclerView.OnScrollListener listScrollListener = new RecyclerView.OnScrollListener() {
         @Override
         public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
             if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                pagedownButtonManuallyHidden = false;
                 scrollingFloatingDate = true;
                 updateFloatingDateView();
                 showFloatingDateView();
             } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                pagedownButtonManuallyHidden = false;
                 scrollingFloatingDate = false;
                 hideFloatingDateView(true);
             }
+            updatePagedownButtonVisibility(true);
+            updateVisibleMessageCells();
         }
 
         @Override
@@ -139,11 +192,19 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
                 }
             }
             updateFloatingDateView();
+            updatePagedownButtonVisibility(true);
+            updateVisibleMessageCells();
         }
     };
 
     private static boolean hasContent(DeletedMessageFull messageFull) {
         return messageFull != null && messageFull.message != null && (!TextUtils.isEmpty(messageFull.message.text) || !TextUtils.isEmpty(messageFull.message.mediaPath) || messageFull.message.documentSerialized != null);
+    }
+
+    private void updateVisibleMessageCells() {
+        if (listView != null) {
+            updateVisibleChatMessageCells(listView);
+        }
     }
 
     private void updateDeleted() {
@@ -326,6 +387,19 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
         emptyView.setPadding(dp(20), dp(4), dp(20), dp(6));
         frameLayout.addView(emptyView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
 
+        BlurredBackgroundSourceColor pagedownSourceColor = new BlurredBackgroundSourceColor();
+        pagedownSourceColor.setColor(Color.TRANSPARENT);
+        BlurredBackgroundDrawableViewFactory pagedownBackgroundDrawableFactory = new BlurredBackgroundDrawableViewFactory(pagedownSourceColor);
+        BlurredBackgroundColorProviderThemed pagedownColorProvider = new BlurredBackgroundColorProviderThemed(getResourceProvider(), Theme.key_chat_messagePanelBackground);
+        sideControlsButtonsLayout = new ChatActivitySideControlsButtonsLayout(context, getResourceProvider(), pagedownColorProvider, pagedownBackgroundDrawableFactory);
+        sideControlsButtonsLayout.setOnClickListener((buttonId, v) -> {
+            if (buttonId == ChatActivitySideControlsButtonsLayout.BUTTON_PAGE_DOWN) {
+                onPageDownClicked();
+            }
+        });
+        frameLayout.addView(sideControlsButtonsLayout, LayoutHelper.createFrame(57, 300, Gravity.RIGHT | Gravity.BOTTOM, 0, 0, 0, 16));
+        updatePagedownButtonPosition();
+
         listView.post(updateFloatingDateRunnable);
 
         updateEmptyView();
@@ -333,7 +407,9 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
         updateDeleted(() -> {
             if (rowCount > 0 && listView != null) {
                 listView.scrollToPosition(rowCount - 1);
+                listView.post(this::updateVisibleMessageCells);
             }
+            updatePagedownButtonVisibility(false);
         });
 
         return fragmentView;
@@ -380,6 +456,11 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
 
                 if (TextUtils.isEmpty(searchQuery)) {
                     filteredMessages.addAll(0, older);
+                    ArrayList<MessageObject> olderObjects = new ArrayList<>(insertCount);
+                    for (int i = 0; i < insertCount; i++) {
+                        olderObjects.add(createMessageObject(older.get(i), true));
+                    }
+                    messageObjects.addAll(0, olderObjects);
                     rowCount = filteredMessages.size();
                     if (listView != null && listView.getAdapter() != null) {
                         listView.getAdapter().notifyItemRangeInserted(0, insertCount);
@@ -396,7 +477,9 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
                 loading = false;
 
                 if (!TextUtils.isEmpty(searchQuery)) updateActionBarCount();
+                updatePagedownButtonVisibility(false);
                 AndroidUtilities.runOnUIThread(updateFloatingDateRunnable);
+                updateVisibleMessageCells();
             });
         });
     }
@@ -407,6 +490,7 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
 
         NotificationCenter.getInstance(UserConfig.selectedAccount).addObserver(this, AyuConstants.MESSAGES_DELETED_NOTIFICATION);
         NotificationCenter.getInstance(UserConfig.selectedAccount).addObserver(this, AyuConstants.DELETED_MEDIA_LOADED_NOTIFICATION);
+        NotificationCenter.getInstance(UserConfig.selectedAccount).addObserver(this, NotificationCenter.voiceTranscriptionUpdate);
 
         return true;
     }
@@ -417,6 +501,7 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
 
         NotificationCenter.getInstance(UserConfig.selectedAccount).removeObserver(this, AyuConstants.MESSAGES_DELETED_NOTIFICATION);
         NotificationCenter.getInstance(UserConfig.selectedAccount).removeObserver(this, AyuConstants.DELETED_MEDIA_LOADED_NOTIFICATION);
+        NotificationCenter.getInstance(UserConfig.selectedAccount).removeObserver(this, NotificationCenter.voiceTranscriptionUpdate);
         Bulletin.removeDelegate(this);
 
         if (scrimPopupWindow != null) {
@@ -475,6 +560,7 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == AyuConstants.MESSAGES_DELETED_NOTIFICATION) {
@@ -495,9 +581,10 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
             } catch (Exception e) {
                 FileLog.e(e);
             }
+        } else if (id == NotificationCenter.voiceTranscriptionUpdate) {
+            handleVoiceTranscriptionUpdate(args);
         }
     }
-
 
     private void createMenu(View v, float x, float y, int position) {
         final MessageObject msg = (v instanceof ChatMessageCell) ? ((ChatMessageCell) v).getMessageObject() : null;
@@ -547,6 +634,14 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
             items.add(msg.isMusic() ? getString(R.string.SaveToMusic) : getString(R.string.SaveToDownloads));
             icons.add(R.drawable.msg_download);
             options.add(OPTION_SAVE_TO_DOWNLOADS);
+        }
+
+        String textToTranslate = msg.messageOwner != null ? msg.messageOwner.message : null;
+        if (!TextUtils.isEmpty(textToTranslate) || msg.isPoll()) {
+            boolean translated = msg.messageOwner != null && (msg.messageOwner.translated || msg.messageOwner.translatedPoll != null);
+            items.add(getString(translated ? R.string.HideTranslation : R.string.Translate));
+            icons.add(NaConfig.INSTANCE.llmIsDefaultProvider() ? R.drawable.magic_stick_solar : R.drawable.ic_translate);
+            options.add(OPTION_TRANSLATE);
         }
 
         items.add(getString(R.string.Delete));
@@ -650,11 +745,29 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
                     });
                 } else if (option == OPTION_DETAILS) {
                     presentFragment(new MessageDetailsActivity(msg, null));
+                } else if (option == OPTION_TRANSLATE) {
+                    toggleOrTranslate((ChatMessageCell) v, msg, null);
                 }
                 if (scrimPopupWindow != null) {
                     scrimPopupWindow.dismiss();
                 }
             });
+            if (option == OPTION_TRANSLATE) {
+                cell.setOnLongClickListener(v1 -> {
+                    if (msg.messageOwner != null && (msg.messageOwner.translated || msg.messageOwner.translatedPoll != null)) {
+                        return true;
+                    }
+                    Translator.showTargetLangSelect(cell, false, false, (locale) -> {
+                        if (scrimPopupWindow != null) {
+                            scrimPopupWindow.dismiss();
+                            scrimPopupWindow = null;
+                        }
+                        toggleOrTranslate((ChatMessageCell) v, msg, locale);
+                        return Unit.INSTANCE;
+                    });
+                    return true;
+                });
+            }
         }
 
         ChatScrimPopupContainerLayout scrimPopupContainerLayout = new ChatScrimPopupContainerLayout(fragmentView.getContext()) {
@@ -872,9 +985,18 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
             }
         }
         rowCount = filteredMessages.size();
+        rebuildMessageObjects();
         notifyAdapterDataChanged();
         updateActionBarCount();
         updateEmptyView();
+        if (listView != null) {
+            listView.post(() -> {
+                updatePagedownButtonVisibility(false);
+                updateVisibleMessageCells();
+            });
+        } else {
+            updatePagedownButtonVisibility(false);
+        }
     }
 
     private void updateEmptyView() {
@@ -927,7 +1049,16 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
             if (holder.getItemViewType() == 1) {
                 var cell = (AyuMessageCell) holder.itemView;
                 var deleted = filteredMessages.get(position);
-                var msg = createMessageObject(deleted, true);
+                MessageObject msg;
+                if (position >= 0 && position < messageObjects.size()) {
+                    msg = messageObjects.get(position);
+                    if (msg == null) {
+                        msg = createMessageObject(deleted, true);
+                        messageObjects.set(position, msg);
+                    }
+                } else {
+                    msg = createMessageObject(deleted, true);
+                }
                 msg.forceAvatar = !msg.isOutOwner();
                 cell.setAyuDelegate(AyuViewDeleted.this);
                 cell.setMessageObject(msg, null, false, false, false);
@@ -940,37 +1071,98 @@ public class AyuViewDeleted extends AyuMessageDelegateFragment {
         public int getItemViewType(int position) {
             return position >= 0 && position < filteredMessages.size() ? 1 : 0;
         }
+    }
 
-        private MessageObject createMessageObject(DeletedMessageFull deletedMessageFull, boolean resolveReply) {
-            var base = deletedMessageFull.message;
-            var tl = new TLRPC.TL_message();
-            AyuMessageUtils.map(base, tl, currentAccount);
-            AyuMessageUtils.mapMedia(base, tl, currentAccount);
+    private MessageObject createMessageObject(DeletedMessageFull deletedMessageFull, boolean resolveReply) {
+        int currentAccount = getCurrentAccount();
+        var base = deletedMessageFull.message;
+        var tl = new TLRPC.TL_message();
+        AyuMessageUtils.map(base, tl, currentAccount);
+        AyuMessageUtils.mapMedia(base, tl, currentAccount);
 
-            if (resolveReply && base.replyMessageId != 0) {
-                boolean found = false;
-                ArrayList<MessageObject> messages = MessagesController.getInstance(currentAccount).dialogMessage.get(base.dialogId);
-                if (messages != null) {
-                    for (int i = 0; i < messages.size(); i++) {
-                        MessageObject m = messages.get(i);
-                        if (m.getId() == base.replyMessageId) {
-                            tl.replyMessage = m.messageOwner;
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!found) {
-                    DeletedMessageFull m = messageIdMap.get(base.replyMessageId);
-                    if (m != null) {
-                        tl.replyMessage = createMessageObject(m, false).messageOwner;
+        if (resolveReply && base.replyMessageId != 0) {
+            boolean found = false;
+            ArrayList<MessageObject> messages = MessagesController.getInstance(currentAccount).dialogMessage.get(base.dialogId);
+            if (messages != null) {
+                for (int i = 0; i < messages.size(); i++) {
+                    MessageObject m = messages.get(i);
+                    if (m.getId() == base.replyMessageId) {
+                        tl.replyMessage = m.messageOwner;
+                        found = true;
+                        break;
                     }
                 }
             }
 
-            tl.ayuDeleted = true;
-            return new MessageObject(getCurrentAccount(), tl, false, true);
+            if (!found) {
+                DeletedMessageFull m = messageIdMap.get(base.replyMessageId);
+                if (m != null) {
+                    tl.replyMessage = createMessageObject(m, false).messageOwner;
+                }
+            }
+        }
+
+        tl.ayuDeleted = true;
+        return new MessageObject(getCurrentAccount(), tl, false, true);
+    }
+
+    private void rebuildMessageObjects() {
+        messageObjects.clear();
+        for (int i = 0; i < filteredMessages.size(); i++) {
+            messageObjects.add(createMessageObject(filteredMessages.get(i), true));
+        }
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private void handleVoiceTranscriptionUpdate(Object... args) {
+        if (listView == null || listView.getAdapter() == null || messageObjects.isEmpty()) {
+            return;
+        }
+
+        MessageObject updated = args != null && args.length > 0 && args[0] instanceof MessageObject ? (MessageObject) args[0] : null;
+        long transcriptionId = 0;
+        String transcriptionText = null;
+        if (args != null && args.length > 1 && args[1] != null) {
+            transcriptionId = (Long) args[1];
+            transcriptionText = (String) args[2];
+        }
+
+        int indexToUpdate = -1;
+        for (int i = 0; i < messageObjects.size(); i++) {
+            MessageObject local = messageObjects.get(i);
+            if (local == null || local.messageOwner == null) {
+                continue;
+            }
+            if (updated == local) {
+                indexToUpdate = i;
+                break;
+            }
+            if (transcriptionId != 0 && local.messageOwner.voiceTranscriptionId == transcriptionId) {
+                indexToUpdate = i;
+                break;
+            }
+            if (updated != null && updated.getId() == local.getId() && updated.getDialogId() == local.getDialogId()) {
+                indexToUpdate = i;
+                break;
+            }
+        }
+
+        if (indexToUpdate >= 0) {
+            MessageObject local = messageObjects.get(indexToUpdate);
+            if (local != null && local.messageOwner != null) {
+                if (transcriptionText != null) {
+                    local.messageOwner.voiceTranscription = transcriptionText;
+                }
+                if (args.length > 3 && args[3] != null) {
+                    local.messageOwner.voiceTranscriptionOpen = (Boolean) args[3];
+                }
+                if (args.length > 4 && args[4] != null) {
+                    local.messageOwner.voiceTranscriptionFinal = (Boolean) args[4];
+                }
+            }
+            listView.getAdapter().notifyItemChanged(indexToUpdate);
+        } else {
+            listView.getAdapter().notifyDataSetChanged();
         }
     }
 

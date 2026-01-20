@@ -12,6 +12,7 @@ import tw.nekomimi.nekogram.translate.Translator
 import tw.nekomimi.nekogram.translate.code2Locale
 import tw.nekomimi.nekogram.utils.AlertUtil
 import tw.nekomimi.nekogram.utils.uDismiss
+import xyz.nextalone.nagram.NaConfig
 import java.util.concurrent.atomic.AtomicBoolean
 
 @JvmOverloads
@@ -26,6 +27,7 @@ fun startTrans(
     val canceled = AtomicBoolean(false)
     val finalToLang = toLang.code2Locale
     val finalProvider = provider.takeIf { it != 0 } ?: NekoConfig.translationProvider.Int()
+    val appendOriginal = NaConfig.translatorMode.Int() == TRANSLATE_MODE_APPEND
     val job = Job()
 
     dialog.show()
@@ -41,7 +43,12 @@ fun startTrans(
             if (!canceled.get()) {
                 withContext(Dispatchers.Main) {
                     dialog.uDismiss()
-                    AlertUtil.showCopyAlert(ctx, result)
+                    val finalText = if (appendOriginal) {
+                        "$text$TRANSLATION_SEPARATOR$result"
+                    } else {
+                        result
+                    }
+                    AlertUtil.showCopyAlert(ctx, finalText)
                 }
             }
         }.onFailure { e ->

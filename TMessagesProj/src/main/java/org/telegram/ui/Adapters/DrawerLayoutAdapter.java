@@ -63,17 +63,18 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnBrowser = 1005;
     public static int nkbtnGhostMode = 1006;
     public static int nkbtnSessions = 1007;
-    public static int nkbtnOpenQuran = 1008;
-    public static int nkbtnOpenBible = 1009;
-    public static int nkbtnShamalaMode = 1010;
-    public static int nkbtnTv = 1011;
-    public static int nkbtnLegends = 1012;
-    public static int nkbtnUltraShamalaMode = 1013;
-    public static int nkbtnHyperShamalaMode = 1014;
-    public static int nkbtnUspdmpshmMode = 1015;
-    public static int nkbtnEpsteinMode = 1016;
-    public static int nkbtnQuantumShalavaMode = 1017;
-    public static int nkbtnDildavshvzhMode = 1018;
+    public static int nkbtnBookmarks = 1008;
+    public static int nkbtnOpenQuran = 1009;
+    public static int nkbtnOpenBible = 1010;
+    public static int nkbtnShamalaMode = 1011;
+    public static int nkbtnTv = 1012;
+    public static int nkbtnLegends = 1013;
+    public static int nkbtnUltraShamalaMode = 1014;
+    public static int nkbtnHyperShamalaMode = 1015;
+    public static int nkbtnUspdmpshmMode = 1016;
+    public static int nkbtnEpsteinMode = 1017;
+    public static int nkbtnQuantumShalavaMode = 1018;
+    public static int nkbtnDildavshvzhMode = 1019;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -451,6 +452,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         if (NaConfig.INSTANCE.getDrawerItemContacts().Bool()) items.add(new Item(6, LocaleController.getString(R.string.Contacts), contactsIcon));
         if (NaConfig.INSTANCE.getDrawerItemCalls().Bool()) items.add(new Item(10, LocaleController.getString(R.string.Calls), callsIcon));
         if (NaConfig.INSTANCE.getDrawerItemSaved().Bool()) items.add(new Item(11, LocaleController.getString(R.string.SavedMessages), savedIcon));
+        if (NaConfig.INSTANCE.getShowAddToBookmark().Bool()) items.add(new Item(nkbtnBookmarks, LocaleController.getString(R.string.BookmarksManager), R.drawable.msg_fave));
         if (NaConfig.INSTANCE.getDrawerItemSettings().Bool()) items.add(new Item(8, LocaleController.getString(R.string.Settings), settingsIcon));
 //        items.add(null); // divider
 //        items.add(new Item(7, LocaleController.getString(R.string.InviteFriends), inviteIcon));

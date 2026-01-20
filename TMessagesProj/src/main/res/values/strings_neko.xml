@@ -80,7 +80,7 @@
     <string name="SourceCode">Source Code</string>
     <string name="ResetStickerSize">Reset sticker size</string>
     <string name="RestartAppToTakeEffect">Restart app to apply changes.</string>
-    <string name="DisableAppBarShadow">Disable Title Bar Shadow</string>
+    <string name="DisableAppBarShadow">Hide Top Panel Divider</string>
     <string name="MediaPreview">Media Preview in Chat List</string>
     <string name="AutoPauseVideo">Auto Pause Video</string>
     <string name="AutoPauseVideoAbout">When lock screen/switch to background.</string>
@@ -109,7 +109,6 @@
     <string name="SaveToDownloadCount_many">Saving %1$d files to downloads</string>
     <string name="SaveToDownloadCount_other">Saving %1$d files to downloads</string>
     <string name="disableNotificationBubbles">Disable Notification Bubbles</string>
-    <string name="ReactionsDisabled">Disable</string>
     <string name="customSavePath">Custom Storage Path</string>
     <string name="customSavePathHint">Leave blank to save directly</string>
     <string name="channelLabel">channel</string>
@@ -206,11 +205,6 @@
     <string name="ShowIdAndDc">Show ID / DC in Profile</string>
     <string name="UseDefaultTheme">Use default theme *</string>
     <string name="DialogsSettings">Dialogs</string>
-    <string name="SortMenu">Sort Chats</string>
-    <string name="SortByUnread">Sort By Unread</string>
-    <string name="SortByUnmuted">Sort By Unmuted</string>
-    <string name="SortByUser">Sort By User</string>
-    <string name="SortByContacts">Sort By Contacts</string>
     <string name="NagramXPushService">Push Service</string>
     <string name="DisableSystemAccount">Disable System Account</string>
     <string name="FilterMenu">Dialogs Filter Menu</string>
@@ -250,7 +244,7 @@
     <string name="TabletMode">Tablet Mode</string>
     <string name="TabletModeDefault">Auto</string>
     <string name="ReplaceText">Replace Text</string>
-    <string name="TextOrigin">Origin</string>
+    <string name="TextOrigin">Original</string>
     <string name="TextReplace">Replace</string>
     <string name="ReplaceRegex">Use Regex</string>
     <string name="DisableTrending">Disable Trending</string>

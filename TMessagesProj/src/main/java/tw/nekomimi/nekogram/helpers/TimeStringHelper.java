@@ -1,35 +1,25 @@
 package tw.nekomimi.nekogram.helpers;
 
-import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.LocaleController.getString;
 
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
-import android.text.style.ReplacementSpan;
-import android.view.Gravity;
-import android.view.View;
+import android.text.style.CharacterStyle;
+import android.text.style.UpdateAppearance;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
-import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.R;
-import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.TranslateController;
 import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ChatActivity;
-import org.telegram.ui.Components.AnimatedTextView;
 import org.telegram.ui.Components.ColoredImageSpan;
 
 import java.util.Locale;
@@ -47,13 +37,29 @@ public class TimeStringHelper {
     public static Drawable channelLabelDrawable;
     public static SpannableStringBuilder translatedSpan;
     public static Drawable translatedDrawable;
+    public static Drawable bookmarkDrawable;
     public static SpannableStringBuilder arrowSpan;
     public static Drawable arrowDrawable;
     public static SpannableStringBuilder forwardsSpan;
     public static Drawable forwardsDrawable;
     public ChatActivity.ThemeDelegate themeDelegate;
 
-    public static CharSequence createDeletedString(MessageObject messageObject, boolean isEdited, boolean isTranslated) {
+    public static CharSequence createBookmarkedString(MessageObject messageObject, int senderNameColor) {
+        createSpan();
+        SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
+        spannableStringBuilder
+                .append(messageObject.messageOwner.post_author != null ? " " : "")
+                .append(createBookmarkSpan(senderNameColor))
+                .append("  ")
+                .append(LocaleController.getInstance().getFormatterDay().format((long) (messageObject.messageOwner.date) * 1000));
+        return spannableStringBuilder;
+    }
+
+    public static CharSequence createDeletedString(MessageObject messageObject, boolean isEdited, boolean isTranslated, int senderNameColor) {
+        return createDeletedString(messageObject, isEdited, isTranslated, false, senderNameColor);
+    }
+
+    public static CharSequence createDeletedString(MessageObject messageObject, boolean isEdited, boolean isTranslated, boolean isBookmarked, int senderNameColor) {
         String editedStr = NaConfig.INSTANCE.getCustomEditedMessage().String();
         String editedStrFin = editedStr.isEmpty() ? getString(R.string.EditedMessage) : editedStr;
         String deletedStr = NaConfig.INSTANCE.getCustomDeletedMark().String();
@@ -68,13 +74,19 @@ public class TimeStringHelper {
                 .append("  ")
                 .append(isEdited ? (NaConfig.INSTANCE.getUseEditedIcon().Bool() ? editedSpan : editedStrFin) : "")
                 .append(isEdited ? "  " : "")
-                .append(isTranslated ? createTranslatedString(messageObject, true) : "")
+                .append(isTranslated ? createTranslatedString(messageObject, true, isBookmarked, senderNameColor) : "")
                 .append(isTranslated ? "  " : "")
+                .append(!isTranslated && isBookmarked ? createBookmarkSpan(senderNameColor) : "")
+                .append(!isTranslated && isBookmarked ? "  " : "")
                 .append(LocaleController.getInstance().getFormatterDay().format((long) (messageObject.messageOwner.date) * 1000));
         return spannableStringBuilder;
     }
 
-    public static CharSequence createEditedString(MessageObject messageObject, boolean isTranslated) {
+    public static CharSequence createEditedString(MessageObject messageObject, boolean isTranslated, int senderNameColor) {
+        return createEditedString(messageObject, isTranslated, false, senderNameColor);
+    }
+
+    public static CharSequence createEditedString(MessageObject messageObject, boolean isTranslated, boolean isBookmarked, int senderNameColor) {
         String editedStr = NaConfig.INSTANCE.getCustomEditedMessage().String();
         String editedStrFin = editedStr.isEmpty() ? getString(R.string.EditedMessage) : editedStr;
 
@@ -85,13 +97,19 @@ public class TimeStringHelper {
                 .append(messageObject.messageOwner.post_author != null ? " " : "")
                 .append(NaConfig.INSTANCE.getUseEditedIcon().Bool() ? editedSpan : editedStrFin)
                 .append("  ")
-                .append(isTranslated ? createTranslatedString(messageObject, true) : "")
+                .append(isTranslated ? createTranslatedString(messageObject, true, isBookmarked, senderNameColor) : "")
                 .append(isTranslated ? "  " : "")
+                .append(!isTranslated && isBookmarked ? createBookmarkSpan(senderNameColor) : "")
+                .append(!isTranslated && isBookmarked ? "  " : "")
                 .append(LocaleController.getInstance().getFormatterDay().format((long) (messageObject.messageOwner.date) * 1000));
         return spannableStringBuilder;
     }
 
-    public static CharSequence createTranslatedString(MessageObject messageObject, boolean internal) {
+    public static CharSequence createTranslatedString(MessageObject messageObject, boolean internal, int senderNameColor) {
+        return createTranslatedString(messageObject, internal, false, senderNameColor);
+    }
+
+    public static CharSequence createTranslatedString(MessageObject messageObject, boolean internal, boolean isBookmarked, int senderNameColor) {
         createSpan();
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
 
@@ -101,13 +119,25 @@ public class TimeStringHelper {
                     .append(" ")
                     .append(arrowSpan)
                     .append(" ")
-                    .append(Locale.forLanguageTag(messageObject.messageOwner.translatedToLanguage).getDisplayName())
+                    .append(Locale.forLanguageTag(messageObject.messageOwner.translatedToLanguage).getDisplayName());
+            if (isBookmarked) {
+                spannableStringBuilder
+                        .append("  ")
+                        .append(createBookmarkSpan(senderNameColor));
+            }
+            spannableStringBuilder
                     .append(internal ? "" : "  ")
                     .append(internal ? "" : LocaleController.getInstance().getFormatterDay().format((long) (messageObject.messageOwner.date) * 1000));
         } else {
             spannableStringBuilder
                     .append(internal || messageObject.messageOwner.post_author == null ? "" : " ")
-                    .append(translatedSpan)
+                    .append(translatedSpan);
+            if (isBookmarked) {
+                spannableStringBuilder
+                        .append("  ")
+                        .append(createBookmarkSpan(senderNameColor));
+            }
+            spannableStringBuilder
                     .append(internal ? "" : "  ")
                     .append(internal ? "" : LocaleController.getInstance().getFormatterDay().format((long) (messageObject.messageOwner.date) * 1000));
         }
@@ -158,6 +188,10 @@ public class TimeStringHelper {
             translatedSpan.setSpan(new ColoredImageSpan(translatedDrawable, true), 0, 1, 0);
         }
 
+        if (bookmarkDrawable == null) {
+            bookmarkDrawable = Objects.requireNonNull(ContextCompat.getDrawable(ApplicationLoader.applicationContext, R.drawable.msg_fave_solar_12)).mutate();
+        }
+
         if (arrowDrawable == null) {
             arrowDrawable = Objects.requireNonNull(ContextCompat.getDrawable(ApplicationLoader.applicationContext, R.drawable.search_arrow));
         }
@@ -175,6 +209,18 @@ public class TimeStringHelper {
         }
     }
 
+    private static SpannableStringBuilder createBookmarkSpan(int senderNameColor) {
+        if (bookmarkDrawable == null) {
+            bookmarkDrawable = Objects.requireNonNull(ContextCompat.getDrawable(ApplicationLoader.applicationContext, R.drawable.msg_fave_solar_12)).mutate();
+        }
+        SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder("\u200B");
+        ColoredImageSpan imageSpan = new ColoredImageSpan(bookmarkDrawable, true);
+        imageSpan.setTopOffset(-1);
+        imageSpan.setOverrideColor(senderNameColor);
+        spannableStringBuilder.setSpan(imageSpan, 0, 1, 0);
+        return spannableStringBuilder;
+    }
+
     public static SpannableStringBuilder getChannelLabelSpan() {
         if (channelLabelDrawable == null) {
             channelLabelDrawable = Objects.requireNonNull(ContextCompat.getDrawable(ApplicationLoader.applicationContext, R.drawable.channel_label_solar)).mutate();
@@ -186,56 +232,28 @@ public class TimeStringHelper {
         return channelLabelSpan;
     }
 
-    public static CharSequence getColoredAdminString(View parent, TextPaint namePaint, SpannableStringBuilder sb) {
-        SpannableString spannableString = new SpannableString("\u200B");
-        spannableString.setSpan(new adminStringSpan(parent, namePaint, sb), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return spannableString;
+    public static CharSequence getColoredAdminString(TextPaint namePaint, SpannableStringBuilder sb) {
+        SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder(sb);
+        spannableStringBuilder.setSpan(new AdminTitleColorSpan(namePaint), 0, spannableStringBuilder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return spannableStringBuilder;
     }
 
-    public static class adminStringSpan extends ReplacementSpan {
+    private static class AdminTitleColorSpan extends CharacterStyle implements UpdateAppearance {
 
-        private final AnimatedTextView.AnimatedTextDrawable adminString;
         private final TextPaint namePaint;
 
-        public adminStringSpan(View parent, TextPaint namePaint, SpannableStringBuilder sb) {
+        private AdminTitleColorSpan(TextPaint namePaint) {
             this.namePaint = namePaint;
-            adminString = new AnimatedTextView.AnimatedTextDrawable(false, false, true);
-            adminString.setCallback(parent);
-            float smallerDp = (2 * SharedConfig.fontSize + 10) / 3f;
-            adminString.setTextSize(dp(smallerDp - 1));
-            adminString.setText("");
-            adminString.setGravity(Gravity.CENTER);
-            setText(sb, false);
-        }
-
-        public void setText(SpannableStringBuilder sb, boolean animated) {
-            adminString.setText(sb.toString(), animated);
-        }
-
-        public void setColor(int color) {
-            adminString.setTextColor(color);
         }
 
         @Override
-        public int getSize(@NonNull Paint paint, CharSequence text, int start, int end, @Nullable Paint.FontMetricsInt fm) {
-            return getWidth();
-        }
-
-        public int getWidth() {
-            return (int) adminString.getWidth();
-        }
-
-        @Override
-        public void draw(@NonNull Canvas canvas, CharSequence text, int start, int end, float _x, int top, int _y, int bottom, @NonNull Paint paint) {
-            if (this.namePaint.getColor() != adminString.getTextColor()) {
-                adminString.setTextColor(this.namePaint.getColor());
+        public void updateDrawState(TextPaint tp) {
+            if (namePaint == null) {
+                return;
             }
-            canvas.save();
-            canvas.translate(_x, -dp(2.0f));
-            AndroidUtilities.rectTmp2.set(0, 0, (int) adminString.getCurrentWidth(), (int) adminString.getHeight());
-            adminString.setBounds(AndroidUtilities.rectTmp2);
-            adminString.draw(canvas);
-            canvas.restore();
+            int alpha = tp.getAlpha();
+            tp.setColor(namePaint.getColor());
+            tp.setAlpha(alpha);
         }
     }
 

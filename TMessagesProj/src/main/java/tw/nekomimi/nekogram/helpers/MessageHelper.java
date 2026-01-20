@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Build;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -29,6 +30,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
 import com.radolyn.ayugram.proprietary.AyuMessageUtils;
+import com.radolyn.ayugram.utils.AyuState;
 
 import org.telegram.SQLite.SQLiteCursor;
 import org.telegram.SQLite.SQLiteException;
@@ -47,6 +49,7 @@ import org.telegram.messenger.MessageObject;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
+import org.telegram.messenger.SendMessagesHelper;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.ConnectionsManager;
@@ -58,9 +61,11 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.CheckBoxCell;
 import org.telegram.ui.ChatActivity;
 import org.telegram.ui.Components.AlertsCreator;
+import org.telegram.ui.Components.AnimatedFileDrawable;
 import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.Components.BackupImageView;
 import org.telegram.ui.Components.Bulletin;
+import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.ColoredImageSpan;
 import org.telegram.ui.Components.Forum.ForumUtilities;
 import org.telegram.ui.Components.LayoutHelper;
@@ -90,6 +95,19 @@ public class MessageHelper extends BaseController {
 
     public MessageHelper(int num) {
         super(num);
+    }
+
+    public static MessageHelper getInstance(int num) {
+        MessageHelper localInstance = Instance[num];
+        if (localInstance == null) {
+            synchronized (MessageHelper.class) {
+                localInstance = Instance[num];
+                if (localInstance == null) {
+                    Instance[num] = localInstance = new MessageHelper(num);
+                }
+            }
+        }
+        return localInstance;
     }
 
     public static String getPathToMessage(MessageObject messageObject) {
@@ -141,7 +159,7 @@ public class MessageHelper extends BaseController {
 
         ArrayList<MessageObject> arrayList = new ArrayList<>();
         arrayList.add(obj);
-        getNotificationCenter().postNotificationName(NotificationCenter.replaceMessagesObjects, dialog_id, arrayList, false);
+        getNotificationCenter().postNotificationName(NotificationCenter.replaceMessagesObjects, dialog_id, arrayList, false, true);
     }
 
     public void resetMessageContent(long dialog_id, ArrayList<MessageObject> messageObjects) {
@@ -151,19 +169,6 @@ public class MessageHelper extends BaseController {
             arrayList.add(obj);
         }
         getNotificationCenter().postNotificationName(NotificationCenter.replaceMessagesObjects, dialog_id, arrayList, false);
-    }
-
-    public static MessageHelper getInstance(int num) {
-        MessageHelper localInstance = Instance[num];
-        if (localInstance == null) {
-            synchronized (MessageHelper.class) {
-                localInstance = Instance[num];
-                if (localInstance == null) {
-                    Instance[num] = localInstance = new MessageHelper(num);
-                }
-            }
-        }
-        return localInstance;
     }
 
     public interface FilteredMessageCallback {
@@ -589,6 +594,9 @@ public class MessageHelper extends BaseController {
                 }
                 Runnable deleteAction = () -> {
                     for (ArrayList<Integer> list : lists) {
+                        for (int msgId : list) {
+                            AyuState.permitDeleteMessage(dialogId, msgId);
+                        }
                         getMessagesController().deleteMessages(list, null, null, dialogId, 0, true, 0);
                     }
                 };
@@ -610,12 +618,21 @@ public class MessageHelper extends BaseController {
         req.limit = 100;
         req.q = "";
         req.offset_id = offsetId;
-        req.from_id = fromId;
-        req.flags |= 1;
         req.filter = new TLRPC.TL_inputMessagesFilterEmpty();
+        long dialogId = DialogObject.getPeerDialogId(peer);
+        boolean isMonoForum = getMessagesStorage().isMonoForum(dialogId);
+        if (!isMonoForum) {
+            req.from_id = fromId;
+            req.flags |= 1;
+        }
         if (replyMessageId != 0) {
-            req.top_msg_id = replyMessageId;
-            req.flags |= 2;
+            if (isMonoForum) {
+                req.saved_peer_id = getMessagesController().getInputPeer(replyMessageId);
+                req.flags |= 4;
+            } else {
+                req.top_msg_id = replyMessageId;
+                req.flags |= 2;
+            }
         }
         req.hash = hash;
         getConnectionsManager().sendRequest(req, (response, error) -> {
@@ -854,7 +871,7 @@ public class MessageHelper extends BaseController {
         try {
             Context context = ApplicationLoader.applicationContext;
             ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-            android.net.Uri uri = FileProvider.getUriForFile(context, ApplicationLoader.getApplicationId() + ".provider", file);
+            Uri uri = FileProvider.getUriForFile(context, ApplicationLoader.getApplicationId() + ".provider", file);
             ClipData clip = ClipData.newUri(context.getContentResolver(), "label", uri);
             clipboard.setPrimaryClip(clip);
             if (callback != null) callback.run();
@@ -978,5 +995,193 @@ public class MessageHelper extends BaseController {
         long fromId = MessageObject.getFromChatId(message);
         boolean blocked =  isBlockedUser(fromId) || AyuFilter.isBlockedChannel(fromId);
         return blocked || AyuFilter.isFiltered(new MessageObject(currentAccount, message, false, false), null);
+    }
+
+    public static void copyVideoFrameToClipboard(File videoFile, long positionMs, View bulletinContainer, Theme.ResourcesProvider resourcesProvider, Runnable fallbackAction) {
+        Utilities.globalQueue.postRunnable(() -> {
+            Bitmap bitmap = null;
+            if (videoFile != null && videoFile.exists()) {
+                bitmap = createVideoFrameBitmap(videoFile, positionMs);
+            }
+            if (bitmap == null) {
+                if (fallbackAction != null) {
+                    AndroidUtilities.runOnUIThread(fallbackAction);
+                }
+                return;
+            }
+            saveFrameBitmapToClipboard(bitmap, bulletinContainer, resourcesProvider);
+        });
+    }
+
+    public static Bitmap createVideoFrameBitmap(File videoFile, long positionMs) {
+        Bitmap bitmap = null;
+        AnimatedFileDrawable fileDrawable = null;
+        try {
+            fileDrawable = new AnimatedFileDrawable(videoFile, true, 0, 0, null, null, null, 0, 0, true, null);
+            bitmap = fileDrawable.getFrameAtTime(positionMs, true);
+        } catch (Exception e) {
+            FileLog.e(e);
+        } finally {
+            if (fileDrawable != null) {
+                fileDrawable.recycle();
+            }
+        }
+        if (bitmap == null) {
+            bitmap = SendMessagesHelper.createVideoThumbnailAtTime(videoFile.getAbsolutePath(), positionMs * 1000);
+        }
+        return bitmap;
+    }
+
+    public static void saveFrameBitmapToClipboard(Bitmap bitmap, View bulletinContainer, Theme.ResourcesProvider resourcesProvider) {
+        if (bitmap == null) {
+            return;
+        }
+        Utilities.globalQueue.postRunnable(() -> {
+            File tempFile = null;
+            boolean saved = false;
+            try {
+                File cacheDir = FileLoader.getDirectory(FileLoader.MEDIA_DIR_CACHE);
+                tempFile = new File(cacheDir, "frame_" + System.currentTimeMillis() + ".png");
+                try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                    saved = bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                }
+            } catch (Exception e) {
+                FileLog.e(e);
+            } finally {
+                try {
+                    bitmap.recycle();
+                } catch (Exception ignore) {
+                }
+            }
+            if (!saved) {
+                if (tempFile != null) {
+                    try {
+                        if (!tempFile.delete()) {
+                            tempFile.deleteOnExit();
+                        }
+                    } catch (Exception ignore) {
+                    }
+                }
+                return;
+            }
+            final File finalTempFile = tempFile;
+            AndroidUtilities.runOnUIThread(() -> {
+                Runnable callback = null;
+                if (bulletinContainer instanceof FrameLayout container) {
+                    callback = () -> BulletinFactory.of(container, resourcesProvider).createCopyBulletin(getString(R.string.PhotoCopied)).show();
+                }
+                addFileToClipboard(finalTempFile, callback);
+            });
+        });
+    }
+
+    public static ArrayList<TLRPC.MessageEntity> reparseMessageEntities(ArrayList<TLRPC.MessageEntity> translatedEntities) {
+        if (translatedEntities == null) {
+            return null;
+        }
+        if (!NaConfig.INSTANCE.getTranslatorKeepMarkdown().Bool()) {
+            ArrayList<TLRPC.MessageEntity> entities = new ArrayList<>();
+            for (TLRPC.MessageEntity entity : translatedEntities) {
+                boolean isMarkdownEntity = entity instanceof TLRPC.TL_messageEntitySpoiler;
+                isMarkdownEntity |= entity instanceof TLRPC.TL_messageEntityBold;
+                isMarkdownEntity |= entity instanceof TLRPC.TL_messageEntityItalic;
+                isMarkdownEntity |= entity instanceof TLRPC.TL_messageEntityCode;
+                isMarkdownEntity |= entity instanceof TLRPC.TL_messageEntityStrike;
+                isMarkdownEntity |= entity instanceof TLRPC.TL_messageEntityUnderline;
+                if (!isMarkdownEntity) {
+                    entities.add(entity);
+                }
+            }
+            return entities;
+        }
+        return translatedEntities;
+    }
+
+    public static ArrayList<TLRPC.MessageEntity> getEntitiesForText(MessageObject messageObject, CharSequence text) {
+        if (messageObject == null || messageObject.messageOwner == null) {
+            return null;
+        }
+        final TLRPC.Message messageOwner = messageObject.messageOwner;
+        if (messageObject.translated) {
+            if (messageOwner.voiceTranscriptionOpen) {
+                return messageOwner.translatedVoiceTranscription != null ? messageOwner.translatedVoiceTranscription.entities : null;
+            } else {
+                return messageOwner.translatedText != null ? reparseMessageEntities(messageOwner.translatedText.entities) : null;
+            }
+        }
+        if (messageOwner.translated && messageOwner.translatedText != null) {
+            return mergeAppendTranslatedEntities(messageOwner.entities, messageOwner.translatedText, text);
+        }
+        return messageOwner.entities;
+    }
+
+    public static ArrayList<TLRPC.MessageEntity> mergeAppendTranslatedEntities(ArrayList<TLRPC.MessageEntity> baseEntities, TLRPC.TL_textWithEntities translatedText, CharSequence fullText) {
+        if (fullText == null || translatedText == null || TextUtils.isEmpty(translatedText.text) || translatedText.entities == null) {
+            return baseEntities;
+        }
+        final int fullLen = fullText.length();
+        final int translatedLen = translatedText.text.length();
+        if (translatedLen == 0 || fullLen < translatedLen) {
+            return baseEntities;
+        }
+        final int translatedOffset = fullLen - translatedLen;
+        final ArrayList<TLRPC.MessageEntity> translatedEntities = reparseMessageEntities(translatedText.entities);
+        if (translatedEntities == null) {
+            return baseEntities;
+        }
+        if (translatedOffset == 0) {
+            return translatedEntities;
+        }
+        if (!TextUtils.regionMatches(fullText, translatedOffset, translatedText.text, 0, translatedLen)) {
+            return baseEntities;
+        }
+        final ArrayList<TLRPC.MessageEntity> merged = new ArrayList<>();
+        if (baseEntities != null) {
+            merged.addAll(baseEntities);
+        }
+        for (int i = 0, size = translatedEntities.size(); i < size; i++) {
+            final TLRPC.MessageEntity entity = translatedEntities.get(i);
+            if (entity == null) {
+                continue;
+            }
+            final TLRPC.MessageEntity copied = copyMessageEntity(entity);
+            if (copied == null) {
+                continue;
+            }
+            copied.offset += translatedOffset;
+            if (copied.length <= 0 || copied.offset < 0 || copied.offset >= fullLen) {
+                continue;
+            }
+            if (copied.offset + copied.length > fullLen) {
+                copied.length = fullLen - copied.offset;
+            }
+            merged.add(copied);
+        }
+        return merged;
+    }
+
+    public static TLRPC.MessageEntity copyMessageEntity(TLRPC.MessageEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        NativeByteBuffer data = null;
+        try {
+            data = new NativeByteBuffer(entity.getObjectSize());
+            entity.serializeToStream(data);
+            data.rewind();
+            final int constructor = data.readInt32(true);
+            final TLRPC.MessageEntity result = TLRPC.MessageEntity.TLdeserialize(data, constructor, true);
+            if (result instanceof TLRPC.TL_messageEntityCustomEmoji && entity instanceof TLRPC.TL_messageEntityCustomEmoji) {
+                ((TLRPC.TL_messageEntityCustomEmoji) result).document = ((TLRPC.TL_messageEntityCustomEmoji) entity).document;
+            }
+            return result;
+        } catch (Exception e) {
+            FileLog.e(e);
+        } finally {
+            if (data != null) {
+                data.reuse();
+            }
+        }
+        return null;
     }
 }

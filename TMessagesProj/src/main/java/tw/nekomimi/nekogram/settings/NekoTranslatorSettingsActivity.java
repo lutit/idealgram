@@ -66,6 +66,7 @@ import tw.nekomimi.nekogram.config.cell.ConfigCellTextDetail;
 import tw.nekomimi.nekogram.config.cell.ConfigCellTextInput;
 import tw.nekomimi.nekogram.translate.Translator;
 import tw.nekomimi.nekogram.translate.TranslatorKt;
+import tw.nekomimi.nekogram.translate.source.LLMTranslator;
 import tw.nekomimi.nekogram.ui.BottomBuilder;
 import tw.nekomimi.nekogram.ui.PopupBuilder;
 import tw.nekomimi.nekogram.ui.cells.HeaderCell;
@@ -73,6 +74,7 @@ import xyz.nextalone.nagram.NaConfig;
 
 public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
 
+    private final int initialTranslationProvider;
     private final CellGroup cellGroup = new CellGroup(this);
     private final AbstractConfigCell headerOptions = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.TranslatorOptions)));
     private final AbstractConfigCell showTranslateRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.showTranslate, null, getString(R.string.ShowTranslateButton)));
@@ -138,6 +140,15 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
 
     private final AbstractConfigCell llmSystemPromptRow = cellGroup.appendCell(new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmSystemPrompt(), (view, position) -> customDialog_BottomInputString(position, NaConfig.INSTANCE.getLlmSystemPrompt(), getString(R.string.LlmSystemPromptNotice), getString(R.string.LlmSystemPromptHint)), getString(R.string.Default)));
     private final AbstractConfigCell llmUserPromptRow = cellGroup.appendCell(new ConfigCellTextDetail(NaConfig.INSTANCE.getLlmUserPrompt(), (view, position) -> customDialog_BottomInputString(position, NaConfig.INSTANCE.getLlmUserPrompt(), getString(R.string.LlmUserPromptNotice), ""), getString(R.string.Default)));
+    private final AbstractConfigCell llmUseContextRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getLlmUseContext(), getString(R.string.LlmUseContextNotice)));
+    private final AbstractConfigCell llmUseContextInAutoTranslateRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getLlmUseContextInAutoTranslate(), getString(R.string.LlmUseContextInAutoTranslateNotice)));
+    private final AbstractConfigCell llmContextSizeRow = cellGroup.appendCell(new ConfigCellSelectBox(null, NaConfig.INSTANCE.getLlmContextSize(), new String[]{
+        "1",
+        "3",
+        "5",
+        "7",
+        "10",
+}, null));
     private final AbstractConfigCell headerTemperature = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.LlmTemperature)));
     private final AbstractConfigCell temperatureValueRow = cellGroup.appendCell(new ConfigCellCustom(getString(R.string.LlmTemperature), ConfigCellCustom.CUSTOM_ITEM_Temperature, false));
     private final AbstractConfigCell dividerAITranslatorSettings = cellGroup.appendCell(new ConfigCellDivider());
@@ -158,9 +169,11 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
     private final boolean isAutoTranslateEnabled;
 
     public NekoTranslatorSettingsActivity() {
+        initialTranslationProvider = NekoConfig.translationProvider.Int();
         isAutoTranslateEnabled = NaConfig.INSTANCE.getTelegramUIAutoTranslate().Bool();
         oldLlmProvider = NaConfig.INSTANCE.getLlmProviderPreset().Int();
         rebuildRowsForLlmProvider(oldLlmProvider);
+        checkContextRows();
         checkTemperatureRows();
         addRowsToMap(cellGroup);
     }
@@ -181,6 +194,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         var keyField = builder.addEditText(hint);
         if (!bind.String().trim().isEmpty()) {
             keyField.setText(bind.String());
+            keyField.setSelection(bind.String().length());
         }
         builder.addCancelButton();
         builder.addOkButton((it) -> {
@@ -393,6 +407,9 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                         listAdapter.notifyItemInserted(index);
                     }
                 }
+            } else if (key.equals(NaConfig.INSTANCE.getLlmUseContext().getKey())) {
+                checkContextRows();
+                checkTemperatureRows();
             }
         };
 
@@ -553,6 +570,43 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
     }
 
     @Override
+    public void onFragmentDestroy() {
+        maybeRestoreTranslationProvider();
+        super.onFragmentDestroy();
+    }
+
+    private void maybeRestoreTranslationProvider() {
+        if (NekoConfig.translationProvider.Int() != Translator.providerLLMTranslator) {
+            return;
+        }
+        if (!isCurrentLlmProviderApiKeyEmpty()) {
+            return;
+        }
+        int providerToRestore = initialTranslationProvider;
+        if (providerToRestore == Translator.providerLLMTranslator) {
+            providerToRestore = Translator.providerGoogle;
+        }
+        NekoConfig.translationProvider.setConfigInt(providerToRestore);
+    }
+
+    private boolean isCurrentLlmProviderApiKeyEmpty() {
+        ConfigItem apiKeyItem = getCurrentLlmProviderApiKeyItem();
+        return apiKeyItem == null || TextUtils.isEmpty(apiKeyItem.String().trim());
+    }
+
+    private ConfigItem getCurrentLlmProviderApiKeyItem() {
+        return switch (NaConfig.INSTANCE.getLlmProviderPreset().Int()) {
+            case 0 -> NaConfig.INSTANCE.getLlmApiKey();
+            case 1 -> NaConfig.INSTANCE.getLlmProviderOpenAIKey();
+            case 2 -> NaConfig.INSTANCE.getLlmProviderGeminiKey();
+            case 3 -> NaConfig.INSTANCE.getLlmProviderGroqKey();
+            case 4 -> NaConfig.INSTANCE.getLlmProviderDeepSeekKey();
+            case 5 -> NaConfig.INSTANCE.getLlmProviderXAIKey();
+            default -> null;
+        };
+    }
+
+    @Override
     public int getBaseGuid() {
         return 13000;
     }
@@ -572,8 +626,48 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
         cellGroup.rows.clear();
 
         cellGroup.appendCell(headerOptions);
+        cellGroup.appendCell(showTranslateRow);
         cellGroup.appendCell(useTelegramUIAutoTranslateRow);
+        cellGroup.appendCell(keepMarkdownRow);
         cellGroup.appendCell(dividerOptions);
+
+        cellGroup.appendCell(headerTranslation);
+        cellGroup.appendCell(translationProviderRow);
+        cellGroup.appendCell(translatorModeRow);
+        cellGroup.appendCell(translateToLangRow);
+        cellGroup.appendCell(doNotTranslateRow);
+        cellGroup.appendCell(preferredTranslateTargetLangRow);
+        if (!NaConfig.INSTANCE.getGoogleTranslateExp().Bool()) {
+            cellGroup.appendCell(googleCloudTranslateKeyRow);
+        }
+        cellGroup.appendCell(dividerTranslation);
+
+        cellGroup.appendCell(headerAITranslatorSettings);
+        cellGroup.appendCell(llmProviderRow);
+        List<AbstractConfigCell> currentLlmProviderConfigRows = llmProviderConfigMap.get(currentLlmProvider);
+        if (currentLlmProviderConfigRows != null) {
+            currentLlmProviderConfigRows.forEach(cellGroup::appendCell);
+        }
+        cellGroup.appendCell(llmSystemPromptRow);
+        cellGroup.appendCell(llmUserPromptRow);
+        cellGroup.appendCell(llmUseContextRow);
+        cellGroup.appendCell(llmUseContextInAutoTranslateRow);
+        cellGroup.appendCell(llmContextSizeRow);
+        cellGroup.appendCell(headerTemperature);
+        cellGroup.appendCell(temperatureValueRow);
+        cellGroup.appendCell(dividerAITranslatorSettings);
+
+        cellGroup.appendCell(headerArticleTranslation);
+        cellGroup.appendCell(enableSeparateArticleTranslatorRow);
+        if (NaConfig.INSTANCE.getEnableSeparateArticleTranslator().Bool()) {
+            cellGroup.appendCell(articleTranslationProviderRow);
+        }
+        cellGroup.appendCell(dividerArticleTranslation);
+
+        cellGroup.appendCell(headerExperimental);
+        cellGroup.appendCell(googleTranslateExpRow);
+        cellGroup.appendCell(keepTranslatorPrefRow);
+        cellGroup.appendCell(dividerExperimental);
     }
 
     private SpannableString premiumStar;
@@ -611,7 +705,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
     }
 
     private void checkTemperatureRows() {
-        String modelName = NaConfig.INSTANCE.getLlmModelName().String();
+        String modelName = LLMTranslator.INSTANCE.getBaseModelName(NaConfig.INSTANCE.getLlmModelName().String());
         boolean showTemperature = NaConfig.INSTANCE.getLlmProviderPreset().Int() > 1 || (NaConfig.INSTANCE.getLlmProviderPreset().Int() == 0 && !modelName.startsWith("gpt-5"));
         if (listAdapter == null) {
             if (!showTemperature) {
@@ -621,7 +715,7 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
             return;
         }
         if (showTemperature) {
-            final int index = cellGroup.rows.indexOf(llmUserPromptRow);
+            final int index = cellGroup.rows.indexOf(NaConfig.INSTANCE.getLlmUseContext().Bool() ? llmContextSizeRow : llmUseContextRow);
             if (!cellGroup.rows.contains(headerTemperature)) {
                 cellGroup.rows.add(index + 1, headerTemperature);
                 cellGroup.rows.add(index + 2, temperatureValueRow);
@@ -633,6 +727,38 @@ public class NekoTranslatorSettingsActivity extends BaseNekoXSettingsActivity {
                 cellGroup.rows.remove(headerTemperature);
                 cellGroup.rows.remove(temperatureValueRow);
                 listAdapter.notifyItemRangeRemoved(temperatureRowIndex, 2);
+            }
+        }
+    }
+
+    private void checkContextRows() {
+        boolean useContext = NaConfig.INSTANCE.getLlmUseContext().Bool();
+        if (listAdapter == null) {
+            if (!useContext) {
+                cellGroup.rows.remove(llmUseContextInAutoTranslateRow);
+                cellGroup.rows.remove(llmContextSizeRow);
+            }
+            return;
+        }
+        if (useContext) {
+            final int index = cellGroup.rows.indexOf(llmUseContextRow);
+            if (!cellGroup.rows.contains(llmUseContextInAutoTranslateRow)) {
+                cellGroup.rows.add(index + 1, llmUseContextInAutoTranslateRow);
+                cellGroup.rows.add(index + 2, llmContextSizeRow);
+                listAdapter.notifyItemRangeInserted(index + 1, 2);
+            }
+        } else {
+            int idxA = cellGroup.rows.indexOf(llmUseContextInAutoTranslateRow);
+            int idxB = cellGroup.rows.indexOf(llmContextSizeRow);
+            if (idxA != -1 || idxB != -1) {
+                List<Integer> toRemove = new ArrayList<>();
+                if (idxA != -1) toRemove.add(idxA);
+                if (idxB != -1) toRemove.add(idxB);
+                toRemove.sort((a, b) -> Integer.compare(b, a));
+                for (int idx : toRemove) {
+                    cellGroup.rows.remove(idx);
+                    listAdapter.notifyItemRemoved(idx);
+                }
             }
         }
     }

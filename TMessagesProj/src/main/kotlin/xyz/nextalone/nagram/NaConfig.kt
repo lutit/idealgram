@@ -1,11 +1,7 @@
 package xyz.nextalone.nagram
 
-import android.content.Context
 import android.content.SharedPreferences
-import android.net.Uri
-import android.os.Build
 import android.util.Base64
-import androidx.core.net.toUri
 import org.telegram.messenger.AndroidUtilities
 import org.telegram.messenger.ApplicationLoader
 import org.telegram.messenger.BuildConfig
@@ -21,17 +17,34 @@ import java.io.ObjectInputStream
 
 
 object NaConfig {
-    val preferences: SharedPreferences =
-        ApplicationLoader.applicationContext.getSharedPreferences(
-            "nkmrcfg",
-            Context.MODE_PRIVATE
-        )
-    val sync =
-        Any()
-    private var configLoaded =
-        false
-    private val configs =
-        ArrayList<ConfigItem>()
+    @Volatile
+    private var initialized = false
+
+    @JvmStatic
+    fun getPreferences(): SharedPreferences {
+        return NekoConfig.getPreferences()
+    }
+
+    @JvmStatic
+    fun init() {
+        if (initialized) return
+        synchronized(sync) {
+            if (initialized) return
+            if (ApplicationLoader.applicationContext == null) return
+
+            loadConfig(false)
+            updatePreferredTranslateTargetLangList()
+            fixConfig()
+            if (!BuildVars.LOGS_ENABLED) {
+                showRPCError.setConfigBool(false)
+            }
+            initialized = true
+        }
+    }
+
+    val sync = Any()
+    private var configLoaded = false
+    private val configs = ArrayList<ConfigItem>()
 
     // Configs
     val forceCopy =
@@ -164,9 +177,7 @@ object NaConfig {
         addConfig(
             "CustomTitle",
             ConfigItem.configTypeString,
-            getString(
-                R.string.NagramX
-            )
+            "Nagram X"
         )
     val dateOfForwardedMsg =
         addConfig(
@@ -501,7 +512,7 @@ object NaConfig {
             "DisableBotOpenButton",
             ConfigItem.configTypeBool,
             false
-    )
+        )
     val customTitleUserName =
         addConfig(
             "CustomTitleUserName",
@@ -561,6 +572,12 @@ object NaConfig {
     val enableSaveEditsHistory =
         addConfig(
             "EnableSaveEditsHistory",
+            ConfigItem.configTypeBool,
+            false
+        )
+    val saveLocalLastSeen =
+        addConfig(
+            "SaveLocalLastSeen",
             ConfigItem.configTypeBool,
             false
         )
@@ -702,32 +719,49 @@ object NaConfig {
             ConfigItem.configTypeFloat,
             0.7f
         )
-
+    val llmUseContext =
+        addConfig(
+            "LlmUseContext",
+            ConfigItem.configTypeBool,
+            false
+        )
+    val llmContextSize =
+        addConfig(
+            "LlmContextSize",
+            ConfigItem.configTypeInt,
+            2
+        )
+    val llmUseContextInAutoTranslate =
+        addConfig(
+            "LlmUseContextInAutoTranslate",
+            ConfigItem.configTypeBool,
+            false
+        )
     val translucentDeletedMessages =
         addConfig(
             "TranslucentDeletedMessages",
             ConfigItem.configTypeBool,
             true
-    )
+        )
     val enableSeparateArticleTranslator =
         addConfig(
             "EnableSeparateArticleTranslator",
             ConfigItem.configTypeBool,
             false
-    )
+        )
     val articleTranslationProvider =
         addConfig(
             "ArticleTranslationProvider",
             ConfigItem.configTypeInt,
             1
-    )
+        )
     val disableCrashlyticsCollection =
         addConfig(
             "DisableCrashlyticsCollection",
             ConfigItem.configTypeBool,
             false
         )
-    val showStickersRowToplevel=
+    val showStickersRowToplevel =
         addConfig(
             "ShowStickersRowToplevel",
             ConfigItem.configTypeBool,
@@ -935,7 +969,7 @@ object NaConfig {
         addConfig(
             "SpringAnimation",
             ConfigItem.configTypeBool,
-            true
+            false
         )
     val springAnimationCrossfade =
         addConfig(
@@ -1012,6 +1046,12 @@ object NaConfig {
     val mediaViewerMenuItemNoQuoteForward =
         addConfig(
             "MediaViewerMenuItemNoQuoteForward",
+            ConfigItem.configTypeBool,
+            true
+        )
+    val mediaViewerMenuItemCopyFrame =
+        addConfig(
+            "MediaViewerMenuItemCopyFrame",
             ConfigItem.configTypeBool,
             true
         )
@@ -1369,11 +1409,53 @@ object NaConfig {
             ConfigItem.configTypeBool,
             true
         )
-   val forceEdgeToEdge =
+    val forceEdgeToEdge =
         addConfig(
             "ForceEdgeToEdge",
             ConfigItem.configTypeBool,
             false
+        )
+    val showAddToBookmark =
+        addConfig(
+            "ShowAddToBookmark",
+            ConfigItem.configTypeBool,
+            false
+        )
+    val sortByUnread =
+        addConfig(
+            "SortByUnread",
+            ConfigItem.configTypeBool,
+            false
+        )
+    val cameraInVideoMessages =
+        addConfig(
+            "CameraInVideoMessages",
+            ConfigItem.configTypeInt,
+            1 // 0: front; 1: rear; 2: ask
+        )
+    val smoothRoundedMenu =
+        addConfig(
+            "SmoothRoundedMenu",
+            ConfigItem.configTypeBool,
+            false
+        )
+    val showCopyFrame =
+        addConfig(
+            "MessageMenuCopyFrame",
+            ConfigItem.configTypeBool,
+            false
+        )
+    val deleteChatForBothSides =
+        addConfig(
+            "DeleteChatForBothSides",
+            ConfigItem.configTypeBool,
+            true
+        )
+    val autoPingProxy =
+        addConfig(
+            "AutoPingProxy",
+            ConfigItem.configTypeBool,
+            true
         )
 
     val preferredTranslateTargetLangList = ArrayList<String>()
@@ -1412,55 +1494,86 @@ object NaConfig {
 
     private fun getIgnoreMutedCountLegacy(): Int {
         return when {
-            preferences.getBoolean("IgnoreFolderCount", false) -> NekoConfig.DIALOG_FILTER_EXCLUDE_ALL
-            preferences.getBoolean("IgnoreMutedCount", true) -> NekoConfig.DIALOG_FILTER_EXCLUDE_MUTED
+            getPreferences().getBoolean(
+                "IgnoreFolderCount", false
+            ) -> NekoConfig.DIALOG_FILTER_EXCLUDE_ALL
+
+            getPreferences().getBoolean(
+                "IgnoreMutedCount", true
+            ) -> NekoConfig.DIALOG_FILTER_EXCLUDE_MUTED
+
             else -> NekoConfig.DIALOG_FILTER_EXCLUDE_NONE
         }
     }
 
     private fun fixConfig() {
+        val context = ApplicationLoader.applicationContext ?: return
+        val prefs = getPreferences()
+
+        // Clamp translator mode
         if (translatorMode.Int() > 1) {
             translatorMode.setConfigInt(1)
         }
-        if (!preferences.getBoolean("ShowIdAndDc", true)) {
+
+        // Legacy ShowIdAndDc -> idDcType migration
+        if (!prefs.contains(idDcType.key) && !prefs.getBoolean("ShowIdAndDc", true)) {
             idDcType.setConfigInt(0)
         }
-        llmProviderPreset.setConfigInt(0)
-        llmApiUrl.setConfigString(getString(R.string.LlmApiUrlDefault))
-        llmModelName.setConfigString(getString(R.string.LlmModelNameDefault))
-        llmSystemPrompt.setConfigString("переведи это на русский язык")
+
+        // Legacy RearVideoMessages -> cameraInVideoMessages migration
+        if (!prefs.contains(cameraInVideoMessages.key)) {
+        val legacyRear = prefs.getBoolean("RearVideoMessages", false)
+                cameraInVideoMessages.setConfigInt(
+                if (legacyRear) 1 else 0
+            )
+        }
+
+        // LLM config migration (do NOT override user values)
+        if (!prefs.contains(llmProviderPreset.key)) {
+            llmProviderPreset.setConfigInt(0)
+        }
+
+        if (!prefs.contains(llmApiUrl.key)) {
+            llmApiUrl.setConfigString(
+                context.getString(R.string.LlmApiUrlDefault)
+            )
+        }
+
+        if (!prefs.contains(llmModelName.key)) {
+            llmModelName.setConfigString(
+                context.getString(R.string.LlmModelNameDefault)
+            )
+        }
+
+        if (!prefs.contains(llmSystemPrompt.key)) {
+            llmSystemPrompt.setConfigString(
+                context.getString(R.string.LlmSystemPromptDefault)
+            )
+        }
     }
 
     private fun addConfig(
-        k: String,
-        t: Int,
-        d: Any?
+        k: String, t: Int, d: Any?
     ): ConfigItem {
-        val a =
-            ConfigItem(
-                k,
-                t,
-                d
-            )
+        val a = ConfigItem(
+            k, t, d
+        )
         configs.add(
             a
         )
         return a
     }
 
+    @Suppress("SameParameterValue")
     private fun addConfig(
-        k: String,
-        t: ConfigItem,
-        d: Int,
-        e: Any?
+        k: String, t: ConfigItem, d: Int, e: Any?
     ): ConfigItem {
-        val a =
-            ConfigItemKeyLinked(
-                k,
-                t,
-                d,
-                e,
-            )
+        val a = ConfigItemKeyLinked(
+            k,
+            t,
+            d,
+            e,
+        )
         configs.add(
             a
         )
@@ -1476,103 +1589,81 @@ object NaConfig {
             if (configLoaded && !force) {
                 return
             }
+            if (ApplicationLoader.applicationContext == null) {
+                return
+            }
             for (i in configs.indices) {
-                val o =
-                    configs[i]
+                val o = configs[i]
                 if (o.type == ConfigItem.configTypeBool) {
-                    o.value =
-                        preferences.getBoolean(
-                            o.key,
-                            o.defaultValue as Boolean
-                        )
+                    o.value = getPreferences().getBoolean(
+                        o.key, o.defaultValue as Boolean
+                    )
                 }
                 if (o.type == ConfigItem.configTypeInt) {
-                    o.value =
-                        preferences.getInt(
-                            o.key,
-                            o.defaultValue as Int
-                        )
+                    o.value = getPreferences().getInt(
+                        o.key, o.defaultValue as Int
+                    )
                 }
                 if (o.type == ConfigItem.configTypeLong) {
-                    o.value =
-                        preferences.getLong(
-                            o.key,
-                            (o.defaultValue as Long)
-                        )
+                    o.value = getPreferences().getLong(
+                        o.key, (o.defaultValue as Long)
+                    )
                 }
                 if (o.type == ConfigItem.configTypeFloat) {
-                    o.value =
-                        preferences.getFloat(
-                            o.key,
-                            (o.defaultValue as Float)
-                        )
+                    o.value = getPreferences().getFloat(
+                        o.key, (o.defaultValue as Float)
+                    )
                 }
                 if (o.type == ConfigItem.configTypeString) {
-                    o.value =
-                        preferences.getString(
-                            o.key,
-                            o.defaultValue as String
-                        )
+                    o.value = getPreferences().getString(
+                        o.key, o.defaultValue as String
+                    )
                 }
                 if (o.type == ConfigItem.configTypeSetInt) {
-                    val ss =
-                        preferences.getStringSet(
-                            o.key,
-                            HashSet()
-                        )
-                    val si =
-                        HashSet<Int>()
+                    val ss = getPreferences().getStringSet(
+                        o.key, HashSet()
+                    )
+                    val si = HashSet<Int>()
                     for (s in ss!!) {
                         si.add(
                             s.toInt()
                         )
                     }
-                    o.value =
-                        si
+                    o.value = si
                 }
                 if (o.type == ConfigItem.configTypeMapIntInt) {
-                    val cv =
-                        preferences.getString(
-                            o.key,
-                            ""
-                        )
+                    val cv = getPreferences().getString(
+                        o.key, ""
+                    )
                     // Log.e("NC", String.format("Getting pref %s val %s", o.key, cv));
                     if (cv!!.isEmpty()) {
-                        o.value =
-                            HashMap<Int, Int>()
+                        o.value = HashMap<Int, Int>()
                     } else {
                         try {
-                            val data =
-                                Base64.decode(
-                                    cv,
-                                    Base64.DEFAULT
+                            val data = Base64.decode(
+                                cv, Base64.DEFAULT
+                            )
+                            val ois = ObjectInputStream(
+                                ByteArrayInputStream(
+                                    data
                                 )
-                            val ois =
-                                ObjectInputStream(
-                                    ByteArrayInputStream(
-                                        data
-                                    )
-                                )
-                            o.value =
-                                ois.readObject() as HashMap<*, *>
+                            )
+                            o.value = ois.readObject() as HashMap<*, *>
                             if (o.value == null) {
-                                o.value =
-                                    HashMap<Int, Int>()
+                                o.value = HashMap<Int, Int>()
                             }
                             ois.close()
-                        } catch (e: Exception) {
-                            o.value =
-                                HashMap<Int, Int>()
+                        } catch (_: Exception) {
+                            o.value = HashMap<Int, Int>()
                         }
                     }
                 }
                 if (o.type == ConfigItem.configTypeBoolLinkInt) {
                     o as ConfigItemKeyLinked
-                    o.changedFromKeyLinked(preferences.getInt(o.keyLinked.key, 0))
+                    o.changedFromKeyLinked(getPreferences().getInt(o.keyLinked.key, 0))
                 }
             }
-            configLoaded =
-                true
+            configLoaded = true
         }
     }
 
@@ -1583,13 +1674,7 @@ object NaConfig {
     }
 
     init {
-        loadConfig(
-            false
-        )
-        updatePreferredTranslateTargetLangList()
-        fixConfig()
-        if (!BuildVars.LOGS_ENABLED) {
-            showRPCError.setConfigBool(false)
-        }
+        init()
     }
+
 }

@@ -108,7 +108,6 @@
     <string name="SaveToDownloadCount_many">Guardando %1$d archivos en descargas</string>
     <string name="SaveToDownloadCount_other">Guardando %1$d archivos en descargas</string>
     <string name="disableNotificationBubbles">Desactivar Burbujas de Notificación</string>
-    <string name="ReactionsDisabled">Deshabilitar</string>
     <string name="customSavePath">Ruta de almacenamiento personalizada</string>
     <string name="customSavePathHint">Dejar en blanco para guardar directamente</string>
     <string name="channelLabel">canal</string>
@@ -201,11 +200,6 @@
     <string name="ShowIdAndDc">Mostrar ID / DC en el perfil</string>
     <string name="UseDefaultTheme">Usar tema por defecto *</string>
     <string name="DialogsSettings">Cuadros de diálogo</string>
-    <string name="SortMenu">Ordenar Chats</string>
-    <string name="SortByUnread">Ordenar por no leído</string>
-    <string name="SortByUnmuted">Ordenar por no silenciado</string>
-    <string name="SortByUser">Ordenar por usuario</string>
-    <string name="SortByContacts">Ordenar por contactos</string>
     <string name="NagramXPushService">Servicio Push</string>
     <string name="DisableSystemAccount">Desactivar cuenta del sistema</string>
     <string name="FilterMenu">Menú de filtros de diálogos</string>

@@ -58,6 +58,7 @@ import org.telegram.SQLite.SQLitePreparedStatement;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.messenger.support.LongSparseIntArray;
 import org.telegram.messenger.support.LongSparseLongArray;
+import org.telegram.messenger.utils.tlutils.AmountUtils;
 import org.telegram.messenger.voip.GroupCallMessagesController;
 import org.telegram.messenger.voip.VoIPDebugToSend;
 import org.telegram.messenger.voip.VoIPPreNotificationService;
@@ -130,8 +131,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import tw.nekomimi.nekogram.NekoConfig;
-import tw.nekomimi.nekogram.helpers.AyuFilter;
-import tw.nekomimi.nekogram.helpers.ChatNameHelper;
+import tw.nekomimi.nekogram.helpers.ChatsHelper;
+import tw.nekomimi.nekogram.helpers.LocalNameHelper;
 import tw.nekomimi.nekogram.helpers.MessageHelper;
 import tw.nekomimi.nekogram.utils.AlertUtil;
 import xyz.nextalone.nagram.NaConfig;
@@ -141,6 +142,7 @@ import com.radolyn.ayugram.AyuConstants;
 import com.radolyn.ayugram.messages.AyuSavePreferences;
 import com.radolyn.ayugram.messages.AyuMessagesController;
 import com.radolyn.ayugram.utils.AyuState;
+import com.radolyn.ayugram.utils.LastSeenHelper;
 
 
 public class MessagesController extends BaseController implements NotificationCenter.NotificationCenterDelegate {
@@ -207,7 +209,8 @@ public class MessagesController extends BaseController implements NotificationCe
     public long giveawayBoostsPerPremium = 4;
     public long boostsPerSentGift = 3;
 
-    public static ConcurrentHashMap<Long, String> overrideNameCache = new ConcurrentHashMap<>(); // custom chat name
+    public static ConcurrentHashMap<Long, String> chatOverrideNameCache = new ConcurrentHashMap<>(); // custom chat name
+    public static ConcurrentHashMap<Long, String> userOverrideNameCache = new ConcurrentHashMap<>(); // custom user name
 
     public static TLRPC.Peer getPeerFromInputPeer(TLRPC.InputPeer peer) {
         if (peer.chat_id != 0) {
@@ -504,7 +507,6 @@ public class MessagesController extends BaseController implements NotificationCe
         }
     };
 
-    public int thisDc; // nekox
     public boolean enableJoined;
     public String linkPrefix;
     public int maxGroupCount;
@@ -825,7 +827,7 @@ public class MessagesController extends BaseController implements NotificationCe
         if (dialogFilters.isEmpty()) {
             return;
         }
-        if (!premium) {
+        if (!premium && !NekoConfig.localPremium.Bool()) {
             if (!dialogFilters.get(0).isDefault()) {
                 for (int i = 1; i < dialogFilters.size(); i++) {
                     if (dialogFilters.get(i).isDefault()) {
@@ -858,7 +860,7 @@ public class MessagesController extends BaseController implements NotificationCe
                     if (!filtersSortedById.get(i).locked) {
                         changed = true;
                     }
-                    filtersSortedById.get(i).locked = true;
+                    filtersSortedById.get(i).locked = !NekoConfig.localPremium.Bool();
                 } else {
                     if (filtersSortedById.get(i).locked) {
                         changed = true;
@@ -1368,6 +1370,13 @@ public class MessagesController extends BaseController implements NotificationCe
                 return 0;
             }
         }
+        if (NaConfig.INSTANCE.getSortByUnread().Bool()) {
+            boolean priority1 = ChatsHelper.getInstance(currentAccount).isUnreadSortPriority(dialog1);
+            boolean priority2 = ChatsHelper.getInstance(currentAccount).isUnreadSortPriority(dialog2);
+            if (priority1 != priority2) {
+                return priority1 ? -1 : 1;
+            }
+        }
         MediaDataController mediaDataController = getMediaDataController();
         long date1 = DialogObject.getLastMessageOrDraftDate(dialog1, mediaDataController.getDraft(dialog1.id, 0));
         long date2 = DialogObject.getLastMessageOrDraftDate(dialog2, mediaDataController.getDraft(dialog2.id, 0));
@@ -1404,82 +1413,13 @@ public class MessagesController extends BaseController implements NotificationCe
                 return 0;
             }
         }
-
-        boolean is1user = !DialogObject.isChannel(dialog1) && dialog1.id > 0;
-        boolean is2user = !DialogObject.isChannel(dialog2) && dialog2.id > 0;
-
-        if (NekoConfig.sortByUnread.Bool()) {
-            if (dialog1.unread_count == 0 && dialog2.unread_count > 0) {
-                return 1;
-            } else if (dialog1.unread_count > 0 && dialog2.unread_count == 0) {
-                return -1;
-            } else if (dialog1.unread_count > 0 && dialog2.unread_count > 0) {
-                if (NekoConfig.sortByUnmuted.Bool()) {
-                    if (isDialogMuted(dialog1.id) && !isDialogMuted(dialog2.id)) {
-                        return 1;
-                    } else if (!isDialogMuted(dialog1.id) && isDialogMuted(dialog2.id)) {
-                        return -1;
-                    } else if (!isDialogMuted(dialog1.id) && !isDialogMuted(dialog2.id)) {
-                        if (NekoConfig.sortByUser.Bool()) {
-                            if (!is1user && is2user) {
-                                return 1;
-                            } else if (is1user && !is2user) {
-                                return -1;
-                            } else if (is1user && is2user) {
-                                if (NekoConfig.sortByContacts.Bool()) {
-                                    boolean is1contact = is1user && getContactsController().isContact((int) dialog1.id);
-                                    boolean is2contact = is2user && getContactsController().isContact((int) dialog2.id);
-                                    if (!is1contact && is2contact) {
-                                        return 1;
-                                    } else if (is1contact && !is2contact) {
-                                        return -1;
-                                    } else {
-                                        return 0;
-                                    }
-                                } else {
-                                    return 0;
-                                }
-                            }
-                        } else {
-                            return 0;
-                        }
-                    }
-                } else {
-                    return 0;
-                }
-            }
-        } else if (NekoConfig.sortByUnmuted.Bool()) {
-            if (dialog1.unread_count == 0 && dialog2.unread_count > 0 && isDialogMuted(dialog1.id) && !isDialogMuted(dialog2.id)) {
-                return 1;
-            } else if (dialog1.unread_count > 0 && dialog2.unread_count == 0 && !isDialogMuted(dialog1.id) && isDialogMuted(dialog2.id)) {
-                return -1;
-            } else if (dialog1.unread_count > 0 && dialog2.unread_count > 0 && !isDialogMuted(dialog1.id) && !isDialogMuted(dialog2.id)) {
-                if (NekoConfig.sortByUser.Bool()) {
-                    if (!is1user && is2user) {
-                        return 1;
-                    } else if (is1user && !is2user) {
-                        return -1;
-                    } else if (is1user && is2user) {
-                        if (NekoConfig.sortByContacts.Bool()) {
-                            boolean is1contact = is1user && getContactsController().isContact((int) dialog1.id);
-                            boolean is2contact = is2user && getContactsController().isContact((int) dialog2.id);
-                            if (!is1contact && is2contact) {
-                                return 1;
-                            } else if (is1contact && !is2contact) {
-                                return -1;
-                            } else {
-                                return 0;
-                            }
-                        } else {
-                            return 0;
-                        }
-                    }
-                } else {
-                    return 0;
-                }
+        if (NaConfig.INSTANCE.getSortByUnread().Bool()) {
+            boolean priority1 = ChatsHelper.getInstance(currentAccount).isUnreadSortPriority(dialog1);
+            boolean priority2 = ChatsHelper.getInstance(currentAccount).isUnreadSortPriority(dialog2);
+            if (priority1 != priority2) {
+                return priority1 ? -1 : 1;
             }
         }
-
         MediaDataController mediaDataController = getMediaDataController();
         long date1 = DialogObject.getLastMessageOrDraftDate(dialog1, mediaDataController.getDraft(dialog1.id, 0));
         long date2 = DialogObject.getLastMessageOrDraftDate(dialog2, mediaDataController.getDraft(dialog2.id, 0));
@@ -2463,7 +2403,7 @@ public class MessagesController extends BaseController implements NotificationCe
             } else if (response instanceof TLRPC.TL_messages_dialogFilters) {
                 TLRPC.TL_messages_dialogFilters res = (TLRPC.TL_messages_dialogFilters) response;
                 if (folderTags != res.tags_enabled) {
-                    setFolderTags(res.tags_enabled);
+                    setFolderTags(res.tags_enabled || !getUserConfig().isPremium() && NekoConfig.localPremium.Bool());
                     AndroidUtilities.runOnUIThread(() -> {
                         getNotificationCenter().postNotificationName(NotificationCenter.dialogFiltersUpdated);
                     });
@@ -5624,7 +5564,7 @@ public class MessagesController extends BaseController implements NotificationCe
                 getNotificationCenter().postNotificationName(NotificationCenter.newSuggestionsAvailable);
             } else if (pendingSuggestions.remove(suggestion) || !dismissedSuggestions.contains(suggestion)) {
                 dismissedSuggestions.add(suggestion);
-                SharedPreferences.Editor editor = mainPreferences.edit();
+                final SharedPreferences.Editor editor = mainPreferences.edit();
                 editor.putStringSet("pendingSuggestions", pendingSuggestions);
                 editor.putStringSet("dismissedSuggestions", dismissedSuggestions);
                 editor.commit();
@@ -5650,7 +5590,6 @@ public class MessagesController extends BaseController implements NotificationCe
             getDownloadController().loadAutoDownloadConfig(false);
             loadAppConfig(true);
             checkPeerColors(true);
-            thisDc = config.this_dc;
             remoteConfigLoaded = true;
             maxMegagroupCount = config.megagroup_size_max;
             maxGroupCount = config.chat_size_max;
@@ -6738,6 +6677,12 @@ public class MessagesController extends BaseController implements NotificationCe
         }
         fromCache = fromCache && user.id / 1000 != 333 && user.id != 777000;
         TLRPC.User oldUser = users.get(user.id);
+        if (NaConfig.INSTANCE.getSaveLocalLastSeen().Bool() && user.id != getUserConfig().getClientUserId() && user.status instanceof TLRPC.TL_userStatusOffline) {
+            int lastSeen = user.status.expires;
+            if (lastSeen > 0) {
+                LastSeenHelper.saveLastSeen(user.id, lastSeen);
+            }
+        }
         if (oldUser == user && !force) {
             return false;
         }
@@ -6764,6 +6709,22 @@ public class MessagesController extends BaseController implements NotificationCe
             }
         }
         updateEmojiStatusUntilUpdate(user.id, user.emoji_status);
+
+        // user name override start
+        String overrideName = userOverrideNameCache.computeIfAbsent(user.id, k -> {
+            String fetchedName = LocalNameHelper.getUserNameOverride(k);
+            return (fetchedName != null) ? fetchedName : "";
+        });
+        if (!overrideName.isEmpty()) {
+            user.first_name = overrideName;
+            user.last_name = "";
+            if (oldUser != null) {
+                oldUser.first_name = overrideName;
+                oldUser.last_name = "";
+            }
+        }
+        // user name override end
+
         if (user.min) {
             if (oldUser != null) {
                 if (!fromCache) {
@@ -6895,17 +6856,20 @@ public class MessagesController extends BaseController implements NotificationCe
         }
         updateEmojiStatusUntilUpdate(-chat.id, chat.emoji_status);
 
-        // --- NagramX Start ---
+        // chat name override start
         if (ChatObject.isChannel(chat)) {
-            String name = overrideNameCache.computeIfAbsent(chat.id, k -> {
-                String fetchedName = ChatNameHelper.getChatNameOverride(k);
+            String overrideName = chatOverrideNameCache.computeIfAbsent(chat.id, k -> {
+                String fetchedName = LocalNameHelper.getChatNameOverride(k);
                 return (fetchedName != null) ? fetchedName : "";
             });
-            if (!name.isEmpty()) {
-                chat.title = name;
+            if (!overrideName.isEmpty()) {
+                chat.title = overrideName;
+                if (oldChat != null) {
+                    oldChat.title = overrideName;
+                }
             }
         }
-        // --- NagramX End ---
+        // chat name override end
 
         if (chat.min) {
             if (oldChat != null) {
@@ -17140,6 +17104,7 @@ public class MessagesController extends BaseController implements NotificationCe
             }
             if (!updates.out && user != null && user.status != null && user.status.expires <= 0 && Math.abs(getConnectionsManager().getCurrentTime() - updates.date) < 30) {
                 onlinePrivacy.put(user.id, updates.date);
+                LastSeenHelper.saveLastSeen(user.id, updates.date);
                 updateStatus = true;
             }
 
@@ -17755,6 +17720,7 @@ public class MessagesController extends BaseController implements NotificationCe
                             }
                             if (!message.out && a == 1 && user.status != null && user.status.expires <= 0 && Math.abs(getConnectionsManager().getCurrentTime() - message.date) < 30) {
                                 onlinePrivacy.put(userId, message.date);
+                                LastSeenHelper.saveLastSeen(userId, message.date);
                                 interfaceUpdateMask |= UPDATE_MASK_STATUS;
                             }
                         }
@@ -17966,6 +17932,7 @@ public class MessagesController extends BaseController implements NotificationCe
                     TLRPC.User user = getUser(update.peer.user_id);
                     if (user != null && user.status != null && user.status.expires <= 0 && Math.abs(getConnectionsManager().getCurrentTime() - date) < 30) {
                         onlinePrivacy.put(update.peer.user_id, date);
+                        LastSeenHelper.saveLastSeen(update.peer.user_id, date);
                         interfaceUpdateMask |= UPDATE_MASK_STATUS;
                     }
                 }
@@ -18149,6 +18116,7 @@ public class MessagesController extends BaseController implements NotificationCe
                     }
                     if (Math.abs(getConnectionsManager().getCurrentTime() - date) < 30) {
                         onlinePrivacy.put(userId, date);
+                        LastSeenHelper.saveLastSeen(userId, date);
                     }
                 }
             } else if (baseUpdate instanceof TLRPC.TL_updateChatParticipants) {
@@ -18312,6 +18280,7 @@ public class MessagesController extends BaseController implements NotificationCe
                     }
                     if (Math.abs(getConnectionsManager().getCurrentTime() - date) < 30) {
                         onlinePrivacy.put(encryptedChat.user_id, date);
+                        LastSeenHelper.saveLastSeen(encryptedChat.user_id, date);
                     }
                 }
             } else if (baseUpdate instanceof TLRPC.TL_updateEncryptedMessagesRead) {
@@ -18707,6 +18676,9 @@ public class MessagesController extends BaseController implements NotificationCe
                 long dialogId = MessageObject.getPeerId(update.peer);
 
                 getMessagesStorage().updateMessageReactions(dialogId, update.msg_id, update.reactions);
+                if (NaConfig.INSTANCE.getSaveLocalLastSeen().Bool()) {
+                    LastSeenHelper.saveLastSeenFromMessageReactions(update.reactions, getUserConfig().getClientUserId());
+                }
 
                 if (update.updateUnreadState) {
                     SparseBooleanArray sparseBooleanArray = new SparseBooleanArray();
@@ -18992,6 +18964,12 @@ public class MessagesController extends BaseController implements NotificationCe
                             update.status.expires = -101;
                         } else if (update.status instanceof TLRPC.TL_userStatusLastMonth) {
                             update.status.expires = -102;
+                        }
+                        if (NaConfig.INSTANCE.getSaveLocalLastSeen().Bool() && update.status instanceof TLRPC.TL_userStatusOffline) {
+                            int lastSeen = update.status.expires;
+                            if (lastSeen > 0) {
+                                LastSeenHelper.saveLastSeen(update.user_id, lastSeen);
+                            }
                         }
                         if (currentUser != null) {
                             currentUser.id = update.user_id;
@@ -20097,7 +20075,7 @@ public class MessagesController extends BaseController implements NotificationCe
                     getNotificationCenter().postNotificationName(NotificationCenter.messagesReadContent, key, value);
                 }
             }
-            if (deletedMessagesFinal != null) { // --- AyuGram: don't notify that messages were deleted; already handled by MESSAGES_DELETED_NOTIFICATION
+            if (deletedMessagesFinal != null) {
                 for (int a = 0, size = deletedMessagesFinal.size(); a < size; a++) {
                     long dialogId = deletedMessagesFinal.keyAt(a);
                     ArrayList<Integer> arrayList = deletedMessagesFinal.valueAt(a);
@@ -21114,17 +21092,7 @@ public class MessagesController extends BaseController implements NotificationCe
 
         try {
             Collections.sort(allDialogs, dialogComparator);
-        } catch (Exception e) {
-            NekoConfig.sortByUnread.setConfigBool(false);
-            NekoConfig.sortByUnmuted.setConfigBool(false);
-            NekoConfig.sortByUser.setConfigBool(false);
-            NekoConfig.sortByContacts.setConfigBool(false);
-            try {
-                Collections.sort(allDialogs, dialogComparator);
-            } catch (Exception ex) {
-                FileLog.e(ex);
-            }
-        }
+        } catch (Exception e) {}
         isLeftPromoChannel = true;
         if (promoDialog != null && promoDialog.id < 0) {
             TLRPC.Chat chat = getChat(-promoDialog.id);

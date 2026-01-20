@@ -390,6 +390,7 @@ public class Theme {
                 if (backgroundHeight != currentBackgroundHeight || crosfadeFromBitmapShader == null || currentColor != color || currentGradientColor1 != gradientColor1 || currentGradientColor2 != gradientColor2 || currentGradientColor3 != gradientColor3 || currentAnimateGradient != animatedGradient) {
                     if (crosfadeFromBitmap == null) {
                         crosfadeFromBitmap = Bitmap.createBitmap(60, 80, Bitmap.Config.ARGB_8888);
+                        crosfadeFromBitmap.setHasAlpha(false);
                         crosfadeFromBitmapShader = new BitmapShader(crosfadeFromBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
                     }
                     if (motionBackground[num] == null) {
@@ -4516,8 +4517,8 @@ public class Theme {
         fallbackKeys.put(key_share_icon, key_windowBackgroundWhiteBlackText);
         fallbackKeys.put(key_share_linkBackground, key_windowBackgroundGray);
         fallbackKeys.put(key_share_linkText, key_windowBackgroundWhiteBlackText);
-        fallbackKeys.put(key_glass_defaultIcon, Theme.key_windowBackgroundWhiteGrayText6);
-        fallbackKeys.put(key_glass_defaultText, Theme.key_windowBackgroundWhiteGrayText6);
+        fallbackKeys.put(key_glass_defaultIcon, Theme.key_chat_messagePanelIcons);
+        fallbackKeys.put(key_glass_defaultText, Theme.key_chat_messagePanelText);
 
         for (int i = 0; i < keys_avatar_background.length; i++) {
             themeAccentExclusionKeys.add(keys_avatar_background[i]);
@@ -6065,12 +6066,24 @@ public class Theme {
         private Path path = new Path();
         private float[] radii = new float[8];
         boolean invalidatePath = true;
+        private static final int INSET = dp(3);
+        private final int inset;
 
         public RippleRadMaskDrawable(float top, float bottom) {
+            this(top, bottom, false);
+        }
+
+        public RippleRadMaskDrawable(float top, float bottom, boolean applyInset) {
+            inset = applyInset ? INSET : 0;
             radii[0] = radii[1] = radii[2] = radii[3] = dp(top);
             radii[4] = radii[5] = radii[6] = radii[7] = dp(bottom);
         }
         public RippleRadMaskDrawable(float topLeft, float topRight, float bottomRight, float bottomLeft) {
+            this(topLeft, topRight, bottomRight, bottomLeft, false);
+        }
+
+        public RippleRadMaskDrawable(float topLeft, float topRight, float bottomRight, float bottomLeft, boolean applyInset) {
+            inset = applyInset ? INSET : 0;
             radii[0] = radii[1] = dp(topLeft);
             radii[2] = radii[3] = dp(topRight);
             radii[4] = radii[5] = dp(bottomRight);
@@ -6103,6 +6116,10 @@ public class Theme {
                 invalidatePath = false;
                 path.reset();
                 AndroidUtilities.rectTmp.set(getBounds());
+                if (inset != 0) {
+                    AndroidUtilities.rectTmp.top += inset;
+                    AndroidUtilities.rectTmp.bottom -= inset;
+                }
                 path.addRoundRect(AndroidUtilities.rectTmp, radii, Path.Direction.CW);
             }
             canvas.drawPath(path, maskPaint);
@@ -6175,6 +6192,16 @@ public class Theme {
     public static Drawable createRadSelectorDrawable(int color, int topLeftRad, int topRightRad, int bottomRightRad, int bottomLeftRad) {
         maskPaint.setColor(0xffffffff);
         Drawable maskDrawable = new RippleRadMaskDrawable(topLeftRad, topRightRad, bottomRightRad, bottomLeftRad);
+        ColorStateList colorStateList = new ColorStateList(
+                new int[][]{StateSet.WILD_CARD},
+                new int[]{color}
+        );
+        return new BaseCell.RippleDrawableSafe(colorStateList, null, maskDrawable);
+    }
+
+    public static Drawable createRadSelectorDrawable(int color, int topLeftRad, int topRightRad, int bottomRightRad, int bottomLeftRad, boolean applyInset) {
+        maskPaint.setColor(0xffffffff);
+        Drawable maskDrawable = new RippleRadMaskDrawable(topLeftRad, topRightRad, bottomRightRad, bottomLeftRad, applyInset);
         ColorStateList colorStateList = new ColorStateList(
                 new int[][]{StateSet.WILD_CARD},
                 new int[]{color}
@@ -7714,6 +7741,8 @@ public class Theme {
     }
 
     public static String getBaseThemeKey(TLRPC.ThemeSettings settings) {
+        if (settings == null)
+            return null;
         if (settings.base_theme instanceof TLRPC.TL_baseThemeClassic) {
             return "Blue";
         } else if (settings.base_theme instanceof TLRPC.TL_baseThemeDay) {
@@ -10781,4 +10810,14 @@ public class Theme {
 
     public static Paint DEBUG_RED = new Paint(); static { DEBUG_RED.setColor(0xffff0000); }
     public static Paint DEBUG_BLUE = new Paint(); static { DEBUG_BLUE.setColor(0xff0000ff); }
+    public static Paint DEBUG_RED_STROKE = new Paint(); static {
+        DEBUG_RED_STROKE.setColor(0xffff0000);
+        DEBUG_RED_STROKE.setStrokeWidth(2);
+        DEBUG_RED_STROKE.setStyle(Paint.Style.STROKE);
+    }
+    public static Paint DEBUG_GREEN_STROKE = new Paint(); static {
+        DEBUG_GREEN_STROKE.setColor(0xff00ff00);
+        DEBUG_GREEN_STROKE.setStrokeWidth(2);
+        DEBUG_GREEN_STROKE.setStyle(Paint.Style.STROKE);
+    }
 }

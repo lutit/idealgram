@@ -32,7 +32,6 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.util.Pair;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -48,7 +47,6 @@ import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.Adapters.DrawerLayoutAdapter;
-import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.ForegroundDetector;
 import org.telegram.ui.Components.UpdateAppAlertDialog;
 import org.telegram.ui.Components.UpdateButton;
@@ -120,6 +118,10 @@ public class ApplicationLoader extends Application {
         return locationServiceProvider;
     }
 
+    /*protected ILocationServiceProvider onCreateLocationServiceProvider() {
+        return new GoogleLocationProvider();
+    }*/
+
     public static IMapsProvider getMapsProvider() {
         if (mapsProvider == null) {
             if (NekoConfig.useOSMDroidMap.Bool())
@@ -131,6 +133,10 @@ public class ApplicationLoader extends Application {
         return mapsProvider;
     }
 
+    /*protected IMapsProvider onCreateMapsProvider() {
+        return new GoogleMapsProvider();
+    }*/
+
     public static PushListenerController.IPushListenerServiceProvider getPushProvider() {
         if (pushProvider == null) {
             pushProvider = PushListenerController.getProvider();
@@ -138,9 +144,17 @@ public class ApplicationLoader extends Application {
         return pushProvider;
     }
 
+    /*protected PushListenerController.IPushListenerServiceProvider onCreatePushProvider() {
+        return PushListenerController.GooglePushListenerServiceProvider.INSTANCE;
+    }*/
+
     public static String getApplicationId() {
         return BuildConfig.APPLICATION_ID;
     }
+
+    /*protected String onGetApplicationId() {
+        return null;
+    }*/
 
     public static boolean isHuaweiStoreBuild() {
         return applicationLoaderInstance.isHuaweiBuild();
@@ -262,6 +276,8 @@ public class ApplicationLoader extends Application {
         }
 
         SharedConfig.loadConfig();
+        NekoConfig.init();
+        NaConfig.init();
         SharedPrefsHelper.init(applicationContext);
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(!NaConfig.INSTANCE.getDisableCrashlyticsCollection().Bool());
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) { //TODO improve account
@@ -450,6 +466,16 @@ public class ApplicationLoader extends Application {
             }
         }, 1000);
     }
+
+    /*private boolean checkPlayServices() {
+        try {
+            int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+            return resultCode == ConnectionResult.SUCCESS;
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        return true;
+    }*/
 
     private static long lastNetworkCheck = -1;
     private static void ensureCurrentNetworkGet() {
@@ -667,11 +693,7 @@ public class ApplicationLoader extends Application {
     }
 
     public boolean checkApkInstallPermissions(final Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !ApplicationLoader.applicationContext.getPackageManager().canRequestPackageInstalls()) {
-            AlertsCreator.createApkRestrictedDialog(context, null).show();
-            return false;
-        }
-        return true;
+        return false;
     }
 
     public boolean openApkInstall(Activity activity, TLRPC.Document document) {
