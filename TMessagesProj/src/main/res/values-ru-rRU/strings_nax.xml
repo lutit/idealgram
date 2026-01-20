@@ -28,6 +28,7 @@
     <string name="LlmProviderXAIKey">Ключ API xAI</string>
     <string name="LlmSystemPrompt">Системный промпт</string>
     <string name="LlmSystemPromptHint">Ты полезный помощник.</string>
+    <string name="LlmSystemPromptDefault">Ты полезный помощник.</string>
     <string name="LlmSystemPromptNotice">Определите роль и поведение ИИ.\n\nЭтот промпт задаёт тон, индивидуальность и ограничения для ИИ. Подумайте о том, каким типом помощника должен быть ИИ.\n\nМожно оставить пустым.</string>
     <string name="LlmUserPrompt">Пользовательский промпт</string>
     <string name="LlmUserPromptNotice">Используйте @text в качестве заполнителя для исходного сообщения и @toLang для целевого языка (необязательно).\n\nНапример: «Переведи @text на @toLang без объяснений».\n\nЕсли оставить это поле пустым, будет использоваться промпт по умолчанию.</string>
