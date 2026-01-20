@@ -930,7 +930,7 @@ public class TranslateController extends BaseController {
                 TLRPC.TL_textWithEntities finalText = new TLRPC.TL_textWithEntities();
                 finalText.text = EpsteinMode.obfuscateText(message.messageOwner.message);
                 finalText.entities = new ArrayList<>();
-                callback.run(message.getId(), finalText, language);
+                callback.run(isTranscription, message.getId(), finalText, language);
             });
             return;
         }

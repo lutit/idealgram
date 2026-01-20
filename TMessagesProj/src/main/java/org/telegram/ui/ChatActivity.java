@@ -9279,7 +9279,9 @@ public class ChatActivity extends BaseFragment implements
 
         onBottomItemsVisibilityChanged();
         ViewCompat.setOnApplyWindowInsetsListener(fragmentView, this::onApplyWindowInsets);
-        windowInsetsStateHolder.attach(fragmentView);
+        // `WindowInsetsStateHolder` no longer exposes an `attach(View)` method —
+        // the insets listener is already installed above and `setInsets(...)` is
+        // called from `onApplyWindowInsets` when needed.
 
         if (dialog_id == -2400916702L || dialog_id == 2400916702L) {
             ChatOpenStarsRippleEffectView effectView = new ChatOpenStarsRippleEffectView(context);
