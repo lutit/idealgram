@@ -350,4 +350,9 @@
     <string name="SetLocalName">Установить локальное имя</string>
     <string name="DeleteChatForBothSides">Использовать «Также удалить для» по умолчанию</string>
     <string name="AutoPingProxy">Автоматический пинг прокси</string>
+
+    <!-- Nasheed Popup (joke feature) -->
+    <string name="NasheedPopupTitle">uzbekistam СТОЙ‼️‼️‼️</string>
+    <string name="NasheedPopupMessage">перед тем как послушать этот файл ты должен послушать нашид✅✅✅</string>
+    <string name="NasheedPopupYes">da врубай✅✅</string>
 </resources>

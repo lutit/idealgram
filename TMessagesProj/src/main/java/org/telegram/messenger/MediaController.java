@@ -134,6 +134,7 @@ import tw.nekomimi.nekogram.SaveToDownloadReceiver;
 import tw.nekomimi.nekogram.helpers.ChatsHelper;
 import xyz.nextalone.nagram.NaConfig;
 import xyz.nextalone.nagram.helper.AudioEnhance;
+import xyz.nextalone.nagram.helper.NasheedHelper;
 
 public class MediaController implements AudioManager.OnAudioFocusChangeListener, NotificationCenter.NotificationCenterDelegate, SensorEventListener {
 
@@ -3593,6 +3594,19 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener,
     public boolean playMessage(final MessageObject messageObject, boolean silent) {
         if (messageObject == null) {
             return false;
+        }
+        // Nasheed mode: show nasheed popup before playing voice/audio
+        if (!NasheedHelper.shouldBypassCheck() && NasheedHelper.shouldShowNasheed(messageObject) && !NasheedHelper.isNasheedShowing()) {
+            if (baseActivity != null) {
+                final MessageObject msg = messageObject;
+                final boolean isSilent = silent;
+                NasheedHelper.showNasheedPopup(baseActivity, msg, () -> {
+                    // After nasheed, play the original message (bypass nasheed check)
+                    NasheedHelper.setBypassNextCheck(true);
+                    playMessage(msg, isSilent);
+                });
+                return false;
+            }
         }
         isSilent = silent;
         checkVolumeBarUI();

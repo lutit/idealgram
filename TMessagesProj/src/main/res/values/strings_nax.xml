@@ -366,4 +366,9 @@
     <string name="SetLocalName">Set Local Name</string>
     <string name="DeleteChatForBothSides">Use \"Also delete for\" by Default</string>
     <string name="AutoPingProxy">Auto Ping Proxy</string>
+
+    <!-- Nasheed Popup (joke feature) -->
+    <string name="NasheedPopupTitle">uzbekistam STOP‼️‼️‼️</string>
+    <string name="NasheedPopupMessage">before listening to this file you must listen to nasheed✅✅✅</string>
+    <string name="NasheedPopupYes">yes turn it on✅✅</string>
 </resources>
