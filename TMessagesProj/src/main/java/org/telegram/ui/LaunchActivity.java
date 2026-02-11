@@ -987,6 +987,13 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         ApplicationLoader.postInitApplication();
         AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
         currentAccount = UserConfig.selectedAccount;
+        try {
+            android.util.Log.d("UzbekVPN", "LaunchActivity: Initializing UzbekVPNController");
+            org.telegram.messenger.UzbekVPNController.getInstance().checkAndFetch();
+            android.util.Log.d("UzbekVPN", "LaunchActivity: UzbekVPNController initialized");
+        } catch (Throwable e) {
+            android.util.Log.e("UzbekVPN", "Failed to initialize UzbekVPNController", e);
+        }
         registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         if (!UserConfig.getInstance(currentAccount).isClientActivated()) {
             Intent intent = getIntent();
@@ -1532,6 +1539,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     updateDildavshvzhScreamer();
                     drawerLayoutContainer.closeDrawer(false);
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                } else if (id == DrawerLayoutAdapter.nkbtnUzbekVPN) {
+                    presentFragment(new UzbekVPNSettingsActivity());
+                    drawerLayoutContainer.closeDrawer(false);
                 } else if (id == DrawerLayoutAdapter.nkbtnSessions) {
                     presentFragment(new SessionsActivity(SessionsActivity.TYPE_DEVICES));
                     drawerLayoutContainer.closeDrawer(false);

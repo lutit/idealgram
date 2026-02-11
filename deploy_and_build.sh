@@ -14,6 +14,7 @@ RSYNC_EXCLUDES=(
   --exclude="**/*.iml"
   --exclude="apks/"
   --exclude="**/local.properties"
+  --exclude="**/release.keystore"
 )
 
 MODE="${1:-default}"

@@ -75,6 +75,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnEpsteinMode = 1017;
     public static int nkbtnQuantumShalavaMode = 1018;
     public static int nkbtnDildavshvzhMode = 1019;
+    public static int nkbtnUzbekVPN = 1020;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -83,6 +84,15 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         accountsShown = MessagesController.getGlobalMainSettings().getBoolean("accountsShown", true);
         Theme.createCommonDialogResources(context);
         resetItems();
+        NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.proxySettingsChanged);
+        android.util.Log.d("UzbekVPN", "DrawerLayoutAdapter created and observer added");
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+        NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.proxySettingsChanged);
+        android.util.Log.d("UzbekVPN", "DrawerLayoutAdapter detached and observer removed");
+        super.onDetachedFromRecyclerView(recyclerView);
     }
 
     private int getAccountRowsCount() {
@@ -132,6 +142,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.proxySettingsChanged) {
+            android.util.Log.d("UzbekVPN", "DrawerLayoutAdapter received proxySettingsChanged notification");
             notifyDataSetChanged();
         }
     }
@@ -396,6 +407,8 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
             items.add(null);
         }
         // --- Shamala Mode ---
+
+        items.add(new Item(nkbtnUzbekVPN, "UzbekVPN", R.drawable.msg_policy));
 
         UserConfig me = UserConfig.getInstance(UserConfig.selectedAccount);
         boolean showDivider = false;
