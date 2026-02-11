@@ -244,9 +244,9 @@ public class DatacenterActivity extends BaseNekoSettingsActivity implements Noti
             imageView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
 
             textView = new LinkSpanDrawable.LinksTextView(context, resourcesProvider);
-            addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 36, 152, 36, 0));
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 36, 152, 36, 24));
             textView.setGravity(Gravity.CENTER_HORIZONTAL);
-            textView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
+            textView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText4));
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
             textView.setLinkTextColor(getThemedColor(Theme.key_windowBackgroundWhiteLinkText));
             textView.setHighlightColor(getThemedColor(Theme.key_windowBackgroundWhiteLinkSelection));
@@ -258,7 +258,7 @@ public class DatacenterActivity extends BaseNekoSettingsActivity implements Noti
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(AndroidUtilities.dp(196), MeasureSpec.EXACTLY));
+            super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
         }
 
         @Override
