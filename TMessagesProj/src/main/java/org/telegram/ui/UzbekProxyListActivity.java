@@ -161,8 +161,7 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
             if (position >= 0 && position < displayedProxies.size()) {
                 UzbekProxyInfo info = displayedProxies.get(position);
                 UzbekVPNController.getInstance().enableProxy(info);
-                // Refresh list to update selection checkmark
-                loadProxies();
+                finishFragment();
             }
         });
 
@@ -264,32 +263,34 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
             
             if (isCurrent && isEnabled) {
                 checkImageView.setVisibility(View.VISIBLE);
-                pingDot.setTranslationX(-AndroidUtilities.dp(20));
+                pingDot.setVisibility(View.GONE);
+                detailTextView.setText(info.address);
             } else {
                 checkImageView.setVisibility(View.GONE);
+                pingDot.setVisibility(View.VISIBLE);
                 pingDot.setTranslationX(0);
-            }
-            
-            String pingText;
-            if (info.checking) {
-                 pingText = "Checking...";
-                 pingPaint.setColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
-            } else if (info.available) {
-                 pingText = info.ping + " ms";
-                 if (info.ping < 150) {
-                     pingPaint.setColor(Theme.getColor(Theme.key_windowBackgroundWhiteGreenText));
-                 } else if (info.ping < 400) {
-                     pingPaint.setColor(0xFFFFD700);
-                 } else {
+                
+                String pingText;
+                if (info.checking) {
+                     pingText = "Checking...";
+                     pingPaint.setColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText2));
+                } else if (info.available) {
+                     pingText = info.ping + " ms";
+                     if (info.ping < 150) {
+                         pingPaint.setColor(Theme.getColor(Theme.key_windowBackgroundWhiteGreenText));
+                     } else if (info.ping < 400) {
+                         pingPaint.setColor(0xFFFFD700);
+                     } else {
+                         pingPaint.setColor(Theme.getColor(Theme.key_text_RedRegular));
+                     }
+                } else {
+                     pingText = "Unavailable";
                      pingPaint.setColor(Theme.getColor(Theme.key_text_RedRegular));
-                 }
-            } else {
-                 pingText = "Unavailable";
-                 pingPaint.setColor(Theme.getColor(Theme.key_text_RedRegular));
+                }
+                pingDot.invalidate();
+                
+                detailTextView.setText(info.address + " • " + pingText);
             }
-            pingDot.invalidate();
-            
-            detailTextView.setText(info.address + ":" + info.port + " • " + pingText);
         }
     }
 }
