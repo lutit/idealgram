@@ -246,6 +246,7 @@ public class UzbekVPNController implements NotificationCenter.NotificationCenter
 
     public void disableProxy() {
         Log.d("UzbekVPN", "Disabling proxy");
+        SharedConfig.setProxyEnable(false);
         ConnectionsManager.setProxySettings(false, "", 0, "", "", "");
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxySettingsChanged);
     }
