@@ -30,25 +30,45 @@ import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Locale;
 
 public class UzbekProxyListActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
     private String proxyType; // "mtproto" or "socks5"
+    private String countryCode; // If null, show country list. If set, show proxies for this country.
+    
     private ListAdapter listAdapter;
     private RecyclerListView listView;
     
     private ArrayList<UzbekProxyInfo> allProxies = new ArrayList<>();
-    private ArrayList<UzbekProxyInfo> displayedProxies = new ArrayList<>();
+    private ArrayList<UzbekProxyInfo> displayedProxies = new ArrayList<>(); // Used when countryCode != null
+    
+    private ArrayList<CountryItem> countryList = new ArrayList<>(); // Used when countryCode == null
+    
     private int pageSize = 20;
     
+    public static class CountryItem {
+        public String code;
+        public String name;
+        public String flag;
+        public int count;
+    }
+    
     public UzbekProxyListActivity(String type) {
+        this(type, null);
+    }
+    
+    public UzbekProxyListActivity(String type, String countryCode) {
         this.proxyType = type;
+        this.countryCode = countryCode;
     }
 
     @Override
@@ -58,7 +78,7 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.proxyCheckDone);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.didUpdateConnectionState);
         
-        loadProxies();
+        loadData();
         return true;
     }
 
@@ -73,41 +93,89 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.proxySettingsChanged) {
-            loadProxies();
+            loadData();
         } else if (id == NotificationCenter.proxyCheckDone) {
-             if (listAdapter != null) {
+             if (listAdapter != null && countryCode != null) {
                  listAdapter.notifyDataSetChanged();
              }
         } else if (id == NotificationCenter.didUpdateConnectionState) {
-             if (listAdapter != null) {
+             if (listAdapter != null && countryCode != null) {
                  listAdapter.notifyDataSetChanged();
              }
         }
     }
     
-    private void loadProxies() {
+    private void loadData() {
         ArrayList<UzbekProxyInfo> source = UzbekVPNController.getInstance().getProxies();
-        allProxies.clear();
-        for (UzbekProxyInfo info : source) {
-            if (proxyType.equals(info.type)) {
-                allProxies.add(info);
+        
+        if (countryCode == null) {
+            // Country List Mode
+            HashMap<String, CountryItem> countryMap = new HashMap<>();
+            
+            for (UzbekProxyInfo info : source) {
+                if (proxyType.equals(info.type)) {
+                    String cc = info.country;
+                    if (TextUtils.isEmpty(cc)) cc = "Unknown";
+                    
+                    CountryItem item = countryMap.get(cc);
+                    if (item == null) {
+                        item = new CountryItem();
+                        item.code = cc;
+                        item.flag = info.flag;
+                        if ("Unknown".equals(cc)) {
+                            item.name = "Unknown Region";
+                        } else {
+                            try {
+                                item.name = new Locale("", cc).getDisplayCountry();
+                            } catch (Exception e) {
+                                item.name = cc;
+                            }
+                        }
+                        countryMap.put(cc, item);
+                    }
+                    item.count++;
+                }
             }
+            
+            countryList.clear();
+            countryList.addAll(countryMap.values());
+            Collections.sort(countryList, (o1, o2) -> o1.name.compareTo(o2.name));
+            
+        } else {
+            // Proxy List Mode
+            allProxies.clear();
+            for (UzbekProxyInfo info : source) {
+                if (proxyType.equals(info.type)) {
+                    String cc = info.country;
+                    if (TextUtils.isEmpty(cc)) cc = "Unknown";
+                    
+                    if (countryCode.equals(cc)) {
+                        allProxies.add(info);
+                    }
+                }
+            }
+            
+            Comparator<UzbekProxyInfo> comparator = (o1, o2) -> {
+                long bias1 = SharedConfig.currentProxy == o1 ? -200000 : 0;
+                if (!o1.available) bias1 += 100000;
+                long bias2 = SharedConfig.currentProxy == o2 ? -200000 : 0;
+                if (!o2.available) bias2 += 100000;
+                return Long.compare(o1.ping + bias1, o2.ping + bias2);
+            };
+            Collections.sort(allProxies, comparator);
+            
+            displayedProxies.clear();
+            loadMore();
         }
         
-        Comparator<UzbekProxyInfo> comparator = (o1, o2) -> {
-            long bias1 = SharedConfig.currentProxy == o1 ? -200000 : 0;
-            if (!o1.available) bias1 += 100000;
-            long bias2 = SharedConfig.currentProxy == o2 ? -200000 : 0;
-            if (!o2.available) bias2 += 100000;
-            return Long.compare(o1.ping + bias1, o2.ping + bias2);
-        };
-        Collections.sort(allProxies, comparator);
-        
-        displayedProxies.clear();
-        loadMore();
+        if (listAdapter != null) {
+            listAdapter.notifyDataSetChanged();
+        }
     }
     
     private void loadMore() {
+        if (countryCode == null) return; 
+        
         int currentSize = displayedProxies.size();
         int remaining = allProxies.size() - currentSize;
         if (remaining > 0) {
@@ -122,10 +190,19 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
     @Override
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
-        if ("socks5".equals(proxyType)) {
-            actionBar.setTitle("SOCKS5 Proxies");
+        if (countryCode == null) {
+            if ("socks5".equals(proxyType)) {
+                actionBar.setTitle("SOCKS5 Countries");
+            } else {
+                actionBar.setTitle("MTProto Countries");
+            }
         } else {
-            actionBar.setTitle("MTProto Proxies");
+            String countryName = countryCode;
+            try {
+                countryName = new Locale("", countryCode).getDisplayCountry();
+            } catch (Exception ignore) {}
+            if ("Unknown".equals(countryCode)) countryName = "Unknown Region";
+            actionBar.setTitle(countryName);
         }
         
         actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
@@ -151,17 +228,34 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (!recyclerView.canScrollVertically(1)) {
+                if (countryCode != null && !recyclerView.canScrollVertically(1)) {
                     loadMore();
                 }
             }
         });
 
         listView.setOnItemClickListener((view, position) -> {
-            if (position >= 0 && position < displayedProxies.size()) {
-                UzbekProxyInfo info = displayedProxies.get(position);
-                UzbekVPNController.getInstance().enableProxy(info);
-                finishFragment();
+            if (countryCode == null) {
+                // Country Mode -> Open Country
+                if (position >= 0 && position < countryList.size()) {
+                    CountryItem item = countryList.get(position);
+                    presentFragment(new UzbekProxyListActivity(proxyType, item.code));
+                }
+            } else {
+                // Proxy Mode -> Connect
+                if (position >= 0 && position < displayedProxies.size()) {
+                    UzbekProxyInfo info = displayedProxies.get(position);
+                    UzbekVPNController.getInstance().enableProxy(info);
+                    
+                    // Remove Country List from backstack
+                    if (getParentLayout() != null && getParentLayout().getFragmentStack().size() >= 2) {
+                         BaseFragment previousFragment = getParentLayout().getFragmentStack().get(getParentLayout().getFragmentStack().size() - 2);
+                         if (previousFragment instanceof UzbekProxyListActivity) {
+                             getParentLayout().removeFragmentFromStack(previousFragment);
+                         }
+                    }
+                    finishFragment(); // Close list
+                }
             }
         });
 
@@ -177,7 +271,11 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
 
         @Override
         public int getItemCount() {
-            return displayedProxies.size();
+            if (countryCode == null) {
+                return countryList.size();
+            } else {
+                return displayedProxies.size();
+            }
         }
 
         @Override
@@ -187,16 +285,30 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
 
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            ProxyCell view = new ProxyCell(mContext);
-            view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+            View view;
+            if (countryCode == null) {
+                // Country Cell
+                view = new TextSettingsCell(mContext);
+                view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+            } else {
+                // Proxy Cell
+                view = new ProxyCell(mContext);
+                view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+            }
             view.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             return new RecyclerListView.Holder(view);
         }
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-            ProxyCell cell = (ProxyCell) holder.itemView;
-            cell.setProxy(displayedProxies.get(position));
+            if (countryCode == null) {
+                TextSettingsCell cell = (TextSettingsCell) holder.itemView;
+                CountryItem item = countryList.get(position);
+                cell.setTextAndValue( (item.flag != null ? item.flag + " " : "") + item.name, String.valueOf(item.count), true);
+            } else {
+                ProxyCell cell = (ProxyCell) holder.itemView;
+                cell.setProxy(displayedProxies.get(position));
+            }
         }
     }
 
