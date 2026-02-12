@@ -42,7 +42,7 @@ import java.util.Locale;
 
 public class UzbekProxyListActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
-    private String proxyType; // "mtproto" or "socks5"
+    private String proxyType; // "mtproto" or "socks5" (kept for compatibility but effectively unused)
     private String countryCode; // If null, show country list. If set, show proxies for this country.
     
     private ListAdapter listAdapter;
@@ -113,28 +113,27 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
             HashMap<String, CountryItem> countryMap = new HashMap<>();
             
             for (UzbekProxyInfo info : source) {
-                if (proxyType.equals(info.type)) {
-                    String cc = info.country;
-                    if (TextUtils.isEmpty(cc)) cc = "Unknown";
-                    
-                    CountryItem item = countryMap.get(cc);
-                    if (item == null) {
-                        item = new CountryItem();
-                        item.code = cc;
-                        item.flag = info.flag;
-                        if ("Unknown".equals(cc)) {
-                            item.name = "Unknown Region";
-                        } else {
-                            try {
-                                item.name = new Locale("", cc).getDisplayCountry();
-                            } catch (Exception e) {
-                                item.name = cc;
-                            }
+                // Since we removed SOCKS5 from Controller, all proxies are valid
+                String cc = info.country;
+                if (TextUtils.isEmpty(cc)) cc = "Unknown";
+                
+                CountryItem item = countryMap.get(cc);
+                if (item == null) {
+                    item = new CountryItem();
+                    item.code = cc;
+                    item.flag = info.flag;
+                    if ("Unknown".equals(cc)) {
+                        item.name = "Unknown Region";
+                    } else {
+                        try {
+                            item.name = new Locale("", cc).getDisplayCountry();
+                        } catch (Exception e) {
+                            item.name = cc;
                         }
-                        countryMap.put(cc, item);
                     }
-                    item.count++;
+                    countryMap.put(cc, item);
                 }
+                item.count++;
             }
             
             countryList.clear();
@@ -145,13 +144,11 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
             // Proxy List Mode
             allProxies.clear();
             for (UzbekProxyInfo info : source) {
-                if (proxyType.equals(info.type)) {
-                    String cc = info.country;
-                    if (TextUtils.isEmpty(cc)) cc = "Unknown";
-                    
-                    if (countryCode.equals(cc)) {
-                        allProxies.add(info);
-                    }
+                String cc = info.country;
+                if (TextUtils.isEmpty(cc)) cc = "Unknown";
+                
+                if (countryCode.equals(cc)) {
+                    allProxies.add(info);
                 }
             }
             
@@ -191,11 +188,7 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
     public View createView(Context context) {
         actionBar.setBackButtonImage(R.drawable.ic_ab_back);
         if (countryCode == null) {
-            if ("socks5".equals(proxyType)) {
-                actionBar.setTitle("SOCKS5 Countries");
-            } else {
-                actionBar.setTitle("MTProto Countries");
-            }
+            actionBar.setTitle("Locations");
         } else {
             String countryName = countryCode;
             try {
@@ -364,7 +357,14 @@ public class UzbekProxyListActivity extends BaseFragment implements Notification
 
         public void setProxy(UzbekProxyInfo info) {
             flagTextView.setText(info.flag != null ? info.flag : "🌐");
-            countryTextView.setText(info.country != null && !info.country.isEmpty() ? info.country : "Unknown Region");
+            
+            String name = "Unknown Region";
+            try {
+                if (info.country != null && !info.country.isEmpty()) {
+                    name = new Locale("", info.country).getDisplayCountry();
+                }
+            } catch (Exception ignore) {}
+            countryTextView.setText(name);
             
             boolean isCurrent = SharedConfig.currentProxy == info;
             if (!isCurrent && SharedConfig.currentProxy != null) {

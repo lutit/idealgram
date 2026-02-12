@@ -35,6 +35,7 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class UzbekVPNSettingsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate {
 
@@ -50,7 +51,11 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.proxyCheckDone);
         NotificationCenter.getInstance(currentAccount).addObserver(this, NotificationCenter.didUpdateConnectionState);
         
-        UzbekVPNController.getInstance().checkProxies();
+        if (UzbekVPNController.getInstance().getProxies().isEmpty()) {
+             UzbekVPNController.getInstance().forceFetch();
+        } else {
+             UzbekVPNController.getInstance().checkProxies();
+        }
         return true;
     }
 
@@ -69,6 +74,14 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
                 listAdapter.notifyDataSetChanged();
             }
             updateConnectButton();
+            if (listView != null) {
+                for (int i = 0; i < listView.getChildCount(); i++) {
+                    View child = listView.getChildAt(i);
+                    if (child instanceof UzbekHeaderCell) {
+                        ((UzbekHeaderCell) child).update();
+                    }
+                }
+            }
         }
     }
 
@@ -117,7 +130,7 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         connectButton.setOnClickListener(v -> {
             boolean enabled = SharedConfig.isProxyEnabled();
             if (enabled) {
-                SharedConfig.setProxyEnable(false);
+                UzbekVPNController.getInstance().disableProxy();
             } else {
                 connectToBestProxy();
             }
@@ -127,10 +140,8 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         updateConnectButton();
 
         listView.setOnItemClickListener((view, position) -> {
-            if (position == 1) { // MTProto
+            if (position == 1) { // Locations
                 presentFragment(new UzbekProxyListActivity("mtproto"));
-            } else if (position == 2) { // SOCKS5
-                presentFragment(new UzbekProxyListActivity("socks5"));
             }
         });
 
@@ -140,12 +151,25 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
     private void updateConnectButton() {
         if (connectButton == null) return;
         boolean enabled = SharedConfig.isProxyEnabled();
+        int state = ConnectionsManager.getInstance(UserConfig.selectedAccount).getConnectionState();
+        
         if (enabled) {
-            connectButton.setText("Disconnect");
-            connectButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), Theme.getColor(Theme.key_text_RedRegular), Theme.getColor(Theme.key_text_RedBold)));
+            if (state == ConnectionsManager.ConnectionStateConnected) {
+                connectButton.setText("Disconnect");
+                connectButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), Theme.getColor(Theme.key_text_RedRegular), Theme.getColor(Theme.key_text_RedBold)));
+                connectButton.setEnabled(true);
+                connectButton.setAlpha(1.0f);
+            } else {
+                connectButton.setText("Connecting...");
+                connectButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), Theme.getColor(Theme.key_featuredStickers_addButton), Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
+                connectButton.setEnabled(false);
+                connectButton.setAlpha(0.5f);
+            }
         } else {
             connectButton.setText("Connect to Best Proxy");
             connectButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), Theme.getColor(Theme.key_featuredStickers_addButton), Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
+            connectButton.setEnabled(true);
+            connectButton.setAlpha(1.0f);
         }
     }
     
@@ -171,6 +195,22 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
             UzbekVPNController.getInstance().enableProxy(best);
         }
     }
+    
+    private String getCurrentCountryName() {
+        if (!SharedConfig.isProxyEnabled() || SharedConfig.currentProxy == null) {
+            return "None";
+        }
+        if (SharedConfig.currentProxy instanceof UzbekProxyInfo) {
+             String code = ((UzbekProxyInfo) SharedConfig.currentProxy).country;
+             if (code == null) return "Unknown";
+             try {
+                 return new Locale("", code).getDisplayCountry();
+             } catch (Exception e) {
+                 return code;
+             }
+        }
+        return "Unknown";
+    }
 
     private class ListAdapter extends RecyclerListView.SelectionAdapter {
         private Context mContext;
@@ -181,7 +221,7 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
 
         @Override
         public int getItemCount() {
-            return 4;
+            return 3; // Header, Locations, Shadow
         }
 
         @Override
@@ -192,7 +232,7 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         @Override
         public int getItemViewType(int position) {
             if (position == 0) return 0; // Header
-            if (position == 3) return 2; // Shadow
+            if (position == 2) return 2; // Shadow
             return 1; // Cell
         }
 
@@ -222,9 +262,7 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
             } else if (holder.getItemViewType() == 1) {
                 TextSettingsCell cell = (TextSettingsCell) holder.itemView;
                 if (position == 1) {
-                    cell.setText("MTProto Proxies", true);
-                } else if (position == 2) {
-                    cell.setText("SOCKS5 Proxies", false);
+                    cell.setTextAndValue("Locations", getCurrentCountryName(), false);
                 }
             }
         }
@@ -235,6 +273,15 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         private TextView titleView;
         private TextView subtitleView;
         private TextView statusView;
+        private TextView timerTextView;
+        
+        private Runnable timerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                updateTimer();
+                AndroidUtilities.runOnUIThread(this, 1000);
+            }
+        };
 
         public UzbekHeaderCell(Context context) {
             super(context);
@@ -247,6 +294,7 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
 
             iconView = new ImageView(context);
             iconView.setImageResource(R.drawable.msg_policy);
+            iconView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText), PorterDuff.Mode.MULTIPLY));
             container.addView(iconView, LayoutHelper.createLinear(64, 64, Gravity.CENTER_HORIZONTAL, 0, 24, 0, 12));
 
             titleView = new TextView(context);
@@ -261,6 +309,14 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
             statusView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
             statusView.setGravity(Gravity.CENTER);
             container.addView(statusView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 0, 0, 0, 4));
+            
+            timerTextView = new TextView(context);
+            timerTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24);
+            timerTextView.setTypeface(AndroidUtilities.bold());
+            timerTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+            timerTextView.setGravity(Gravity.CENTER);
+            timerTextView.setVisibility(GONE);
+            container.addView(timerTextView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 0, 8, 0, 4));
 
             subtitleView = new TextView(context);
             subtitleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
@@ -268,39 +324,79 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
             subtitleView.setGravity(Gravity.CENTER);
             container.addView(subtitleView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 0, 0, 0, 24));
         }
+        
+        @Override
+        protected void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            update();
+        }
+        
+        @Override
+        protected void onDetachedFromWindow() {
+            super.onDetachedFromWindow();
+            AndroidUtilities.cancelRunOnUIThread(timerRunnable);
+        }
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
             super.onMeasure(MeasureSpec.makeMeasureSpec(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+        }
+        
+        private void updateTimer() {
+            long startTime = UzbekVPNController.getInstance().connectionStartTime;
+            if (startTime > 0) {
+                long diff = (System.currentTimeMillis() - startTime) / 1000;
+                long hours = diff / 3600;
+                long minutes = (diff % 3600) / 60;
+                long seconds = diff % 60;
+                String time;
+                if (hours > 0) {
+                    time = String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds);
+                } else {
+                    time = String.format(Locale.US, "%02d:%02d", minutes, seconds);
+                }
+                timerTextView.setText(time);
+            }
         }
 
         public void update() {
              boolean enabled = SharedConfig.isProxyEnabled();
              SharedConfig.ProxyInfo current = SharedConfig.currentProxy;
              
+             AndroidUtilities.cancelRunOnUIThread(timerRunnable);
+
              if (enabled && current != null) {
                  int state = ConnectionsManager.getInstance(UserConfig.selectedAccount).getConnectionState();
                  if (state == ConnectionsManager.ConnectionStateConnected) {
-                     statusView.setText(LocaleController.getString(R.string.Connected));
+                     statusView.setText(LocaleController.getString("Connected", R.string.Connected));
                      statusView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGreenText));
                      iconView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGreenText), PorterDuff.Mode.MULTIPLY));
-                     subtitleView.setText(current.address + ":" + current.port);
+                     subtitleView.setText(current.address);
+                     
+                     timerTextView.setVisibility(VISIBLE);
+                     timerRunnable.run();
                  } else if (state == ConnectionsManager.ConnectionStateUpdating || state == ConnectionsManager.ConnectionStateConnecting) {
-                     statusView.setText(LocaleController.getString(R.string.Connecting));
+                     statusView.setText(LocaleController.getString("Connecting", R.string.Connecting));
                      statusView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText));
                      iconView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText), PorterDuff.Mode.MULTIPLY));
-                     subtitleView.setText(current.address + ":" + current.port);
+                     subtitleView.setText(current.address);
+                     
+                     timerTextView.setVisibility(GONE);
                  } else {
-                     statusView.setText(LocaleController.getString(R.string.WaitingForNetwork));
+                     statusView.setText(LocaleController.getString("WaitingForNetwork", R.string.WaitingForNetwork));
                      statusView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
                      iconView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText), PorterDuff.Mode.MULTIPLY));
                      subtitleView.setText("Check your internet connection");
+                     
+                     timerTextView.setVisibility(GONE);
                  }
              } else {
                  statusView.setText("Not Connected");
                  statusView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText));
                  iconView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText), PorterDuff.Mode.MULTIPLY));
                  subtitleView.setText("Select a proxy to connect");
+                 
+                 timerTextView.setVisibility(GONE);
              }
         }
     }

@@ -20,7 +20,7 @@ import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class UzbekVPNController {
+public class UzbekVPNController implements NotificationCenter.NotificationCenterDelegate {
 
     private static volatile UzbekVPNController Instance = null;
 
@@ -41,6 +41,7 @@ public class UzbekVPNController {
     private ArrayList<UzbekProxyInfo> proxies = new ArrayList<>();
     private volatile long lastFetchTime;
     private volatile boolean isFetching;
+    public long connectionStartTime;
     private final Object sync = new Object();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -61,6 +62,26 @@ public class UzbekVPNController {
 
     public UzbekVPNController() {
         Log.d("UzbekVPN", "UzbekVPNController constructor called");
+        NotificationCenter.getInstance(UserConfig.selectedAccount).addObserver(this, NotificationCenter.didUpdateConnectionState);
+        checkConnectionTime();
+    }
+
+    @Override
+    public void didReceivedNotification(int id, int account, Object... args) {
+        if (id == NotificationCenter.didUpdateConnectionState) {
+            checkConnectionTime();
+        }
+    }
+
+    private void checkConnectionTime() {
+        int state = ConnectionsManager.getInstance(UserConfig.selectedAccount).getConnectionState();
+        if (state == ConnectionsManager.ConnectionStateConnected) {
+            if (connectionStartTime == 0) {
+                connectionStartTime = System.currentTimeMillis();
+            }
+        } else {
+            connectionStartTime = 0;
+        }
     }
 
     public void start() {
@@ -79,12 +100,16 @@ public class UzbekVPNController {
 
     public void forceFetch() {
         Log.d("UzbekVPN", "forceFetch called");
-        executor.execute(this::fetchProxies);
+        executor.execute(() -> fetchProxies(true));
     }
 
     private void fetchProxies() {
-        Log.d("UzbekVPN", "fetchProxies called. isFetching: " + isFetching);
-        if (isFetching) return;
+        fetchProxies(false);
+    }
+
+    private void fetchProxies(boolean force) {
+        Log.d("UzbekVPN", "fetchProxies called. isFetching: " + isFetching + " force: " + force);
+        if (isFetching && !force) return;
         isFetching = true;
         // Run on our own executor
         Log.d("UzbekVPN", "fetchProxies started on executor");
@@ -93,9 +118,10 @@ public class UzbekVPNController {
                 URL url = new URL("https://cdn.lutit.xyz/uzbekgram/proxy.json");
                 Log.d("UzbekVPN", "Connecting to " + url);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setConnectTimeout(5000);
-                connection.setReadTimeout(5000);
+                connection.setConnectTimeout(10000); // Increased timeout
+                connection.setReadTimeout(10000);
                 connection.setRequestMethod("GET");
+                connection.setUseCaches(false); // Disable cache
                 connection.connect();
 
                 int responseCode = connection.getResponseCode();
@@ -126,7 +152,11 @@ public class UzbekVPNController {
         Log.d("UzbekVPN", "parseAndSave called");
         try {
             JSONObject root = new JSONObject(json);
-            JSONObject servers = root.getJSONObject("servers");
+            JSONObject servers = root.optJSONObject("servers");
+            if (servers == null) {
+                 Log.e("UzbekVPN", "No 'servers' object in JSON");
+                 return;
+            }
             
             ArrayList<UzbekProxyInfo> newProxies = new ArrayList<>();
 
@@ -145,25 +175,6 @@ public class UzbekVPNController {
                         newProxies.add(new UzbekProxyInfo(
                                 info.address, info.port, info.username, info.password, info.secret,
                                 p.optString("country_code"), p.optString("flag"), p.optString("id"), "mtproto"
-                        ));
-                    }
-                }
-            }
-
-            // SOCKS5
-            JSONArray socks5 = servers.optJSONArray("socks5");
-            if (socks5 != null) {
-                for (int i = 0; i < socks5.length(); i++) {
-                    JSONObject p = socks5.getJSONObject(i);
-                    String ip = p.optString("ip");
-                    int port = p.optInt("port");
-                    String user = p.optString("user");
-                    String pass = p.optString("pass");
-                    
-                    if (!TextUtils.isEmpty(ip) && port > 0) {
-                        newProxies.add(new UzbekProxyInfo(
-                                ip, port, user, pass, "",
-                                p.optString("country_code"), p.optString("flag"), p.optString("id"), "socks5"
                         ));
                     }
                 }
@@ -228,6 +239,15 @@ public class UzbekVPNController {
     public void enableProxy(UzbekProxyInfo info) {
         Log.d("UzbekVPN", "Enabling proxy: " + info.address);
         SharedConfig.setCurrentProxy(info);
+        boolean enabled = true;
+        ConnectionsManager.setProxySettings(enabled, info.address, info.port, info.username, info.password, info.secret);
+        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxySettingsChanged);
+    }
+
+    public void disableProxy() {
+        Log.d("UzbekVPN", "Disabling proxy");
+        ConnectionsManager.setProxySettings(false, "", 0, "", "", "");
+        NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxySettingsChanged);
     }
 
     private void saveProxies() {
