@@ -987,13 +987,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         ApplicationLoader.postInitApplication();
         AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
         currentAccount = UserConfig.selectedAccount;
-        try {
-            android.util.Log.d("UzbekVPN", "LaunchActivity: Initializing UzbekVPNController");
-            org.telegram.messenger.UzbekVPNController.getInstance().checkAndFetch();
-            android.util.Log.d("UzbekVPN", "LaunchActivity: UzbekVPNController initialized");
-        } catch (Throwable e) {
-            android.util.Log.e("UzbekVPN", "Failed to initialize UzbekVPNController", e);
-        }
         registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         if (!UserConfig.getInstance(currentAccount).isClientActivated()) {
             Intent intent = getIntent();
@@ -1915,6 +1908,16 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 //                }
 //            );
 //        }
+
+        // Initialize UzbekVPNController in background after main initialization
+        Utilities.stageQueue.postRunnable(() -> {
+            try {
+                android.util.Log.d("UzbekVPN", "LaunchActivity: Starting UzbekVPNController in background");
+                org.telegram.messenger.UzbekVPNController.getInstance().start();
+            } catch (Throwable e) {
+                android.util.Log.e("UzbekVPN", "Failed to start UzbekVPNController", e);
+            }
+        });
     }
 
     private void showAttachMenuBot(TLRPC.TL_attachMenuBot attachMenuBot, String startApp, boolean sidemenu) {

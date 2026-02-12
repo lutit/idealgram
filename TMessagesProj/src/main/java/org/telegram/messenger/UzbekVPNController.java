@@ -17,6 +17,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class UzbekVPNController {
 
@@ -37,9 +39,10 @@ public class UzbekVPNController {
     }
 
     private ArrayList<UzbekProxyInfo> proxies = new ArrayList<>();
-    private long lastFetchTime;
-    private boolean isFetching;
+    private volatile long lastFetchTime;
+    private volatile boolean isFetching;
     private final Object sync = new Object();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public static class UzbekProxyInfo extends SharedConfig.ProxyInfo {
         public String country;
@@ -58,39 +61,50 @@ public class UzbekVPNController {
 
     public UzbekVPNController() {
         Log.d("UzbekVPN", "UzbekVPNController constructor called");
-        // Load proxies asynchronously to prevent ANR on main thread
-        Utilities.globalQueue.postRunnable(this::loadProxies);
+    }
+
+    public void start() {
+        executor.execute(() -> {
+            loadProxies();
+            checkAndFetch();
+        });
     }
 
     public void checkAndFetch() {
-        Log.d("UzbekVPN", "checkAndFetch called. lastFetchTime: " + lastFetchTime);
-        if (lastFetchTime == 0 || System.currentTimeMillis() - lastFetchTime > 2 * 60 * 60 * 1000) { // 2 hours
-            Log.d("UzbekVPN", "Fetching proxies because cache expired or not loaded");
-            fetchProxies();
-        } else {
-            Log.d("UzbekVPN", "Proxies are fresh, skipping fetch");
-        }
+        executor.execute(() -> {
+            Log.d("UzbekVPN", "checkAndFetch called. lastFetchTime: " + lastFetchTime);
+            if (lastFetchTime == 0 || System.currentTimeMillis() - lastFetchTime > 2 * 60 * 60 * 1000) { // 2 hours
+                Log.d("UzbekVPN", "Fetching proxies because cache expired or not loaded");
+                fetchProxies();
+            } else {
+                Log.d("UzbekVPN", "Proxies are fresh, skipping fetch");
+                if (proxies.isEmpty()) {
+                    Log.d("UzbekVPN", "Proxies list is empty despite valid time, forcing fetch");
+                    fetchProxies();
+                }
+            }
+        });
     }
 
     public void forceFetch() {
         Log.d("UzbekVPN", "forceFetch called");
-        fetchProxies();
+        executor.execute(this::fetchProxies);
     }
 
     private void fetchProxies() {
         Log.d("UzbekVPN", "fetchProxies called. isFetching: " + isFetching);
         if (isFetching) return;
         isFetching = true;
-        Utilities.globalQueue.postRunnable(() -> {
-            Log.d("UzbekVPN", "fetchProxies runnable started on globalQueue");
-            // Double check if loaded while queued
-            if (lastFetchTime > 0 && System.currentTimeMillis() - lastFetchTime < 2 * 60 * 60 * 1000) {
-                 Log.d("UzbekVPN", "Proxies loaded from cache and are fresh, skipping network fetch");
-                 isFetching = false;
-                 return;
-            }
+        // Run on our own executor
+        Log.d("UzbekVPN", "fetchProxies started on executor");
+        // Double check
+        if (lastFetchTime > 0 && System.currentTimeMillis() - lastFetchTime < 2 * 60 * 60 * 1000 && !proxies.isEmpty()) {
+             Log.d("UzbekVPN", "Proxies loaded and fresh, skipping network fetch");
+             isFetching = false;
+             return;
+        }
 
-            try {
+        try {
                 URL url = new URL("https://cdn.lutit.xyz/uzbekgram/proxy.json");
                 Log.d("UzbekVPN", "Connecting to " + url);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -121,7 +135,6 @@ public class UzbekVPNController {
                 isFetching = false;
                 Log.d("UzbekVPN", "fetchProxies finished");
             }
-        });
     }
 
     private void parseAndSave(String json) {
@@ -198,7 +211,7 @@ public class UzbekVPNController {
     }
     
     public void checkProxies() {
-        Utilities.globalQueue.postRunnable(() -> {
+        executor.execute(() -> {
             Log.d("UzbekVPN", "Starting checkProxies in background");
             ArrayList<UzbekProxyInfo> checkList;
             synchronized (sync) {
@@ -250,7 +263,7 @@ public class UzbekVPNController {
             }
             SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("uzbek_vpn_prefs", Context.MODE_PRIVATE);
             prefs.edit().putString("proxies", arr.toString()).apply();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             FileLog.e(e);
         }
     }
@@ -258,35 +271,51 @@ public class UzbekVPNController {
     private void loadProxies() {
         Log.d("UzbekVPN", "loadProxies started");
         try {
+            if (ApplicationLoader.applicationContext == null) {
+                Log.e("UzbekVPN", "ApplicationLoader.applicationContext is null!");
+                return;
+            }
             SharedPreferences prefs = ApplicationLoader.applicationContext.getSharedPreferences("uzbek_vpn_prefs", Context.MODE_PRIVATE);
-            lastFetchTime = prefs.getLong("last_fetch", 0);
+            long localLastFetchTime = prefs.getLong("last_fetch", 0);
             String json = prefs.getString("proxies", null);
+            ArrayList<UzbekProxyInfo> loadedProxies = new ArrayList<>();
+
             if (json != null) {
                 JSONArray arr = new JSONArray(json);
-                synchronized (sync) {
-                    proxies.clear();
-                    for (int i = 0; i < arr.length(); i++) {
-                        JSONObject obj = arr.getJSONObject(i);
-                        proxies.add(new UzbekProxyInfo(
-                                obj.optString("addr"),
-                                obj.optInt("port"),
-                                obj.optString("user"),
-                                obj.optString("pass"),
-                                obj.optString("sec"),
-                                obj.optString("cc"),
-                                obj.optString("flag"),
-                                obj.optString("id"),
-                                obj.optString("type", "mtproto")
-                        ));
-                    }
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.getJSONObject(i);
+                    loadedProxies.add(new UzbekProxyInfo(
+                            obj.optString("addr"),
+                            obj.optInt("port"),
+                            obj.optString("user"),
+                            obj.optString("pass"),
+                            obj.optString("sec"),
+                            obj.optString("cc"),
+                            obj.optString("flag"),
+                            obj.optString("id"),
+                            obj.optString("type", "mtproto")
+                    ));
                 }
-                Log.d("UzbekVPN", "Loaded " + proxies.size() + " proxies from cache");
-            } else {
-                Log.d("UzbekVPN", "No proxies in cache");
             }
-        } catch (Exception e) {
+            
+            synchronized (sync) {
+                proxies.clear();
+                if (!loadedProxies.isEmpty()) {
+                    proxies.addAll(loadedProxies);
+                    lastFetchTime = localLastFetchTime;
+                    Log.d("UzbekVPN", "Loaded " + proxies.size() + " proxies from cache");
+                } else {
+                    lastFetchTime = 0;
+                    Log.d("UzbekVPN", "No proxies in cache or empty list");
+                }
+            }
+        } catch (Throwable e) {
             Log.e("UzbekVPN", "Error loading proxies", e);
             FileLog.e(e);
+            synchronized (sync) {
+                proxies.clear();
+                lastFetchTime = 0;
+            }
         }
     }
 
