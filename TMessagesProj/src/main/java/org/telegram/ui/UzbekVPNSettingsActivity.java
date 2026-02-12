@@ -100,7 +100,7 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         listView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         listView.setAdapter(listAdapter = new ListAdapter(context));
         listView.setVerticalScrollBarEnabled(false);
-        frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, 0, 0, 0, 60)); 
+        frameLayout.addView(listView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT, 0, 0, 0, 60));
 
         bottomLayout = new FrameLayout(context);
         bottomLayout.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
@@ -112,7 +112,7 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         connectButton.setGravity(Gravity.CENTER);
         connectButton.setTypeface(AndroidUtilities.bold());
         connectButton.setBackground(Theme.createSimpleSelectorRoundRectDrawable(AndroidUtilities.dp(6), Theme.getColor(Theme.key_featuredStickers_addButton), Theme.getColor(Theme.key_featuredStickers_addButtonPressed)));
-        bottomLayout.addView(connectButton, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, 0, 10, 10, 10, 10));
+        bottomLayout.addView(connectButton, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER, 10, 10, 10, 10));
 
         connectButton.setOnClickListener(v -> {
             boolean enabled = SharedConfig.isProxyEnabled();
