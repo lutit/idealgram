@@ -72,17 +72,8 @@ public class UzbekVPNController {
 
     public void checkAndFetch() {
         executor.execute(() -> {
-            Log.d("UzbekVPN", "checkAndFetch called. lastFetchTime: " + lastFetchTime);
-            if (lastFetchTime == 0 || System.currentTimeMillis() - lastFetchTime > 2 * 60 * 60 * 1000) { // 2 hours
-                Log.d("UzbekVPN", "Fetching proxies because cache expired or not loaded");
-                fetchProxies();
-            } else {
-                Log.d("UzbekVPN", "Proxies are fresh, skipping fetch");
-                if (proxies.isEmpty()) {
-                    Log.d("UzbekVPN", "Proxies list is empty despite valid time, forcing fetch");
-                    fetchProxies();
-                }
-            }
+            Log.d("UzbekVPN", "checkAndFetch called. Aggressively fetching proxies.");
+            fetchProxies();
         });
     }
 
@@ -97,12 +88,6 @@ public class UzbekVPNController {
         isFetching = true;
         // Run on our own executor
         Log.d("UzbekVPN", "fetchProxies started on executor");
-        // Double check
-        if (lastFetchTime > 0 && System.currentTimeMillis() - lastFetchTime < 2 * 60 * 60 * 1000 && !proxies.isEmpty()) {
-             Log.d("UzbekVPN", "Proxies loaded and fresh, skipping network fetch");
-             isFetching = false;
-             return;
-        }
 
         try {
                 URL url = new URL("https://cdn.lutit.xyz/uzbekgram/proxy.json");
@@ -197,6 +182,8 @@ public class UzbekVPNController {
                 Log.d("UzbekVPN", "Posting NotificationCenter.proxySettingsChanged");
                 NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.proxySettingsChanged);
             });
+
+            checkProxies();
 
         } catch (Exception e) {
             Log.e("UzbekVPN", "Error parsing proxies", e);
