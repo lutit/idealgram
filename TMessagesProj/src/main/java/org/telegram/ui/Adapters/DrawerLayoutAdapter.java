@@ -488,7 +488,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         boolean showTv = true;
         boolean showPornTv = true;
         boolean showLegends = true;
-        if (showNSettings || showBrowser || showOpenQuran || showOpenBible || showQrLogin || showSessions || showTv || showLegends) items.add(null); // divider
+        if (showNSettings || showBrowser || showOpenQuran || showOpenBible || showQrLogin || showSessions || showTv || showPornTv || showLegends) items.add(null); // divider
         if (showNSettings) items.add(new Item(nkbtnSettings, LocaleController.getString(R.string.NekoSettings), R.drawable.nagramx_outline));
         if (showBrowser) items.add(new Item(nkbtnBrowser, LocaleController.getString(R.string.InappBrowser), R.drawable.web_browser));
         if (showTv) items.add(new Item(nkbtnTv, "TV", R.drawable.screencast_big_solar));
