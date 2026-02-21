@@ -1401,6 +1401,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 } else if (id == DrawerLayoutAdapter.nkbtnTv) {
                     Browser.openUrl(LaunchActivity.this, "https://youtube.com/watch?v=dz1MhkbPthI");
                     drawerLayoutContainer.closeDrawer(true);
+                } else if (id == DrawerLayoutAdapter.nkbtnPornTv) {
+                    Browser.openUrl(LaunchActivity.this, "https://yande.re");
+                    drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnOpenQuran) {
                     Browser.openUrl(LaunchActivity.this, "https://tanzil.net/");
                     drawerLayoutContainer.closeDrawer(true);
