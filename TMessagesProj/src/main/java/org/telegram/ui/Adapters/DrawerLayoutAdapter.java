@@ -69,14 +69,15 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnShamalaMode = 1011;
     public static int nkbtnTv = 1012;
     public static int nkbtnPornTv = 1013;
-    public static int nkbtnLegends = 1014;
-    public static int nkbtnUltraShamalaMode = 1015;
-    public static int nkbtnHyperShamalaMode = 1016;
-    public static int nkbtnUspdmpshmMode = 1017;
-    public static int nkbtnEpsteinMode = 1018;
-    public static int nkbtnQuantumShalavaMode = 1019;
-    public static int nkbtnDildavshvzhMode = 1020;
-    public static int nkbtnUzbekVPN = 1021;
+    public static int nkbtnUzbekHub = 1014;
+    public static int nkbtnLegends = 1015;
+    public static int nkbtnUltraShamalaMode = 1016;
+    public static int nkbtnHyperShamalaMode = 1017;
+    public static int nkbtnUspdmpshmMode = 1018;
+    public static int nkbtnEpsteinMode = 1019;
+    public static int nkbtnQuantumShalavaMode = 1020;
+    public static int nkbtnDildavshvzhMode = 1021;
+    public static int nkbtnUzbekVPN = 1022;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -487,12 +488,14 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         boolean showRestartApp = NaConfig.INSTANCE.getDrawerItemRestartApp().Bool();
         boolean showTv = true;
         boolean showPornTv = true;
+        boolean showUzbekHub = true;
         boolean showLegends = true;
-        if (showNSettings || showBrowser || showOpenQuran || showOpenBible || showQrLogin || showSessions || showTv || showPornTv || showLegends) items.add(null); // divider
+        if (showNSettings || showBrowser || showOpenQuran || showOpenBible || showQrLogin || showSessions || showTv || showPornTv || showUzbekHub || showLegends) items.add(null); // divider
         if (showNSettings) items.add(new Item(nkbtnSettings, LocaleController.getString(R.string.NekoSettings), R.drawable.nagramx_outline));
         if (showBrowser) items.add(new Item(nkbtnBrowser, LocaleController.getString(R.string.InappBrowser), R.drawable.web_browser));
         if (showTv) items.add(new Item(nkbtnTv, "TV", R.drawable.screencast_big_solar));
         if (showPornTv) items.add(new Item(nkbtnPornTv, "Porn TV", R.drawable.screencast_big_solar));
+        if (showUzbekHub) items.add(new Item(nkbtnUzbekHub, "UzbekHub", R.drawable.screencast_big_solar));
         if (showLegends) items.add(new Item(nkbtnLegends, LocaleController.getString(R.string.Legends), R.drawable.msg_spoiler));
         if (showOpenQuran) items.add(new Item(nkbtnOpenQuran, LocaleController.getString(R.string.OpenQuran), R.drawable.filter_book_solar));
         if (showOpenBible) items.add(new Item(nkbtnOpenBible, LocaleController.getString(R.string.OpenBible), R.drawable.filter_book));
