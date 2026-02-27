@@ -1405,10 +1405,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     Browser.openUrl(LaunchActivity.this, "https://yande.re");
                     drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnUzbekHub) {
-                    Browser.openUrl(LaunchActivity.this, "https://danbooru.donmai.us/posts?tags=animated+rating%3Aexplicit");
+                    Browser.openUrl(LaunchActivity.this, "https://danbooru.donmai.us/posts?tags=animated+-rating%3Ageneral");
                     drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnUzbekXXX) {
-                    Browser.openUrl(LaunchActivity.this, "https://konachan.com/post?tags=rating%3Aexplicit");
+                    Browser.openUrl(LaunchActivity.this, "https://konachan.com/post?tags=-rating%3Asafe");
                     drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnOpenQuran) {
                     Browser.openUrl(LaunchActivity.this, "https://tanzil.net/");
