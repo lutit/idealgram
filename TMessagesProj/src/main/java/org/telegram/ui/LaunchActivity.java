@@ -633,19 +633,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
     }
 
-        dildavshvzhScreamerScheduled = true;
-        AndroidUtilities.runOnUIThread(dildavshvzhScreamerRunnable, 12000);
-    }
-
-        if (enabled) {
-            if (!dildavshvzhScreamerScheduled) {
-            }
-        } else {
-            dildavshvzhScreamerScheduled = false;
-            AndroidUtilities.cancelRunOnUIThread(dildavshvzhScreamerRunnable);
-        }
-    }
-
     private void resetCloseDmTracking() {
         closeDmTrackingReady = false;
         closeDmKnownDialogs.clear();

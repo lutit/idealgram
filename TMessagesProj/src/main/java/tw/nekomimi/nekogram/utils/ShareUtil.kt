@@ -4,10 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import org.telegram.messenger.BuildConfig
-import org.telegram.ui.LaunchActivity
 import java.io.File
 
 object ShareUtil {
@@ -36,9 +34,12 @@ object ShareUtil {
         if (caption.isNotBlank()) i.putExtra(Intent.EXTRA_SUBJECT, caption)
 
         i.putExtra(Intent.EXTRA_STREAM, uri)
-        i.setClass(ctx, LaunchActivity::class.java)
 
-        ctx.startActivity(i)
+        val chooser = Intent.createChooser(i, null)
+        if (ctx !is android.app.Activity) {
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        ctx.startActivity(chooser)
 
     }
 
