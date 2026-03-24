@@ -493,15 +493,6 @@ public class NekoConfig {
     }
     // --- Epstein Mode ---
 
-    // --- Dildavshvzh Mode ---
-    public static boolean isDildavshvzhModeActive() {
-        return dildavshvzhMode.Bool();
-    }
-
-    public static void toggleDildavshvzhMode() {
-        dildavshvzhMode.toggleConfigBool();
-    }
-    // --- Dildavshvzh Mode ---
 
     public static Set<String> getAllKeys() {
         synchronized (sync) {

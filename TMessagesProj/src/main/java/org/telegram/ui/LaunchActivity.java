@@ -369,21 +369,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             scheduleNextShamalaScreamerTick();
         }
     };
-    private ShamalaScreamerOverlay dildavshvzhScreamerOverlay;
-    private boolean dildavshvzhScreamerScheduled;
-    private final Runnable dildavshvzhScreamerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (!isResumed || !NekoConfig.isDildavshvzhModeActive()) {
-                dildavshvzhScreamerScheduled = false;
-                return;
-            }
-            if (dildavshvzhScreamerOverlay != null) {
-                dildavshvzhScreamerOverlay.start();
-            }
-            scheduleNextDildavshvzhScreamerTick();
-        }
-    };
     private final LongSparseIntArray closeDmKnownDialogs = new LongSparseIntArray();
     private boolean closeDmTrackingReady;
     private BottomSheetTabsOverlay bottomSheetTabsOverlay;
@@ -648,28 +633,16 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
     }
 
-    private void scheduleNextDildavshvzhScreamerTick() {
-        if (!isResumed || !NekoConfig.isDildavshvzhModeActive()) {
-            dildavshvzhScreamerScheduled = false;
-            return;
-        }
         dildavshvzhScreamerScheduled = true;
         AndroidUtilities.runOnUIThread(dildavshvzhScreamerRunnable, 12000);
     }
 
-    private void updateDildavshvzhScreamer() {
-        if (dildavshvzhScreamerOverlay == null) {
-            return;
-        }
-        boolean enabled = isResumed && NekoConfig.isDildavshvzhModeActive();
         if (enabled) {
             if (!dildavshvzhScreamerScheduled) {
-                scheduleNextDildavshvzhScreamerTick();
             }
         } else {
             dildavshvzhScreamerScheduled = false;
             AndroidUtilities.cancelRunOnUIThread(dildavshvzhScreamerRunnable);
-            dildavshvzhScreamerOverlay.stop();
         }
     }
 
@@ -1148,7 +1121,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         });
         frameLayout.addView(shamalaFlyerOverlay = new ShamalaFlyerOverlay(this));
         frameLayout.addView(shamalaScreamerOverlay = new ShamalaScreamerOverlay(this));
-        frameLayout.addView(dildavshvzhScreamerOverlay = new ShamalaScreamerOverlay(this, "huiznaet.jpg"));
         setupActionBarLayout();
         sideMenuContainer = new DrawerContainer(this);
         sideMenu = new RecyclerListView(this) {
@@ -1526,19 +1498,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                             willEnable ? R.string.EpsteinModeEnabled : R.string.EpsteinModeDisabled
                     );
                     BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, msg).show();
-                    drawerLayoutContainer.closeDrawer(false);
-                    NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
-                } else if (id == DrawerLayoutAdapter.nkbtnDildavshvzhMode) {
-                    boolean willEnable = !NekoConfig.isDildavshvzhModeActive();
-                    NekoConfig.toggleDildavshvzhMode();
-                    CharSequence msg = LocaleController.getString(
-                            willEnable ? R.string.DildavshvzhModeEnabled : R.string.DildavshvzhModeDisabled
-                    );
-                    BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, msg).show();
-                    if (willEnable && dildavshvzhScreamerOverlay != null) {
-                        dildavshvzhScreamerOverlay.start();
-                    }
-                    updateDildavshvzhScreamer();
                     drawerLayoutContainer.closeDrawer(false);
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
                 } else if (id == DrawerLayoutAdapter.nkbtnUzbekVPN) {
@@ -7914,7 +7873,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         stopUspdmpshmModeEffects();
         stopQuantumShalavaModeEffects();
         updateShamalaScreamer();
-        updateDildavshvzhScreamer();
         uspOfferShown = false;
         pipActivityHandler.onPause();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 4096);
@@ -8130,7 +8088,6 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         handleCloseDmsFromAll();
         updateShamalaScreamer();
-        updateDildavshvzhScreamer();
         updateQuantumShalavaModeEffects();
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
