@@ -108,7 +108,8 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
             VIEW_TYPE_FORWARD_TO_STORIES_CELL = 21,
             VIEW_TYPE_UZBEK_GPT = 22,
             VIEW_TYPE_IDEAL_GRAM = 23,
-            VIEW_TYPE_UZBEKGRAM_ADMIN = 24;
+            VIEW_TYPE_UZBEKGRAM_ADMIN = 24,
+            VIEW_TYPE_ALLAH_CALL = 25;
 
     private static final int UZBEK_GPT_PLACEHOLDER_ID = 0x555A454B;
     private static final int UZBEK_GPT_STABLE_ID = 42;
@@ -116,6 +117,8 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
     private static final int IDEAL_GRAM_STABLE_ID = 43;
     private static final int UZBEKGRAM_ADMIN_PLACEHOLDER_ID = 0x55414241;
     private static final int UZBEKGRAM_ADMIN_STABLE_ID = 44;
+    private static final int ALLAH_CALL_PLACEHOLDER_ID = 0x414C4C48;
+    private static final int ALLAH_CALL_STABLE_ID = 45;
 
     private Context mContext;
     private ArchiveHintCell archiveHintCell;
@@ -391,7 +394,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
                         isForumCell == itemInternal.isForumCell &&
                         pinned == itemInternal.pinned;
             }
-            if (viewType == VIEW_TYPE_UZBEK_GPT || viewType == VIEW_TYPE_IDEAL_GRAM) {
+            if (viewType == VIEW_TYPE_UZBEK_GPT || viewType == VIEW_TYPE_IDEAL_GRAM || viewType == VIEW_TYPE_ALLAH_CALL) {
                 return customDialog != null && itemInternal.customDialog != null &&
                         Objects.equals(customDialog.name, itemInternal.customDialog.name) &&
                         Objects.equals(customDialog.message, itemInternal.customDialog.message) &&
@@ -621,6 +624,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
             case VIEW_TYPE_IDEAL_GRAM:
             case VIEW_TYPE_UZBEK_GPT:
             case VIEW_TYPE_UZBEKGRAM_ADMIN:
+            case VIEW_TYPE_ALLAH_CALL:
             case VIEW_TYPE_DIALOG:
                 if (dialogsType == DialogsActivity.DIALOGS_TYPE_ADD_USERS_TO ||
                     dialogsType == DialogsActivity.DIALOGS_TYPE_BOT_REQUEST_PEER) {
@@ -870,7 +874,8 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
             }
             case VIEW_TYPE_UZBEK_GPT:
             case VIEW_TYPE_IDEAL_GRAM:
-            case VIEW_TYPE_UZBEKGRAM_ADMIN: {
+            case VIEW_TYPE_UZBEKGRAM_ADMIN:
+            case VIEW_TYPE_ALLAH_CALL: {
                 DialogCell cell = (DialogCell) holder.itemView;
                 TLRPC.Dialog nextDialog = (TLRPC.Dialog) getItem(i + 1);
                 ItemInternal itemInternal = itemInternals.get(i);
@@ -880,6 +885,8 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
                     cell.setDialog(itemInternal.customDialog != null ? itemInternal.customDialog : createUzbekGptCustomDialog());
                 } else if (holder.getItemViewType() == VIEW_TYPE_UZBEKGRAM_ADMIN) {
                     cell.setDialog(itemInternal.customDialog != null ? itemInternal.customDialog : createUzbekgramAdminCustomDialog());
+                } else if (holder.getItemViewType() == VIEW_TYPE_ALLAH_CALL) {
+                    cell.setDialog(itemInternal.customDialog != null ? itemInternal.customDialog : createAllahCallCustomDialog());
                 } else {
                     cell.setDialog(itemInternal.customDialog != null ? itemInternal.customDialog : createIdealGramCustomDialog());
                 }
@@ -1519,6 +1526,27 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
         return customDialog;
     }
 
+    private boolean shouldShowAllahCallShortcut() {
+        return dialogsType == DialogsActivity.DIALOGS_TYPE_DEFAULT
+                && folderId == 0
+                && !isOnlySelect
+                && requestPeerType == null
+                && parentFragment != null;
+    }
+
+    private DialogCell.CustomDialog createAllahCallCustomDialog() {
+        DialogCell.CustomDialog customDialog = new DialogCell.CustomDialog();
+        customDialog.id = ALLAH_CALL_PLACEHOLDER_ID;
+        customDialog.name = LocaleController.getString(R.string.AllahCallShortcutTitle);
+        customDialog.message = LocaleController.getString(R.string.AllahCallShortcutSubtitle);
+        customDialog.date = ConnectionsManager.getInstance(currentAccount).getCurrentTime();
+        customDialog.pinned = true;
+        customDialog.unread_count = 0;
+        customDialog.muted = false;
+        customDialog.type = 0;
+        return customDialog;
+    }
+
     public class LastEmptyView extends FrameLayout {
 
         public boolean moving;
@@ -1670,6 +1698,12 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
             uzbekgramAdminPlaceholderDialog = createUzbekgramAdminCustomDialog();
         }
 
+        boolean showAllahCallShortcut = shouldShowAllahCallShortcut();
+        DialogCell.CustomDialog allahCallPlaceholderDialog = null;
+        if (showAllahCallShortcut) {
+            allahCallPlaceholderDialog = createAllahCallCustomDialog();
+        }
+
         if (!hasHints && dialogsType == 0 && folderId == 0 && messagesController.isDialogsEndReached(folderId) && !forceUpdatingContacts) {
             if (messagesController.getAllFoldersDialogsCount() <= 10 && ContactsController.getInstance(currentAccount).doneLoadingContacts && !ContactsController.getInstance(currentAccount).contacts.isEmpty()) {
                 onlineContacts = new ArrayList<>(ContactsController.getInstance(currentAccount).contacts);
@@ -1809,6 +1843,9 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
         }
 
         if (!stopUpdate) {
+            if (showAllahCallShortcut && allahCallPlaceholderDialog != null) {
+                itemInternals.add(new ItemInternal(allahCallPlaceholderDialog, VIEW_TYPE_ALLAH_CALL, ALLAH_CALL_STABLE_ID));
+            }
             if (showUzbekgramAdminShortcut && uzbekgramAdminPlaceholderDialog != null) {
                 itemInternals.add(new ItemInternal(uzbekgramAdminPlaceholderDialog, VIEW_TYPE_UZBEKGRAM_ADMIN, UZBEKGRAM_ADMIN_STABLE_ID));
             }
@@ -1875,7 +1912,8 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
         if (itemInternals.get(position).viewType == VIEW_TYPE_DIALOG
                 || itemInternals.get(position).viewType == VIEW_TYPE_UZBEK_GPT
                 || itemInternals.get(position).viewType == VIEW_TYPE_IDEAL_GRAM
-                || itemInternals.get(position).viewType == VIEW_TYPE_UZBEKGRAM_ADMIN) {
+                || itemInternals.get(position).viewType == VIEW_TYPE_UZBEKGRAM_ADMIN
+                || itemInternals.get(position).viewType == VIEW_TYPE_ALLAH_CALL) {
             if (itemInternals.get(position).isForumCell && !collapsedView) {
                 return AndroidUtilities.dp(SharedConfig.useThreeLinesLayout ? 86 : 91);
             } else {
@@ -1895,6 +1933,10 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
 
     public boolean isUzbekgramAdminShortcut(int position) {
         return position >= 0 && position < itemInternals.size() && itemInternals.get(position).viewType == VIEW_TYPE_UZBEKGRAM_ADMIN;
+    }
+
+    public boolean isAllahCallShortcut(int position) {
+        return position >= 0 && position < itemInternals.size() && itemInternals.get(position).viewType == VIEW_TYPE_ALLAH_CALL;
     }
 
     protected boolean showOpenBotButton() {

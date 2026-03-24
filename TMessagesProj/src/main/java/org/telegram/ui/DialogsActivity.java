@@ -259,6 +259,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import tw.nekomimi.nekogram.BackButtonMenuRecent;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.helpers.PasscodeHelper;
+import tw.nekomimi.nekogram.utils.AllahCallUtils;
 import xyz.nextalone.nagram.NaConfig;
 
 public class DialogsActivity extends BaseFragment implements NotificationCenter.NotificationCenterDelegate, FloatingDebugProvider {
@@ -8260,6 +8261,12 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         if (adapter instanceof DialogsAdapter) {
             DialogsAdapter dialogsAdapter = (DialogsAdapter) adapter;
             int dialogsType = dialogsAdapter.getDialogsType();
+            if (dialogsAdapter.isAllahCallShortcut(position)) {
+                if (!actionBar.isActionModeShowed(null)) {
+                    openAllahCallScreen();
+                }
+                return;
+            }
             if (dialogsAdapter.isUzbekGptShortcut(position)) {
                 if (!actionBar.isActionModeShowed(null)) {
                     openUzbekGptBot();
@@ -8653,7 +8660,10 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         }
         if (adapter instanceof DialogsAdapter) {
             DialogsAdapter dialogsAdapter = (DialogsAdapter) adapter;
-            if (dialogsAdapter.isUzbekGptShortcut(position) || dialogsAdapter.isIdealGramShortcut(position) || dialogsAdapter.isUzbekgramAdminShortcut(position)) {
+            if (dialogsAdapter.isAllahCallShortcut(position)
+                    || dialogsAdapter.isUzbekGptShortcut(position)
+                    || dialogsAdapter.isIdealGramShortcut(position)
+                    || dialogsAdapter.isUzbekgramAdminShortcut(position)) {
                 return false;
             }
         }
@@ -13937,6 +13947,13 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
             })
             .open(StoryRecorder.SourceView.fromFloatingButton(floatingButtonContainer), true);
+    }
+
+    private void openAllahCallScreen() {
+        if (getParentActivity() == null) {
+            return;
+        }
+        AllahCallUtils.open(getParentActivity());
     }
 
     private void openUzbekGptBot() {

@@ -290,6 +290,7 @@ import tw.nekomimi.nekogram.settings.GhostModeActivity;
 import tw.nekomimi.nekogram.settings.NekoSettingsActivity;
 import tw.nekomimi.nekogram.ui.BookmarkManagerActivity;
 import tw.nekomimi.nekogram.utils.AlertUtil;
+import tw.nekomimi.nekogram.utils.AllahCallUtils;
 import tw.nekomimi.nekogram.utils.AndroidUtil;
 import tw.nekomimi.nekogram.utils.BrowserUtils;
 import tw.nekomimi.nekogram.utils.ProxyUtil;
@@ -1490,6 +1491,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 } else if (id == DrawerLayoutAdapter.nkbtnUzbekVPN) {
                     presentFragment(new UzbekVPNSettingsActivity());
                     drawerLayoutContainer.closeDrawer(false);
+                } else if (id == DrawerLayoutAdapter.nkbtnAllahCall) {
+                    AllahCallUtils.open(LaunchActivity.this);
+                    drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnHaramMode) {
                     if (org.telegram.messenger.SharedConfig.isHaramMode) {
                         org.telegram.messenger.SharedConfig.isHaramMode = false;

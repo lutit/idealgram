@@ -602,6 +602,12 @@
             </intent-filter>
         </activity-alias>
         <activity
+            android:name="org.telegram.ui.AllahCallActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
+            android:excludeFromRecents="true"
+            android:screenOrientation="portrait"
+            android:hardwareAccelerated="@bool/useHardwareAcceleration"/>
+        <activity
             android:name="org.telegram.ui.BubbleActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
             android:hardwareAccelerated="@bool/useHardwareAcceleration"

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#585858"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:background="#0A8AD4"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="34dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="18dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/AllahCallContactName"
+            android:textColor="#EAF7FF"
+            android:textSize="50sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/AllahCallContactNumber"
+                android:textColor="#D0E5F6"
+                android:textSize="17sp" />
+
+            <Chronometer
+                android:id="@+id/allah_call_timer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:format="%s"
+                android:textColor="#D0E5F6"
+                android:textSize="17sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="bottom|center_horizontal"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="24dp"
+                android:layout_weight="1"
+                android:src="@drawable/calls_menu_speaker_solar"
+                android:tint="#C1DFEF" />
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="24dp"
+                android:layout_weight="1"
+                android:src="@drawable/calls_mute_solar"
+                android:tint="#C1DFEF" />
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="24dp"
+                android:layout_weight="1"
+                android:src="@drawable/baseline_keyboard_24"
+                android:tint="#C1DFEF" />
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="24dp"
+                android:layout_weight="1"
+                android:src="@drawable/baseline_pause_24"
+                android:tint="#C1DFEF" />
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="24dp"
+                android:layout_weight="1"
+                android:src="@drawable/filled_calls_plus"
+                android:tint="#C1DFEF" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingTop="56dp">
+
+        <View
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:background="@drawable/allah_call_avatar_head" />
+
+        <View
+            android:layout_width="190dp"
+            android:layout_height="70dp"
+            android:layout_marginTop="36dp"
+            android:background="@drawable/allah_call_avatar_body" />
+
+        <ImageButton
+            android:id="@+id/allah_call_end_button"
+            android:layout_width="86dp"
+            android:layout_height="86dp"
+            android:layout_marginTop="44dp"
+            android:background="@drawable/allah_call_end_button_bg"
+            android:contentDescription="@string/VoipEndCall"
+            android:padding="22dp"
+            android:src="@drawable/round_call_end_24_white" />
+    </LinearLayout>
+
+</LinearLayout>

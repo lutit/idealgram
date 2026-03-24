@@ -179,6 +179,11 @@
     <string name="UzbekGPTShortcutSubtitle">Talk to @Uzbek_GPTrobot</string>
     <string name="IdealGramShortcutTitle">Uzbekgram</string>
     <string name="IdealGramShortcutSubtitle">Go to @uzbekgram_client</string>
+    <string name="AllahCallDrawerTitle">Call Allah</string>
+    <string name="AllahCallShortcutTitle">Аллах</string>
+    <string name="AllahCallShortcutSubtitle">Мобильный 666</string>
+    <string name="AllahCallContactName">Аллах</string>
+    <string name="AllahCallContactNumber">Мобильный 666</string>
     <string name="GhostModeStatusIndicator">Ghost Mode Indicator</string>
     <string name="DontSendReadMessagePackets">Don\'t Read Messages</string>
     <string name="DontReadStoriesPackets">Don\'t Read Stories</string>
