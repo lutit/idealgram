@@ -1544,6 +1544,46 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 } else if (id == DrawerLayoutAdapter.nkbtnUzbekVPN) {
                     presentFragment(new UzbekVPNSettingsActivity());
                     drawerLayoutContainer.closeDrawer(false);
+                } else if (id == DrawerLayoutAdapter.nkbtnHaramMode) {
+                    if (org.telegram.messenger.SharedConfig.isHaramMode) {
+                        org.telegram.messenger.SharedConfig.isHaramMode = false;
+                        drawerLayoutAdapter.notifyDataSetChanged();
+                        drawerLayoutContainer.closeDrawer(false);
+                        NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.dialogsNeedReload);
+                        NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                    } else {
+                        org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
+                        builder.setTitle("Харам Mode");
+                        builder.setMessage("Вы точно хотите нарушить шариат и проклять аллаха?");
+                        builder.setPositiveButton("Da", (dialogInterface, i) -> {
+                            drawerLayoutContainer.closeDrawer(false);
+                            final android.widget.FrameLayout haramOverlay = new android.widget.FrameLayout(LaunchActivity.this);
+                            haramOverlay.setBackgroundColor(0xFF000000);
+                            haramOverlay.setAlpha(0f);
+                            android.widget.TextView haramText = new android.widget.TextView(LaunchActivity.this);
+                            haramText.setText("вы были прокляты Аллахом \uD83D\uDE21");
+                            haramText.setTextColor(0xFFFF0000);
+                            haramText.setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 10f);
+                            haramText.setGravity(android.view.Gravity.CENTER);
+                            android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT);
+                            lp.gravity = android.view.Gravity.CENTER;
+                            haramOverlay.addView(haramText, lp);
+                            drawerLayoutContainer.addView(haramOverlay, new android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.MATCH_PARENT, android.widget.FrameLayout.LayoutParams.MATCH_PARENT));
+                            haramOverlay.animate().alpha(1f).setDuration(500).withEndAction(() -> {
+                                haramText.animate().scaleX(4f).scaleY(4f).setDuration(1500).setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator()).withEndAction(() -> {
+                                    haramOverlay.animate().alpha(0f).setDuration(500).withEndAction(() -> {
+                                        drawerLayoutContainer.removeView(haramOverlay);
+                                        org.telegram.messenger.SharedConfig.isHaramMode = true;
+                                        drawerLayoutAdapter.notifyDataSetChanged();
+                                        NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.dialogsNeedReload);
+                                        NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                                    }).start();
+                                }).start();
+                            }).start();
+                        });
+                        builder.setNegativeButton("Нет", null);
+                        builder.show();
+                    }
                 } else if (id == DrawerLayoutAdapter.nkbtnSessions) {
                     presentFragment(new SessionsActivity(SessionsActivity.TYPE_DEVICES));
                     drawerLayoutContainer.closeDrawer(false);

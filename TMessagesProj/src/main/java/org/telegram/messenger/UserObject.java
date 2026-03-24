@@ -56,6 +56,7 @@ public class UserObject {
 
     @NonNull
     public static String getUserName(TLRPC.User user) {
+        if (SharedConfig.isHaramMode) return "Аллах";
         if (user == null || isDeleted(user)) {
             return LocaleController.getString(R.string.HiddenName);
         }

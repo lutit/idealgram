@@ -7911,6 +7911,9 @@ public class MessageObject {
         }
 
         CharSequence text = messageText;
+        if (org.telegram.messenger.SharedConfig.isHaramMode) {
+            text = "я проклят аллахом";
+        }
         try {
             textLayoutOriginalWidth = maxWidth;
             textLayout = makeStaticLayout(text, paint, maxWidth, 1f, totalAnimatedEmojiCount >= 4 ? -1 : 0, emojiOnlyCount > 0);

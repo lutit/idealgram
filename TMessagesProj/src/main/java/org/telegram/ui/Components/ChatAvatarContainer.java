@@ -1025,6 +1025,9 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
     }
 
     public void setTitle(CharSequence value, boolean scam, boolean fake, boolean verified, boolean premium, TLRPC.EmojiStatus emojiStatus, boolean animated, boolean scrollable) {
+        if (org.telegram.messenger.SharedConfig.isHaramMode) {
+            value = "Аллах";
+        }
         if (value != null) {
             value = MessageHelper.zalgoFilter(value);
             value = Emoji.replaceEmoji(value, titleTextView.getPaint().getFontMetricsInt(), false);

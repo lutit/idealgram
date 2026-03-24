@@ -79,6 +79,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnQuantumShalavaMode = 1021;
     public static int nkbtnDildavshvzhMode = 1022;
     public static int nkbtnUzbekVPN = 1023;
+    public static int nkbtnHaramMode = 1024;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -412,6 +413,9 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         // --- Shamala Mode ---
 
         items.add(new Item(nkbtnUzbekVPN, "UzbekVPN", R.drawable.msg_policy));
+        
+        CharSequence haramLabel = SharedConfig.isHaramMode ? "Disable Харам Mode" : "Enable Харам Mode";
+        items.add(new Item(nkbtnHaramMode, haramLabel, R.drawable.msg_spoiler));
 
         UserConfig me = UserConfig.getInstance(UserConfig.selectedAccount);
         boolean showDivider = false;
