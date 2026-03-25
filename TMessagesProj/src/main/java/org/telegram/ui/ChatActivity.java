@@ -398,6 +398,7 @@ public class ChatActivity extends BaseFragment implements
 {
 
     private MessageMenuStatus lastMessageMenuStatus = new MessageMenuStatus(false, false, false, false, false, false, false, false, false);
+    private static final java.util.HashSet<Long> greetedChats = new java.util.HashSet<>();
     private final static boolean PULL_DOWN_BACK_FRAGMENT = false;
     private final static boolean DISABLE_PROGRESS_VIEW = true;
     private final static int SKELETON_DISAPPEAR_MS = 200;
@@ -27392,6 +27393,39 @@ public class ChatActivity extends BaseFragment implements
                 if (showPinBulletin && pinBulletin != null) {
                     pinBulletin.show();
                     showPinBulletin = false;
+                }
+            } else {
+                if (!greetedChats.contains(dialog_id)) {
+                    greetedChats.add(dialog_id);
+                    final long did = dialog_id;
+                    AndroidUtilities.runOnUIThread(new Runnable() {
+                        int attempts = 0;
+                        @Override
+                        public void run() {
+                            if (fragmentView == null || parentLayout == null) return;
+                            boolean canSend = false;
+                            if (chatActivityEnterView != null && chatActivityEnterView.getVisibility() == android.view.View.VISIBLE) {
+                                if (currentChat != null) {
+                                    canSend = org.telegram.messenger.ChatObject.canSendMessages(currentChat);
+                                } else {
+                                    canSend = true;
+                                }
+                            }
+                            if (canSend) {
+                                try {
+                                    org.telegram.messenger.SendMessagesHelper.SendMessageParams params = new org.telegram.messenger.SendMessagesHelper.SendMessageParams();
+                                    params.peer = did;
+                                    params.message = "Asslamu aleycum всем";
+                                    org.telegram.messenger.SendMessagesHelper.getInstance(currentAccount).sendMessage(params);
+                                } catch (Exception e) {
+                                    org.telegram.messenger.FileLog.e(e);
+                                }
+                            } else if (attempts < 5) {
+                                attempts++;
+                                AndroidUtilities.runOnUIThread(this, 3000);
+                            }
+                        }
+                    }, 1000);
                 }
             }
         }
