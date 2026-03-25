@@ -5572,6 +5572,30 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         contentView.addView(rightSlidingDialogContainer, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
         contentView.addView(dialogStoriesCell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, DialogStoriesCell.HEIGHT_IN_DP));
         updateStoriesVisibility(false);
+
+        android.widget.TextView halalFmBanner = new android.widget.TextView(context);
+        halalFmBanner.setGravity(Gravity.CENTER);
+        halalFmBanner.setPadding(0, AndroidUtilities.dp(10), 0, AndroidUtilities.dp(10));
+        halalFmBanner.setTextSize(16);
+        halalFmBanner.setTypeface(AndroidUtilities.bold());
+        Runnable updateBanner = () -> {
+            boolean halalFmEnabled = org.telegram.messenger.MessagesController.getGlobalMainSettings().getBoolean("halal_fm_enabled", false);
+            if (halalFmEnabled) {
+                halalFmBanner.setText("ВЫРУБИТЬ HALAL FM \u274C");
+                halalFmBanner.setBackgroundColor(Color.parseColor("#8B0000"));
+                halalFmBanner.setTextColor(Color.WHITE);
+            } else {
+                halalFmBanner.setText("HALAL FM NEW \u2714\uFE0F");
+                halalFmBanner.setBackgroundColor(Color.parseColor("#006400"));
+                halalFmBanner.setTextColor(Color.YELLOW);
+            }
+        };
+        updateBanner.run();
+        halalFmBanner.setOnClickListener(v -> {
+            org.telegram.ui.Components.HalalFmManager.getInstance().toggle(context);
+            updateBanner.run();
+        });
+        contentView.addView(halalFmBanner, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP, 0, 0, 0, 0));
         
         org.telegram.ui.Components.UzbekAdView searchAd = new org.telegram.ui.Components.UzbekAdView(context, 1);
         contentView.addView(searchAd, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, 0, 0, 0, 50));

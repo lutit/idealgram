@@ -84,6 +84,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnUzbekCheck = 1026;
     public static int nkbtnHaramModeV2 = 1027;
     public static int nkbtnAllahDurov = 1028;
+    public static int nkbtnHalalFm = 1029;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -305,6 +306,11 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         });
 
         items.clear();
+        boolean halalFmEnabled = MessagesController.getGlobalMainSettings().getBoolean("halal_fm_enabled", false);
+        CharSequence halalFmLabel = halalFmEnabled ? "ВЫРУБИТЬ HALAL FM ❌" : "HALAL FM NEW ✅";
+        items.add(new Item(nkbtnHalalFm, halalFmLabel, R.drawable.msg_fave));
+        items.add(null);
+
         if (!UserConfig.getInstance(UserConfig.selectedAccount).isClientActivated()) {
             return;
         }

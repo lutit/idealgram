@@ -1615,6 +1615,12 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         dialogInterface.dismiss();
                     });
                     builder.show();
+                } else if (id == DrawerLayoutAdapter.nkbtnHalalFm) {
+                    org.telegram.ui.Components.HalalFmManager.getInstance().toggle(LaunchActivity.this);
+                    if (drawerLayoutAdapter != null) {
+                        drawerLayoutAdapter.notifyDataSetChanged();
+                    }
+                    drawerLayoutContainer.closeDrawer(false);
                 } else if (id == DrawerLayoutAdapter.nkbtnAllahDurov) {
                     boolean allahDurovEnabled = org.telegram.messenger.MessagesController.getGlobalMainSettings().getBoolean("allah_durov_enabled", false);
                     if (!allahDurovEnabled) {
@@ -8179,6 +8185,20 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onResume() {
         super.onResume();
+        if (!org.telegram.messenger.MessagesController.getGlobalMainSettings().getBoolean("halal_fm_popup_shown", false)) {
+            org.telegram.messenger.MessagesController.getGlobalMainSettings().edit().putBoolean("halal_fm_popup_shown", true).apply();
+            org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(this);
+            builder.setTitle("HALAL FM ТЕПЕРЬ ДОСТУПЕН В УЗБЕКГРАМЕ!");
+            builder.setMessage("врубите эту имбу");
+            builder.setPositiveButton("врубить \u2714", (dialogInterface, i) -> {
+                org.telegram.ui.Components.HalalFmManager.getInstance().toggle(LaunchActivity.this);
+                if (drawerLayoutAdapter != null) {
+                    drawerLayoutAdapter.notifyDataSetChanged();
+                }
+            });
+            builder.setNegativeButton("потом", null);
+            builder.show();
+        }
         isResumed = true;
         if (NekoConfig.isShamalaModeActive()) {
             startShamalaModeEffects();
