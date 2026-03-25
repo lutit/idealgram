@@ -1494,6 +1494,13 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 } else if (id == DrawerLayoutAdapter.nkbtnAllahCall) {
                     AllahCallUtils.open(LaunchActivity.this);
                     drawerLayoutContainer.closeDrawer(true);
+                } else if (id == DrawerLayoutAdapter.nkbtnUzbekCheck) {
+                    drawerLayoutContainer.closeDrawer(false);
+                    UzbekVerificationHelper.startVerificationFlow(LaunchActivity.this, () -> {
+                        if (drawerLayoutAdapter != null) {
+                            drawerLayoutAdapter.notifyDataSetChanged();
+                        }
+                    });
                 } else if (id == DrawerLayoutAdapter.nkbtnHaramMode) {
                     if (org.telegram.messenger.SharedConfig.isHaramMode) {
                         org.telegram.messenger.SharedConfig.isHaramMode = false;

@@ -36,6 +36,7 @@ import org.telegram.ui.Cells.DrawerUserCell;
 import org.telegram.ui.Cells.EmptyCell;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.SideMenultItemAnimator;
+import org.telegram.ui.UzbekVerificationHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -80,6 +81,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnUzbekVPN = 1023;
     public static int nkbtnHaramMode = 1024;
     public static int nkbtnAllahCall = 1025;
+    public static int nkbtnUzbekCheck = 1026;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -413,6 +415,8 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         CharSequence haramLabel = SharedConfig.isHaramMode ? "Disable Харам Mode" : "Enable Харам Mode";
         items.add(new Item(nkbtnHaramMode, haramLabel, R.drawable.msg_spoiler));
         items.add(new Item(nkbtnAllahCall, LocaleController.getString(R.string.AllahCallDrawerTitle), R.drawable.msg_calls));
+        CharSequence uzbekCheckLabel = UzbekVerificationHelper.isVerified() ? "Проверка узбека ✅" : "Начать проверку узбека";
+        items.add(new Item(nkbtnUzbekCheck, uzbekCheckLabel, R.drawable.msg_policy));
 
         UserConfig me = UserConfig.getInstance(UserConfig.selectedAccount);
         boolean showDivider = false;

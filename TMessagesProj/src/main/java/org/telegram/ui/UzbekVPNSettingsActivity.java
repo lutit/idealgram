@@ -30,6 +30,7 @@ import org.telegram.ui.ActionBar.ActionBarMenuItem;
 import org.telegram.ui.ActionBar.BaseFragment;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.ShadowSectionCell;
+import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
@@ -142,6 +143,11 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         listView.setOnItemClickListener((view, position) -> {
             if (position == 1) { // Locations
                 presentFragment(new UzbekProxyListActivity("mtproto"));
+            } else if (position == 2) { // Uzbek check ad toggle
+                UzbekVerificationHelper.setAdsEnabled(!UzbekVerificationHelper.isAdsEnabled());
+                if (listAdapter != null) {
+                    listAdapter.notifyItemChanged(2);
+                }
             }
         });
 
@@ -221,18 +227,20 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
 
         @Override
         public int getItemCount() {
-            return 3; // Header, Locations, Shadow
+            return 4; // Header, Locations, Toggle, Shadow
         }
 
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
-            return holder.getItemViewType() == 1;
+            int viewType = holder.getItemViewType();
+            return viewType == 1 || viewType == 2;
         }
 
         @Override
         public int getItemViewType(int position) {
             if (position == 0) return 0; // Header
-            if (position == 2) return 2; // Shadow
+            if (position == 2) return 2; // Toggle
+            if (position == 3) return 3; // Shadow
             return 1; // Cell
         }
 
@@ -245,6 +253,10 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
                     break;
                 case 1:
                     view = new TextSettingsCell(mContext);
+                    view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
+                    break;
+                case 2:
+                    view = new TextCheckCell(mContext);
                     view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
                     break;
                 default:
@@ -264,6 +276,9 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
                 if (position == 1) {
                     cell.setTextAndValue("Locations", getCurrentCountryName(), false);
                 }
+            } else if (holder.getItemViewType() == 2) {
+                TextCheckCell cell = (TextCheckCell) holder.itemView;
+                cell.setTextAndCheck("Показывать проверку узбека в чатах", UzbekVerificationHelper.isAdsEnabled(), false);
             }
         }
     }

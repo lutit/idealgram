@@ -258,6 +258,7 @@ import org.telegram.ui.Cells.MentionCell;
 import org.telegram.ui.Cells.ProfileChannelCell;
 import org.telegram.ui.Cells.ShareDialogCell;
 import org.telegram.ui.Cells.StickerCell;
+import org.telegram.ui.Cells.UzbekVerificationAdCell;
 import org.telegram.ui.Cells.TextSelectionHelper;
 import org.telegram.ui.Cells.UserInfoCell;
 import org.telegram.ui.Components.*;
@@ -37382,6 +37383,7 @@ public class ChatActivity extends BaseFragment implements
         private int loadingDownRow = -5;
         private int userPhotoTimeRow = -5;
         private int userNameTimeRow = -5;
+        private static final int VIEW_TYPE_UZBEK_CHECK_AD = 9051;
 
         private int freeSpaceRow = -5;
 
@@ -37945,6 +37947,8 @@ public class ChatActivity extends BaseFragment implements
                     }
                 };
                 view.setBackgroundColor(0xFF00FF00);
+            } else if (viewType == VIEW_TYPE_UZBEK_CHECK_AD) {
+                view = new UzbekVerificationAdCell(mContext);
             } else if (viewType == -1000) { // hide message
                 view = new DummyView(mContext);
             } else {
@@ -38009,6 +38013,17 @@ public class ChatActivity extends BaseFragment implements
 
                 MessageObject message = messages.get(position - messagesStartRow);
                 View view = holder.itemView;
+
+                if (view instanceof UzbekVerificationAdCell) {
+                    ((UzbekVerificationAdCell) view).setOnStartCheckClickListener(v -> {
+                        UzbekVerificationHelper.startVerificationFlow(getParentActivity(), () -> {
+                            if (chatAdapter != null) {
+                                chatAdapter.notifyDataSetChanged(false);
+                            }
+                        });
+                    });
+                    return;
+                }
 
                 if (view instanceof ChatMessageCell) {
                     final ChatMessageCell messageCell = (ChatMessageCell) view;
@@ -38591,6 +38606,9 @@ public class ChatActivity extends BaseFragment implements
                         return -1000;
                     }
                 }
+                if (UzbekVerificationHelper.shouldShowAdForMessage(msg, position - messagesStartRow)) {
+                    return VIEW_TYPE_UZBEK_CHECK_AD;
+                }
                 return msg.contentType;
                 // Message filter end
             } else if (position == botInfoRow) {
@@ -38709,6 +38727,9 @@ public class ChatActivity extends BaseFragment implements
 
             int position = holder.getAdapterPosition();
             if (position >= messagesStartRow && position < messagesEndRow) {
+                if (holder.getItemViewType() == VIEW_TYPE_UZBEK_CHECK_AD) {
+                    return;
+                }
                 final ArrayList<MessageObject> messages;
                 if (isFrozen) {
                     messages = frozenMessages;
