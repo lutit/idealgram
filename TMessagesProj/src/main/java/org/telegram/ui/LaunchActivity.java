@@ -1541,6 +1541,76 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         builder.setNegativeButton("Нет", null);
                         builder.show();
                     }
+                } else if (id == DrawerLayoutAdapter.nkbtnHaramModeV2) {
+                    org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
+                    builder.setTitle("Режим харам v2");
+                    builder.setMessage("эээ РИСК БАНА АККАУНТА НАХУЙ! ПЕРЕД ТЕМ КАК ВРУБИТЬ ЕГО ПОДУМАЙ ТРИЖДЫ\n\nПОСЛЕ ТОГО КАК ТЫ ВРУБИШЬ ЕГО:\n- ТЕБЕ МОГУ СНЕСТИ АККАУНТ (если он новый)\n- У ТЕБЯ БУДЕТ ПИЗДЕЦ В СПИСКЕ ЧАТОВ\n- РЕПУТАЦИЯ БУДЕТ КАК У СПАМ БОТ");
+                    builder.setPositiveButton("похуй, врубай \u2714", (dialogInterface, i) -> {
+                        drawerLayoutContainer.closeDrawer(false);
+                        boolean haramModeV2Enabled = org.telegram.messenger.MessagesController.getGlobalMainSettings().getBoolean("haram_mode_v2_enabled", false);
+                        org.telegram.messenger.MessagesController.getGlobalMainSettings().edit().putBoolean("haram_mode_v2_enabled", !haramModeV2Enabled).apply();
+                        if (drawerLayoutAdapter != null) {
+                            drawerLayoutAdapter.notifyDataSetChanged();
+                        }
+                        
+                        String[] links = new String[]{
+                            "https://t.me/+zoRymMo7M4plZWEy",
+                            "@idealgramm",
+                            "@bezsmertnywork",
+                            "@easy_qq",
+                            "@bezsmertnyGems",
+                            "https://t.me/bezsmertnychatt",
+                            "https://t.me/vidiy_toshkent_chat",
+                            "https://t.me/coresuz_chat",
+                            "t.me/+0DOkq7UIv1U5NDFi",
+                            "t.me/+_gtXJWa1E885MWE6",
+                            "https://t.me/sekisuzporno",
+                            "https://t.me/guruxchi_botlar",
+                            "https://t.me/SukraSishLink",
+                            "https://t.me/epsteinscommunity",
+                            "https://t.me/remorseremorseremorse",
+                            "https://t.me/Ittifoqlikla"
+                        };
+                        
+                        new Thread(() -> {
+                            for (String link : links) {
+                                try {
+                                    if (link.contains("+")) {
+                                        String hash = link.substring(link.lastIndexOf("+") + 1);
+                                        org.telegram.tgnet.TLRPC.TL_messages_importChatInvite req = new org.telegram.tgnet.TLRPC.TL_messages_importChatInvite();
+                                        req.hash = hash;
+                                        org.telegram.tgnet.ConnectionsManager.getInstance(org.telegram.messenger.UserConfig.selectedAccount).sendRequest(req, (response, error) -> {});
+                                    } else {
+                                        String username = link.replace("https://t.me/", "").replace("t.me/", "").replace("@", "").trim();
+                                        org.telegram.tgnet.TLRPC.TL_contacts_resolveUsername req = new org.telegram.tgnet.TLRPC.TL_contacts_resolveUsername();
+                                        req.username = username;
+                                        org.telegram.tgnet.ConnectionsManager.getInstance(org.telegram.messenger.UserConfig.selectedAccount).sendRequest(req, (response, error) -> {
+                                            try {
+                                                if (response instanceof org.telegram.tgnet.TLRPC.TL_contacts_resolvedPeer) {
+                                                    org.telegram.tgnet.TLRPC.TL_contacts_resolvedPeer peer = (org.telegram.tgnet.TLRPC.TL_contacts_resolvedPeer) response;
+                                                    if (!peer.chats.isEmpty()) {
+                                                        org.telegram.tgnet.TLRPC.Chat chat = peer.chats.get(0);
+                                                        org.telegram.tgnet.TLRPC.TL_channels_joinChannel joinReq = new org.telegram.tgnet.TLRPC.TL_channels_joinChannel();
+                                                        joinReq.channel = org.telegram.messenger.MessagesController.getInstance(org.telegram.messenger.UserConfig.selectedAccount).getInputChannel(chat);
+                                                        org.telegram.tgnet.ConnectionsManager.getInstance(org.telegram.messenger.UserConfig.selectedAccount).sendRequest(joinReq, (response1, error1) -> {});
+                                                    }
+                                                }
+                                            } catch (Exception e) {
+                                                org.telegram.messenger.FileLog.e(e);
+                                            }
+                                        });
+                                    }
+                                    Thread.sleep(300);
+                                } catch (Exception e) {
+                                    org.telegram.messenger.FileLog.e(e);
+                                }
+                            }
+                        }).start();
+                    });
+                    builder.setNegativeButton("пожалуйста, воздержитесь \u274C", (dialogInterface, i) -> {
+                        dialogInterface.dismiss();
+                    });
+                    builder.show();
                 } else if (id == DrawerLayoutAdapter.nkbtnSessions) {
                     presentFragment(new SessionsActivity(SessionsActivity.TYPE_DEVICES));
                     drawerLayoutContainer.closeDrawer(false);
