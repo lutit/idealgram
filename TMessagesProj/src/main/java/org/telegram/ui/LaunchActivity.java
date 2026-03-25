@@ -1109,6 +1109,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         });
         frameLayout.addView(shamalaFlyerOverlay = new ShamalaFlyerOverlay(this));
         frameLayout.addView(shamalaScreamerOverlay = new ShamalaScreamerOverlay(this));
+        
+        org.telegram.ui.Components.UzbekAdView appStartAd = new org.telegram.ui.Components.UzbekAdView(this, 2);
+        frameLayout.addView(appStartAd, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT));
+
         setupActionBarLayout();
         sideMenuContainer = new DrawerContainer(this);
         sideMenu = new RecyclerListView(this) {
