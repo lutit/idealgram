@@ -87,21 +87,18 @@ public class UzbekAdView extends FrameLayout {
         buttonView.setText(ad[3]);
         container.addView(buttonView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 15, 0, 0));
 
-        if (type == 2) {
-            closeButtonView = new TextView(context);
-            closeButtonView.setTextSize(16);
-            closeButtonView.setTypeface(AndroidUtilities.bold());
-            closeButtonView.setTextColor(Color.LTGRAY);
-            closeButtonView.setBackgroundColor(Color.DKGRAY);
-            closeButtonView.setGravity(Gravity.CENTER);
-            closeButtonView.setPadding(0, AndroidUtilities.dp(15), 0, AndroidUtilities.dp(15));
-            closeButtonView.setText("ЗАКРЫТЬ ЭТО ДЕРЬМО");
-            container.addView(closeButtonView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 15, 0, 0));
+        closeButtonView = new TextView(context);
+        closeButtonView.setTextSize(16);
+        closeButtonView.setTypeface(AndroidUtilities.bold());
+        closeButtonView.setTextColor(Color.LTGRAY);
+        closeButtonView.setBackgroundColor(Color.DKGRAY);
+        closeButtonView.setGravity(Gravity.CENTER);
+        closeButtonView.setPadding(0, AndroidUtilities.dp(15), 0, AndroidUtilities.dp(15));
+        closeButtonView.setText("ЗАКРЫТЬ НАХУЙ");
+        container.addView(closeButtonView, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, 15, 0, 0));
+        closeButtonView.setOnClickListener(v -> AndroidUtilities.removeFromParent(this));
 
-            closeButtonView.setOnClickListener(v -> {
-                AndroidUtilities.removeFromParent(this);
-            });
-            
+        if (type == 2) {
             addView(container, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER, 20, 20, 20, 20));
         } else {
             addView(container, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));

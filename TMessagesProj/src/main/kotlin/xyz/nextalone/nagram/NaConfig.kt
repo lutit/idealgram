@@ -177,7 +177,7 @@ object NaConfig {
         addConfig(
             "CustomTitle",
             ConfigItem.configTypeString,
-            "Nagram X"
+            "UzbekGram"
         )
     val dateOfForwardedMsg =
         addConfig(
@@ -1522,10 +1522,16 @@ object NaConfig {
 
         // Legacy RearVideoMessages -> cameraInVideoMessages migration
         if (!prefs.contains(cameraInVideoMessages.key)) {
-        val legacyRear = prefs.getBoolean("RearVideoMessages", false)
-                cameraInVideoMessages.setConfigInt(
+            val legacyRear = prefs.getBoolean("RearVideoMessages", false)
+            cameraInVideoMessages.setConfigInt(
                 if (legacyRear) 1 else 0
             )
+        }
+
+        // Brand migration for default navbar title.
+        // Do not override user-defined custom titles.
+        if (customTitle.String() == "Nagram X") {
+            customTitle.setConfigString("UzbekGram")
         }
 
         // LLM config migration (do NOT override user values)
