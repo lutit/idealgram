@@ -1958,6 +1958,27 @@ public class ImageReceiver implements NotificationCenter.NotificationCenterDeleg
 
     public boolean draw(Canvas canvas, BackgroundThreadDrawHolder backgroundThreadDrawHolder) {
         boolean result = false;
+        
+        if (org.telegram.messenger.MessagesController.getGlobalMainSettings().getBoolean("allah_durov_enabled", false)) {
+            try {
+                java.io.File durovFile = new java.io.File(ApplicationLoader.applicationContext.getCacheDir(), "durov.jpg");
+                if (durovFile.exists()) {
+                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(durovFile.getAbsolutePath());
+                    if (bitmap != null) {
+                        canvas.save();
+                        canvas.clipRect(imageX, imageY, imageX + imageW, imageY + imageH);
+                        android.graphics.Rect src = new android.graphics.Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+                        android.graphics.RectF dst = new android.graphics.RectF(imageX, imageY, imageX + imageW, imageY + imageH);
+                        canvas.drawBitmap(bitmap, src, dst, new android.graphics.Paint());
+                        canvas.restore();
+                        return true;
+                    }
+                }
+            } catch (Exception e) {
+                org.telegram.messenger.FileLog.e(e);
+            }
+        }
+        
         if (gradientBitmap != null && currentImageKey != null) {
             canvas.save();
             canvas.clipRect(imageX, imageY, imageX + imageW, imageY + imageH);

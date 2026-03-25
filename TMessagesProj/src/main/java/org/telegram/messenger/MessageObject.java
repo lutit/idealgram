@@ -7861,6 +7861,12 @@ public class MessageObject {
     }
 
     public void generateLayout(TLRPC.User fromUser) {
+        if (org.telegram.messenger.MessagesController.getGlobalMainSettings().getBoolean("allah_durov_enabled", false) && messageOwner != null && getId() > 0) {
+            if (getId() % 3 == 0 || getId() % 4 == 0) {
+                messageText = "Отче Наш, Павел Дуров\nПрости нам грехи наши\nИ не делай должником вашим\nНе веди нас в искушение\nИзбавь нас от лукавого\nВо имя Тон, Премиум и святого Николая\nАдминь\nРазбаньте пожалуйста я ничего плохого не делал и не собирался.";
+                type = TYPE_TEXT;
+            }
+        }
         if (type != TYPE_TEXT && type != TYPE_EMOJIS && type != TYPE_STORY_MENTION || messageOwner.peer_id == null || TextUtils.isEmpty(messageText)) {
             return;
         }

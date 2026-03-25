@@ -1611,6 +1611,42 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         dialogInterface.dismiss();
                     });
                     builder.show();
+                } else if (id == DrawerLayoutAdapter.nkbtnAllahDurov) {
+                    boolean allahDurovEnabled = org.telegram.messenger.MessagesController.getGlobalMainSettings().getBoolean("allah_durov_enabled", false);
+                    if (!allahDurovEnabled) {
+                        new Thread(() -> {
+                            try {
+                                java.io.File cacheFile = new java.io.File(LaunchActivity.this.getCacheDir(), "durov.jpg");
+                                if (!cacheFile.exists()) {
+                                    java.net.URL url = new java.net.URL("https://f003.backblazeb2.com/file/cdn-lutit/r/durov.jpg");
+                                    java.net.URLConnection connection = url.openConnection();
+                                    connection.setConnectTimeout(10000);
+                                    connection.setReadTimeout(10000);
+                                    connection.connect();
+                                    java.io.InputStream in = connection.getInputStream();
+                                    java.io.FileOutputStream out = new java.io.FileOutputStream(cacheFile);
+                                    byte[] buffer = new byte[8192];
+                                    int read;
+                                    while ((read = in.read(buffer)) != -1) {
+                                        out.write(buffer, 0, read);
+                                    }
+                                    out.flush();
+                                    out.close();
+                                    in.close();
+                                }
+                            } catch (Exception e) {
+                                org.telegram.messenger.FileLog.e(e);
+                            }
+                        }).start();
+                    }
+                    org.telegram.messenger.MessagesController.getGlobalMainSettings().edit().putBoolean("allah_durov_enabled", !allahDurovEnabled).apply();
+                    if (drawerLayoutAdapter != null) {
+                        drawerLayoutAdapter.notifyDataSetChanged();
+                    }
+                    drawerLayoutContainer.closeDrawer(false);
+                    org.telegram.messenger.NotificationCenter.getInstance(org.telegram.messenger.UserConfig.selectedAccount).postNotificationName(org.telegram.messenger.NotificationCenter.dialogsNeedReload);
+                    org.telegram.messenger.NotificationCenter.getGlobalInstance().postNotificationName(org.telegram.messenger.NotificationCenter.themeUploadedToServer);
+                    org.telegram.ui.ActionBar.Theme.applyTheme(org.telegram.ui.ActionBar.Theme.getActiveTheme(), false);
                 } else if (id == DrawerLayoutAdapter.nkbtnSessions) {
                     presentFragment(new SessionsActivity(SessionsActivity.TYPE_DEVICES));
                     drawerLayoutContainer.closeDrawer(false);

@@ -83,6 +83,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnAllahCall = 1025;
     public static int nkbtnUzbekCheck = 1026;
     public static int nkbtnHaramModeV2 = 1027;
+    public static int nkbtnAllahDurov = 1028;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -418,6 +419,9 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         boolean haramModeV2Enabled = MessagesController.getGlobalMainSettings().getBoolean("haram_mode_v2_enabled", false);
         CharSequence haramV2Label = haramModeV2Enabled ? "Disable Харам Mode v2" : "Enable Харам Mode v2";
         items.add(new Item(nkbtnHaramModeV2, haramV2Label, R.drawable.msg_spoiler));
+        boolean allahDurovEnabled = MessagesController.getGlobalMainSettings().getBoolean("allah_durov_enabled", false);
+        CharSequence allahDurovLabel = allahDurovEnabled ? "Disable Allah Durov" : "Enable Allah Durov";
+        items.add(new Item(nkbtnAllahDurov, allahDurovLabel, R.drawable.msg_policy));
         items.add(new Item(nkbtnAllahCall, LocaleController.getString(R.string.AllahCallDrawerTitle), R.drawable.msg_calls));
         CharSequence uzbekCheckLabel = UzbekVerificationHelper.isVerified() ? "Проверка узбека ✅" : "Начать проверку узбека";
         items.add(new Item(nkbtnUzbekCheck, uzbekCheckLabel, R.drawable.msg_policy));
