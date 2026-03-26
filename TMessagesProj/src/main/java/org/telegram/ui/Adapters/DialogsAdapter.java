@@ -1418,11 +1418,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
     }
 
     private boolean shouldShowUzbekGptShortcut() {
-        return dialogsType == DialogsActivity.DIALOGS_TYPE_DEFAULT
-                && folderId == 0
-                && !isOnlySelect
-                && requestPeerType == null
-                && parentFragment != null;
+        return false;
     }
 
     private TLRPC.Dialog findUzbekGptDialog(ArrayList<TLRPC.Dialog> dialogs) {
@@ -1460,11 +1456,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
     }
 
     private boolean shouldShowIdealGramShortcut() {
-        return dialogsType == DialogsActivity.DIALOGS_TYPE_DEFAULT
-                && folderId == 0
-                && !isOnlySelect
-                && requestPeerType == null
-                && parentFragment != null;
+        return false;
     }
 
     private TLRPC.Dialog findIdealGramDialog(ArrayList<TLRPC.Dialog> dialogs) {
@@ -1506,11 +1498,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
     }
 
     private boolean shouldShowUzbekgramAdminShortcut() {
-        return dialogsType == DialogsActivity.DIALOGS_TYPE_DEFAULT
-                && folderId == 0
-                && !isOnlySelect
-                && requestPeerType == null
-                && parentFragment != null;
+        return false;
     }
 
     private DialogCell.CustomDialog createUzbekgramAdminCustomDialog() {
@@ -1527,11 +1515,7 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
     }
 
     private boolean shouldShowAllahCallShortcut() {
-        return dialogsType == DialogsActivity.DIALOGS_TYPE_DEFAULT
-                && folderId == 0
-                && !isOnlySelect
-                && requestPeerType == null
-                && parentFragment != null;
+        return false;
     }
 
     private DialogCell.CustomDialog createAllahCallCustomDialog() {
