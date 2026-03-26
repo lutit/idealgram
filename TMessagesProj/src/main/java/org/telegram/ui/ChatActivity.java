@@ -47082,8 +47082,8 @@ public class ChatActivity extends BaseFragment implements
                             }
                         }
                     }
-                    boolean showTranslate = NekoConfig.showTranslate.Bool() || (NaConfig.INSTANCE.getShowTranslateMessageLLM().Bool() && NaConfig.INSTANCE.llmIsDefaultProvider());
-                    boolean showTranslateLLM = NaConfig.INSTANCE.getShowTranslateMessageLLM().Bool() && NaConfig.INSTANCE.isLLMTranslatorAvailable() && !NaConfig.INSTANCE.llmIsDefaultProvider();
+                    boolean showTranslate = false; // NekoConfig.showTranslate.Bool() || (NaConfig.INSTANCE.getShowTranslateMessageLLM().Bool() && NaConfig.INSTANCE.llmIsDefaultProvider());
+                    boolean showTranslateLLM = false; // NaConfig.INSTANCE.getShowTranslateMessageLLM().Bool() && NaConfig.INSTANCE.isLLMTranslatorAvailable() && !NaConfig.INSTANCE.llmIsDefaultProvider();
                     boolean isTranslatableMessage = !selectedObject.isAnimatedEmoji() && !selectedObject.isDice() && (messageObject != null || docsWithMessages);
                     if ((showTranslate || showTranslateLLM) && isTranslatableMessage) {
                         String fromLang = null;
@@ -47325,8 +47325,8 @@ public class ChatActivity extends BaseFragment implements
                         }
                     }
                 }
-                boolean showTranslate = NekoConfig.showTranslate.Bool();
-                boolean showTranslateLLM = NaConfig.INSTANCE.getShowTranslateMessageLLM().Bool() && NaConfig.INSTANCE.isLLMTranslatorAvailable() && !NaConfig.INSTANCE.llmIsDefaultProvider();
+                boolean showTranslate = false; // NekoConfig.showTranslate.Bool();
+                boolean showTranslateLLM = false; // NaConfig.INSTANCE.getShowTranslateMessageLLM().Bool() && NaConfig.INSTANCE.isLLMTranslatorAvailable() && !NaConfig.INSTANCE.llmIsDefaultProvider();
                 boolean isTranslatingDialog = isTranslatingDialog(selectedObject);
                 if ((showTranslate || showTranslateLLM) && (selectedObject.isOutOwner() || !isTranslatingDialog)) {
                     if (messageObject != null || docsWithMessages) {

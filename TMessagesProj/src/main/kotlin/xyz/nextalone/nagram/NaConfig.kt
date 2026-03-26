@@ -1476,16 +1476,7 @@ object NaConfig {
     }
 
     fun isLLMTranslatorAvailable(): Boolean {
-        val llmProvider = llmProviderPreset.Int()
-        val keyConfig = when (llmProvider) {
-            1 -> llmProviderOpenAIKey
-            2 -> llmProviderGeminiKey
-            3 -> llmProviderGroqKey
-            4 -> llmProviderDeepSeekKey
-            5 -> llmProviderXAIKey
-            else -> llmApiKey
-        }
-        return keyConfig.String().isNotEmpty()
+        return false
     }
 
     fun llmIsDefaultProvider(): Boolean {

@@ -318,7 +318,7 @@ public class AyuMessageHistory extends AyuMessageDelegateFragment {
         }
 
         String textToTranslate = msg.messageOwner != null ? msg.messageOwner.message : null;
-        if (!TextUtils.isEmpty(textToTranslate) || msg.isPoll()) {
+        if (false && (!TextUtils.isEmpty(textToTranslate) || msg.isPoll())) {
             boolean translated = msg.messageOwner != null && (msg.messageOwner.translated || msg.messageOwner.translatedPoll != null);
             items.add(getString(translated ? R.string.HideTranslation : R.string.Translate));
             icons.add(NaConfig.INSTANCE.llmIsDefaultProvider() ? R.drawable.magic_stick_solar : R.drawable.ic_translate);
