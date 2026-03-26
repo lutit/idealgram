@@ -15,13 +15,13 @@ public class LauncherIconController {
             }
         }
 
-        setIcon(LauncherIcon.BLUE);
+        setIcon(LauncherIcon.UZBEKGRAM_LEGACY);
     }
 
     public static boolean isEnabled(LauncherIcon icon) {
         Context ctx = ApplicationLoader.applicationContext;
         int i = ctx.getPackageManager().getComponentEnabledSetting(icon.getComponentName(ctx));
-        return i == PackageManager.COMPONENT_ENABLED_STATE_ENABLED || i == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && icon == LauncherIcon.BLUE;
+        return i == PackageManager.COMPONENT_ENABLED_STATE_ENABLED || i == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && icon == LauncherIcon.UZBEKGRAM_LEGACY;
     }
 
     public static void setIcon(LauncherIcon icon) {
@@ -35,13 +35,13 @@ public class LauncherIconController {
 
     public enum LauncherIcon {
         DEFAULT("DefaultIcon", R.mipmap.ic_launcher_nagram, R.mipmap.icon_background_nagram, R.string.AppIconDefault),
-        IDEALGRAM("IdealgramIcon", R.mipmap.ic_launcher_uzbekgram_legacy, R.mipmap.ic_launcher_uzbekgram_legacy_foreground, R.string.AppIconIdealgram),
-        IDEALGRAM_BLUE("IdealgramIconBlue", R.mipmap.ic_launcher_uzbekgram_legacy, R.mipmap.ic_launcher_uzbekgram_legacy_foreground, R.string.AppIconIdealgramBlue),
-        IDEALGRAM_RED("IdealgramIconRed", R.mipmap.ic_launcher_uzbekgram_legacy, R.mipmap.ic_launcher_uzbekgram_legacy_foreground, R.string.AppIconIdealgramRed),
-        IDEALGRAM_FILLED_BLACK("IdealgramIconFilledBlack", R.mipmap.ic_launcher_uzbekgram_legacy, R.mipmap.ic_launcher_uzbekgram_legacy_foreground, R.string.AppIconIdealgramFilledBlack),
-        IDEALGRAM_FILLED_WHITE("IdealgramIconFilledWhite", R.mipmap.ic_launcher_uzbekgram_legacy, R.mipmap.ic_launcher_uzbekgram_legacy_foreground, R.string.AppIconIdealgramFilledWhite),
-        IDEALGRAM_UZBEK("IdealgramIconUzbek", R.mipmap.ic_launcher_uzbekgram_legacy, R.mipmap.ic_launcher_uzbekgram_legacy_foreground, R.string.AppIconIdealgramUzbek),
-        UZBEKGRAM("UzbekgramIcon", R.mipmap.ic_launcher_uzbekgram_legacy, R.mipmap.ic_launcher_uzbekgram_legacy_foreground, R.string.AppIconUzbekgram),
+        IDEALGRAM("IdealgramIcon", R.mipmap.ic_launcher_idealgram, R.mipmap.ic_launcher_idealgram_foreground, R.string.AppIconIdealgram),
+        IDEALGRAM_BLUE("IdealgramIconBlue", R.mipmap.ic_launcher_idealgram_blue, R.mipmap.ic_launcher_idealgram_blue_foreground, R.string.AppIconIdealgramBlue),
+        IDEALGRAM_RED("IdealgramIconRed", R.mipmap.ic_launcher_idealgram_red, R.mipmap.ic_launcher_idealgram_red_foreground, R.string.AppIconIdealgramRed),
+        IDEALGRAM_FILLED_BLACK("IdealgramIconFilledBlack", R.mipmap.ic_launcher_idealgram_filled_black, R.mipmap.ic_launcher_idealgram_filled_black_foreground, R.string.AppIconIdealgramFilledBlack),
+        IDEALGRAM_FILLED_WHITE("IdealgramIconFilledWhite", R.mipmap.ic_launcher_idealgram_filled_white, R.mipmap.ic_launcher_idealgram_filled_white_foreground, R.string.AppIconIdealgramFilledWhite),
+        IDEALGRAM_UZBEK("IdealgramIconUzbek", R.mipmap.ic_launcher_idealgram_uzbek, R.mipmap.ic_launcher_idealgram_uzbek_foreground, R.string.AppIconIdealgramUzbek),
+        UZBEKGRAM("UzbekgramIcon", R.mipmap.ic_launcher_uzbekgram, R.mipmap.ic_launcher_uzbekgram_foreground, R.string.AppIconUzbekgram),
         UZBEKGRAM_LEGACY("UzbekgramLegacyIcon", R.mipmap.ic_launcher_uzbekgram_legacy, R.mipmap.ic_launcher_uzbekgram_legacy_foreground, R.string.AppIconUzbekgramLegacy),
         GOOGLE("GoogleIcon", R.mipmap.icon_background_google, R.mipmap.icon_foreground_google, R.string.AppIconGoogle),
         COLORFUL("ColorfulIcon", R.mipmap.icon_background_colorful, R.mipmap.icon_foreground_colorful, R.string.AppIconColorful),
