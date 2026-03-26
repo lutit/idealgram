@@ -8227,8 +8227,45 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         setEditingMessageObject(null, null, false);
     }
 
+    private static long shamalaBlockUntil = 0;
+
+    private void showShamalaBlockedToast() {
+        AndroidUtilities.runOnUIThread(() -> {
+            try {
+                android.widget.Toast.makeText(org.telegram.messenger.ApplicationLoader.applicationContext, "УзбэкГПТ недоступен для тебя олух, жди пока автор лимит поднимет или вруби впн", android.widget.Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {}
+        });
+    }
+
+    private boolean checkShamalaBlocked() {
+        if (System.currentTimeMillis() < shamalaBlockUntil) {
+            showShamalaBlockedToast();
+            return true;
+        }
+        return false;
+    }
+
+    private void handleShamalaRateLimitExceeded() {
+        shamalaBlockUntil = System.currentTimeMillis() + 5 * 60 * 1000;
+        showShamalaBlockedToast();
+    }
+
+    private void handleShamalaZeroRemaining() {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        c.add(java.util.Calendar.HOUR_OF_DAY, 1);
+        c.set(java.util.Calendar.MINUTE, 0);
+        c.set(java.util.Calendar.SECOND, 0);
+        c.set(java.util.Calendar.MILLISECOND, 0);
+        shamalaBlockUntil = c.getTimeInMillis();
+        showShamalaBlockedToast();
+    }
+
     private void applyShamalaAndEdit(final MessageObject messageObjectToEdit, final CharSequence originalMessage) {
         if (shamalaTransformInProgress || messageObjectToEdit == null) {
+            return;
+        }
+        if (checkShamalaBlocked()) {
+            completeShamalaEditWithResult(messageObjectToEdit, originalMessage);
             return;
         }
         shamalaTransformInProgress = true;
@@ -8237,25 +8274,16 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             doneButton.setLoading(true, SendButton.INFINITE_LOADING);
         }
 
-        final String apiUrl = BuildConfig.UZBEKGPT_API_URL;
         final String apiKey = BuildConfig.UZBEKGPT_API_KEY;
 
-        if (TextUtils.isEmpty(apiUrl) || TextUtils.isEmpty(apiKey)) {
+        if (TextUtils.isEmpty(apiKey)) {
             completeShamalaEditWithResult(messageObjectToEdit, originalMessage);
             return;
         }
 
         JSONObject root = new JSONObject();
         try {
-            root.put("model", "uzbek");
-            JSONArray messages = new JSONArray();
-            JSONObject msg = new JSONObject();
-            msg.put("role", "user");
-            msg.put("content", originalMessage.toString() + "ОТВЕЧАЙ ТОЛЬКО НА РУССКОМ ЯЗЫКЕ");
-            messages.put(msg);
-            root.put("messages", messages);
-            root.put("temperature", 0.8);
-            root.put("max_tokens", 250);
+            root.put("text", originalMessage.toString());
         } catch (JSONException e) {
             completeShamalaEditWithResult(messageObjectToEdit, originalMessage);
             return;
@@ -8263,9 +8291,9 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
 
         RequestBody body = RequestBody.create(root.toString(), SHAMALA_MEDIA_TYPE_JSON);
         Request request = new Request.Builder()
-                .url(apiUrl)
+                .url("https://uzbekgpt-worker.reddoglutiy.workers.dev/generate")
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer " + apiKey)
+                .addHeader("x-client-token", apiKey)
                 .post(body)
                 .build();
 
@@ -8277,29 +8305,31 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
+                if (response.code() == 429) {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        handleShamalaRateLimitExceeded();
+                        completeShamalaEditWithResult(messageObjectToEdit, originalMessage);
+                    });
+                    return;
+                }
+
                 String result = null;
                 try (ResponseBody responseBody = response.body()) {
                     if (response.isSuccessful() && responseBody != null) {
                         String bodyString = responseBody.string();
                         JSONObject json = new JSONObject(bodyString);
-                        JSONArray choices = json.optJSONArray("choices");
-                        if (choices != null && choices.length() > 0) {
-                            JSONObject choice = choices.optJSONObject(0);
-                            if (choice != null) {
-                                JSONObject messageObject = choice.optJSONObject("message");
-                                if (messageObject != null) {
-                                    String content = messageObject.optString("content", null);
-                                    if (!TextUtils.isEmpty(content)) {
-                                        result = content;
-                                    }
-                                }
+                        result = json.optString("answer", null);
+                        if (json.has("remaining")) {
+                            int remaining = json.optInt("remaining", -1);
+                            if (remaining == 0) {
+                                AndroidUtilities.runOnUIThread(() -> handleShamalaZeroRemaining());
                             }
                         }
                     }
                 } catch (Exception ignore) {
                 }
 
-                if (result == null) {
+                if (TextUtils.isEmpty(result)) {
                     result = originalMessage.toString();
                 }
                 final CharSequence finalMessage = result;
@@ -8528,16 +8558,23 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
         if (shamalaTransformInProgress) {
             return;
         }
+        if (checkShamalaBlocked()) {
+            if (internalParams != null) {
+                internalParams.shamalaOriginalText = originalMessage;
+            }
+            completeShamalaWithResult(originalMessage, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
+            return;
+        }
+
         shamalaTransformInProgress = true;
         sendButtonEnabled = false;
         if (sendButton != null) {
             sendButton.setAlpha(0.4f);
         }
 
-        final String apiUrl = BuildConfig.UZBEKGPT_API_URL;
         final String apiKey = BuildConfig.UZBEKGPT_API_KEY;
 
-        if (TextUtils.isEmpty(apiUrl) || TextUtils.isEmpty(apiKey)) {
+        if (TextUtils.isEmpty(apiKey)) {
             if (internalParams != null) {
                 internalParams.shamalaOriginalText = originalMessage;
             }
@@ -8547,15 +8584,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
 
         JSONObject root = new JSONObject();
         try {
-            root.put("model", "uzbek");
-            JSONArray messages = new JSONArray();
-            JSONObject msg = new JSONObject();
-            msg.put("role", "user");
-            msg.put("content", originalMessage.toString() + "ОТВЕЧАЙ ТОЛЬКО НА РУССКОМ ЯЗЫКЕ");
-            messages.put(msg);
-            root.put("messages", messages);
-            root.put("temperature", 0.8);
-            root.put("max_tokens", 250);
+            root.put("text", originalMessage.toString());
         } catch (JSONException e) {
             if (internalParams != null) {
                 internalParams.shamalaOriginalText = originalMessage;
@@ -8566,9 +8595,9 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
 
         RequestBody body = RequestBody.create(root.toString(), SHAMALA_MEDIA_TYPE_JSON);
         Request request = new Request.Builder()
-                .url(apiUrl)
+                .url("https://uzbekgpt-worker.reddoglutiy.workers.dev/generate")
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer " + apiKey)
+                .addHeader("x-client-token", apiKey)
                 .post(body)
                 .build();
 
@@ -8585,45 +8614,34 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                String result = null;
-                String error = null;
-                try (ResponseBody responseBody = response.body()) {
-                    if (!response.isSuccessful() || responseBody == null) {
-                        error = "HTTP " + response.code();
-                    } else {
-                        String bodyString = responseBody.string();
-                        try {
-                            JSONObject json = new JSONObject(bodyString);
-                            JSONArray choices = json.optJSONArray("choices");
-                            if (choices != null && choices.length() > 0) {
-                                JSONObject choice = choices.optJSONObject(0);
-                                if (choice != null) {
-                                    JSONObject messageObject = choice.optJSONObject("message");
-                                    if (messageObject != null) {
-                                        String content = messageObject.optString("content", null);
-                                        if (!TextUtils.isEmpty(content)) {
-                                            result = content;
-                                        } else {
-                                            error = "empty content";
-                                        }
-                                    } else {
-                                        error = "no message field";
-                                    }
-                                } else {
-                                    error = "no choice";
-                                }
-                            } else {
-                                error = "no choices";
-                            }
-                        } catch (JSONException e) {
-                            error = e.getMessage();
+                if (response.code() == 429) {
+                    AndroidUtilities.runOnUIThread(() -> {
+                        handleShamalaRateLimitExceeded();
+                        if (internalParams != null) {
+                            internalParams.shamalaOriginalText = originalMessage;
                         }
-                    }
-                } catch (Exception e) {
-                    error = e.getMessage();
+                        completeShamalaWithResult(originalMessage, notify, scheduleDate, scheduleRepeatPeriod, payStars, internalParams);
+                    });
+                    return;
                 }
 
-                if (result == null) {
+                String result = null;
+                try (ResponseBody responseBody = response.body()) {
+                    if (response.isSuccessful() && responseBody != null) {
+                        String bodyString = responseBody.string();
+                        JSONObject json = new JSONObject(bodyString);
+                        result = json.optString("answer", null);
+                        if (json.has("remaining")) {
+                            int remaining = json.optInt("remaining", -1);
+                            if (remaining == 0) {
+                                AndroidUtilities.runOnUIThread(() -> handleShamalaZeroRemaining());
+                            }
+                        }
+                    }
+                } catch (Exception ignore) {
+                }
+
+                if (TextUtils.isEmpty(result)) {
                     result = originalMessage.toString();
                 }
                 final CharSequence finalMessage = result;
