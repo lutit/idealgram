@@ -27,6 +27,21 @@ public class HalalFmOverlay extends FrameLayout {
         textView.setGravity(Gravity.CENTER);
         
         addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP));
+
+        TextView closeButton = new TextView(context);
+        closeButton.setText("ЗАКРЫТЬ");
+        closeButton.setTextSize(16);
+        closeButton.setTypeface(AndroidUtilities.bold());
+        closeButton.setTextColor(Color.WHITE);
+        closeButton.setBackgroundColor(Color.DKGRAY);
+        closeButton.setGravity(Gravity.CENTER);
+        closeButton.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(8), AndroidUtilities.dp(16), AndroidUtilities.dp(8));
+        addView(closeButton, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP | Gravity.RIGHT, 0, 100, 10, 0));
+
+        closeButton.setOnClickListener(v -> {
+            HalalFmManager.getInstance().stop();
+            AndroidUtilities.removeFromParent(this);
+        });
         
         startAnimation();
     }
