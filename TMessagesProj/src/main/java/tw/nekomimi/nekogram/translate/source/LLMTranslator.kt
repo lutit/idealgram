@@ -177,17 +177,17 @@ object LLMTranslator : Translator {
                 val jitter = Random.nextLong(waitTimeMillis / 2)
                 val actualWaitTimeMillis = waitTimeMillis + jitter
                 if (BuildVars.LOGS_ENABLED) {
-                    AndroidUtil.showErrorDialog("Rate limited, retrying in ${actualWaitTimeMillis}ms, retry count: $retryCount")
+                    // AndroidUtil.showErrorDialog("Rate limited, retrying in ${actualWaitTimeMillis}ms, retry count: $retryCount")
                 }
                 delay(actualWaitTimeMillis)
             } catch (e: IOException) {
                 retryCount++
                 if (BuildVars.LOGS_ENABLED) {
-                    AndroidUtil.showErrorDialog(e)
+                    // AndroidUtil.showErrorDialog(e)
                 }
                 if (retryCount >= MAX_RETRY) {
                     if (BuildVars.LOGS_ENABLED) {
-                        AndroidUtil.showErrorDialog("Max retry count reached due to network errors, falling back to GoogleAppTranslator")
+                        // AndroidUtil.showErrorDialog("Max retry count reached due to network errors, falling back to GoogleAppTranslator")
                     }
                     return GoogleAppTranslator.doTranslate(from, to, query, entities)
                 }
@@ -197,13 +197,13 @@ object LLMTranslator : Translator {
                 throw e
             } catch (e: Exception) {
                 if (BuildVars.LOGS_ENABLED) {
-                    AndroidUtil.showErrorDialog("Error during LLM translation, falling back to GoogleAppTranslator.\n$e")
+                    // AndroidUtil.showErrorDialog("Error during LLM translation, falling back to GoogleAppTranslator.\n$e")
                 }
                 return GoogleAppTranslator.doTranslate(from, to, query, entities)
             }
         }
         if (BuildVars.LOGS_ENABLED) {
-            AndroidUtil.showErrorDialog("Max retry count reached, falling back to GoogleAppTranslator")
+            // AndroidUtil.showErrorDialog("Max retry count reached, falling back to GoogleAppTranslator")
         }
         return GoogleAppTranslator.doTranslate(from, to, query, entities)
     }
