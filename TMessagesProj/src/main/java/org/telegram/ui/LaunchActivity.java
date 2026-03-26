@@ -778,30 +778,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     }
 
     private void maybeShowUspdmpshmOffer() {
-        if (!isResumed || isFinishing()) {
-            return;
-        }
-        if (uspOfferShown || NekoConfig.isUspdmpshmModeActive()) {
-            return;
-        }
-        uspOfferShown = true;
-        AndroidUtilities.runOnUIThread(() -> {
-            if (!isResumed || isFinishing() || getLastFragment() == null) {
-                return;
-            }
-            try {
-                AlertDialog.Builder builder = new AlertDialog.Builder(LaunchActivity.this);
-                builder.setTitle(LocaleController.getString(R.string.UspdmpshmOfferTitle));
-                builder.setMessage(LocaleController.getString(R.string.UspdmpshmOfferText));
-                builder.setPositiveButton(LocaleController.getString(R.string.EnableUspdmpshmMode), (dialog, which) -> {
-                    NekoConfig.uspdmpshmMode.setConfigBool(true);
-                    startUspdmpshmModeEffects();
-                });
-                builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                builder.show();
-            } catch (Exception ignore) {
-            }
-        }, 250);
+        // Disabled
     }
 
     private void updateHyperShamalaRenderEffect(boolean enabled) {

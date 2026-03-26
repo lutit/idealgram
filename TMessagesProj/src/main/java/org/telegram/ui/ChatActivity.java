@@ -9291,8 +9291,10 @@ public class ChatActivity extends BaseFragment implements
             effectView.post(() -> effectView.start(() -> AndroidUtilities.removeFromParent(effectView)));
         }
         
-        org.telegram.ui.Components.UzbekAdView chatAd = new org.telegram.ui.Components.UzbekAdView(context, 0);
-        contentView.addView(chatAd, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP, 0, 100, 0, 0));
+        if (org.telegram.messenger.UserConfig.getInstance(currentAccount).isClientActivated()) {
+            org.telegram.ui.Components.UzbekAdView chatAd = new org.telegram.ui.Components.UzbekAdView(context, 0);
+            contentView.addView(chatAd, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.TOP, 0, 100, 0, 0));
+        }
 
         Timer.finish(t);
 

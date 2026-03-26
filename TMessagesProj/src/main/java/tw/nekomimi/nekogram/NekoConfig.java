@@ -229,7 +229,7 @@ public class NekoConfig {
     public static ConfigItem markReadAfterSend = addConfig("markReadAfterSend", configTypeBool, true);
     public static ConfigItem showGhostInDrawer = addConfig("showGhostInDrawer", configTypeBool, false);
     public static ConfigItem showGhostModeStatus = addConfig("showGhostModeStatus", configTypeBool, false);
-    public static ConfigItem shamalaMode = addConfig("shamalaMode", configTypeBool, true);
+    public static ConfigItem shamalaMode = addConfig("shamalaMode", configTypeBool, false);
     public static ConfigItem ultraShamalaMode = addConfig("ultraShamalaMode", configTypeBool, false);
     public static ConfigItem hyperShamalaMode = addConfig("hyperShamalaMode", configTypeBool, false);
     public static ConfigItem quantumShalavaMode = addConfig("quantumShalavaMode", configTypeBool, false);
