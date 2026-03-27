@@ -2,7 +2,7 @@
 
 <account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
     android:accountType="au.idealgram.org"
-    android:icon="@mipmap/ic_launcher_nagram_blue_round"
-    android:smallIcon="@mipmap/ic_launcher_nagram_blue_round"
+    android:icon="@mipmap/ic_launcher_uzbekgram_legacy_round"
+    android:smallIcon="@mipmap/ic_launcher_uzbekgram_legacy_round"
     android:label="@string/AppName"
     android:accountPreferences="@xml/auth_menu"/>

@@ -228,7 +228,7 @@ public final class QRCodeWriter {
             canvas.drawBitmap(icon, imageX, imageX, null);
             icon.recycle();
         } else {
-            Drawable drawable = ApplicationLoader.applicationContext.getResources().getDrawable(R.mipmap.ic_launcher_nagram_blue);
+            Drawable drawable = ApplicationLoader.applicationContext.getResources().getDrawable(R.mipmap.ic_launcher_uzbekgram_legacy);
             drawable.setBounds(imageX, imageX, imageX + imageSize, imageX + imageSize);
             drawable.draw(canvas);
         }
