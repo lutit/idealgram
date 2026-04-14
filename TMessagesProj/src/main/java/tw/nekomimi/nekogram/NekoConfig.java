@@ -231,6 +231,7 @@ public class NekoConfig {
     public static ConfigItem showGhostInDrawer = addConfig("showGhostInDrawer", configTypeBool, false);
     public static ConfigItem showGhostModeStatus = addConfig("showGhostModeStatus", configTypeBool, false);
     public static ConfigItem shamalaMode = addConfig("shamalaMode", configTypeBool, false);
+    public static ConfigItem shalavaModeUltra = addConfig("shalavaModeUltra", configTypeBool, false);
     public static ConfigItem ultraShamalaMode = addConfig("ultraShamalaMode", configTypeBool, false);
     public static ConfigItem hyperShamalaMode = addConfig("hyperShamalaMode", configTypeBool, false);
     public static ConfigItem quantumShalavaMode = addConfig("quantumShalavaMode", configTypeBool, false);
@@ -453,6 +454,16 @@ public class NekoConfig {
         ultraShamalaMode.toggleConfigBool();
     }
     // --- Ultra Shamala Mode ---
+
+    // --- SHALAVA MODE ULTRA ---
+    public static boolean isShalavaModeUltraActive() {
+        return shalavaModeUltra.Bool();
+    }
+
+    public static void toggleShalavaModeUltra() {
+        shalavaModeUltra.toggleConfigBool();
+    }
+    // --- SHALAVA MODE ULTRA ---
 
     // --- Hyper Shamala Mode ---
     public static boolean isHyperShamalaModeActive() {

@@ -141,6 +141,11 @@
     <string name="UltraShamalaModeEnabled">ULTRA ШАЛАВА MODE включён</string>
     <string name="UltraShamalaModeDisabled">ULTRA ШАЛАВА MODE выключен</string>
     <string name="UltraShamalaModeRandom">ULTRA Shamala устраивает полный хаос\u2026</string>
+    <string name="ShalavaModeUltra">SHALAVA MODE ULTRA</string>
+    <string name="EnableShalavaModeUltra">Включить SHALAVA MODE ULTRA</string>
+    <string name="DisableShalavaModeUltra">Выключить SHALAVA MODE ULTRA</string>
+    <string name="ShalavaModeUltraEnabled">SHALAVA MODE ULTRA включён</string>
+    <string name="ShalavaModeUltraDisabled">SHALAVA MODE ULTRA выключен</string>
     <string name="HyperShamalaMode">HYPER SHAMALA MODE</string>
     <string name="EnableHyperShamalaMode">Включить HYPER SHAMALA MODE</string>
     <string name="DisableHyperShamalaMode">Выключить HYPER SHAMALA MODE</string>

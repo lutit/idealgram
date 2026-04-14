@@ -85,6 +85,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnHaramModeV2 = 1027;
     public static int nkbtnAllahDurov = 1028;
     public static int nkbtnHalalFm = 1029;
+    public static int nkbtnShalavaModeUltra = 1030;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -392,6 +393,11 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
                     ? LocaleController.getString(R.string.DisableUltraShamalaMode)
                     : LocaleController.getString(R.string.EnableUltraShamalaMode);
             items.add(new Item(nkbtnUltraShamalaMode, ultraShamalaLabel, R.drawable.ayu_ghost));
+
+            CharSequence shalavaModeUltraLabel = NekoConfig.isShalavaModeUltraActive()
+                    ? LocaleController.getString(R.string.DisableShalavaModeUltra)
+                    : LocaleController.getString(R.string.EnableShalavaModeUltra);
+            items.add(new Item(nkbtnShalavaModeUltra, shalavaModeUltraLabel, R.drawable.ayu_ghost));
 
             CharSequence hyperShamalaLabel = NekoConfig.isHyperShamalaModeActive()
                     ? LocaleController.getString(R.string.DisableHyperShamalaMode)

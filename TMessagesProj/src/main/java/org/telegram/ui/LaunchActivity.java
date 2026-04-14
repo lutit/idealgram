@@ -202,6 +202,7 @@ import org.telegram.ui.Components.FireworksOverlay;
 import org.telegram.ui.Components.QuantumShalavaOverlay;
 import org.telegram.ui.Components.ShamalaFlyerOverlay;
 import org.telegram.ui.Components.ShamalaScreamerOverlay;
+import org.telegram.ui.Components.UltraShamalaDetonationOverlay;
 import org.telegram.ui.Components.UspdmpshmOverlay;
 import org.telegram.ui.Components.FloatingDebug.FloatingDebugController;
 import org.telegram.ui.Components.FolderBottomSheet;
@@ -356,6 +357,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private QuantumShalavaOverlay quantumShalavaOverlay;
     private ShamalaFlyerOverlay shamalaFlyerOverlay;
     private ShamalaScreamerOverlay shamalaScreamerOverlay;
+    private UltraShamalaDetonationOverlay ultraShamalaDetonationOverlay;
     private boolean shamalaScreamerScheduled;
     private final Runnable shamalaScreamerRunnable = new Runnable() {
         @Override
@@ -514,6 +516,28 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         AndroidUtilities.cancelRunOnUIThread(ultraShamalaModeRunnable);
         updateShamalaFlyerOverlay();
         updateShamalaScreamer();
+    }
+
+    public void onShalavaModeUltraToggled(boolean enabled) {
+        if (enabled) {
+            showUltraShamalaDetonationOverlay();
+        } else {
+            stopUltraShamalaDetonationOverlay();
+        }
+    }
+
+    private void showUltraShamalaDetonationOverlay() {
+        if (ultraShamalaDetonationOverlay == null) {
+            return;
+        }
+        ultraShamalaDetonationOverlay.start();
+    }
+
+    private void stopUltraShamalaDetonationOverlay() {
+        if (ultraShamalaDetonationOverlay == null) {
+            return;
+        }
+        ultraShamalaDetonationOverlay.stop();
     }
 
     private boolean hyperShamalaModeScheduled;
@@ -1086,6 +1110,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         });
         frameLayout.addView(shamalaFlyerOverlay = new ShamalaFlyerOverlay(this));
         frameLayout.addView(shamalaScreamerOverlay = new ShamalaScreamerOverlay(this));
+        frameLayout.addView(ultraShamalaDetonationOverlay = new UltraShamalaDetonationOverlay(this));
 
         setupActionBarLayout();        sideMenuContainer = new DrawerContainer(this);
         sideMenu = new RecyclerListView(this) {
@@ -1398,6 +1423,16 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     } else {
                         stopUltraShamalaModeEffects();
                     }
+                    drawerLayoutContainer.closeDrawer(false);
+                    NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
+                } else if (id == DrawerLayoutAdapter.nkbtnShalavaModeUltra) {
+                    boolean willEnable = !NekoConfig.isShalavaModeUltraActive();
+                    NekoConfig.toggleShalavaModeUltra();
+                    CharSequence msg = LocaleController.getString(
+                            willEnable ? R.string.ShalavaModeUltraEnabled : R.string.ShalavaModeUltraDisabled
+                    );
+                    BulletinFactory.of(getLastFragment()).createSimpleBulletin(R.raw.chats_infotip, msg).show();
+                    onShalavaModeUltraToggled(willEnable);
                     drawerLayoutContainer.closeDrawer(false);
                     NotificationCenter.getInstance(UserConfig.selectedAccount).postNotificationName(NotificationCenter.mainUserInfoChanged);
                 } else if (id == DrawerLayoutAdapter.nkbtnHyperShamalaMode) {
@@ -7959,6 +7994,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         stopHyperShamalaModeEffects();
         stopUspdmpshmModeEffects();
         stopQuantumShalavaModeEffects();
+        stopUltraShamalaDetonationOverlay();
         updateShamalaScreamer();
         uspOfferShown = false;
         pipActivityHandler.onPause();
