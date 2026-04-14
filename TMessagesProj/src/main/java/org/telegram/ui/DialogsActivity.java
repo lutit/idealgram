@@ -5573,7 +5573,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
         contentView.addView(dialogStoriesCell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, DialogStoriesCell.HEIGHT_IN_DP));
         updateStoriesVisibility(false);
 
-        if (org.telegram.messenger.UserConfig.getInstance(currentAccount).isClientActivated()) {
+        if (org.telegram.messenger.UserConfig.getInstance(currentAccount).isClientActivated() && NekoConfig.showUzbekAds.Bool()) {
             org.telegram.ui.Components.UzbekAdView searchAd = new org.telegram.ui.Components.UzbekAdView(context, 1);
             contentView.addView(searchAd, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.BOTTOM, 0, 0, 0, 50));
         }

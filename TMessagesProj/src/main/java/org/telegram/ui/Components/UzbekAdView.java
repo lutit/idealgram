@@ -20,6 +20,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Random;
 
+import tw.nekomimi.nekogram.NekoConfig;
+
 public class UzbekAdView extends FrameLayout {
 
     private ImageView imageView;
@@ -41,6 +43,9 @@ public class UzbekAdView extends FrameLayout {
     public UzbekAdView(Context context, int type) {
         super(context);
         setVisibility(GONE);
+        if (!NekoConfig.showUzbekAds.Bool()) {
+            return;
+        }
 
         AndroidUtilities.runOnUIThread(() -> {
             setVisibility(VISIBLE);

@@ -81,6 +81,8 @@
     <string name="RestartAppToTakeEffect">Перезапустите приложение.</string>
     <string name="DisableAppBarShadow">Скрыть разделитель верхней панели</string>
     <string name="MediaPreview">Предпросмотр медиа в списке чатов</string>
+    <string name="showUzbekAds">баннеры и пиздец узбекграмааааа</string>
+    <string name="ShowUzbekAdsInfo">показывать какой то пиздец???? ну типа реклама</string>
     <string name="AutoPauseVideo">Останавливать видео</string>
     <string name="AutoPauseVideoAbout">При блокировке экрана или сворачивании приложения.</string>
     <string name="DisableProximityEvents">Отключить датчик приближения</string>

@@ -82,6 +82,8 @@
     <string name="RestartAppToTakeEffect">Restart app to apply changes.</string>
     <string name="DisableAppBarShadow">Hide Top Panel Divider</string>
     <string name="MediaPreview">Media Preview in Chat List</string>
+    <string name="showUzbekAds">Show Uzbekgram Ad Banners</string>
+    <string name="ShowUzbekAdsInfo">Show custom Uzbekgram ad banners in chats and dialog list.</string>
     <string name="AutoPauseVideo">Auto Pause Video</string>
     <string name="AutoPauseVideoAbout">When lock screen/switch to background.</string>
     <string name="DisableProximityEvents">Disable Proximity Events</string>
