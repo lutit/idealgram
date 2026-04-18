@@ -129,6 +129,11 @@ public class NekoGeneralSettingsActivity extends BaseNekoXSettingsActivity {
     private final AbstractConfigCell customDoHRow = cellGroup.appendCell(new ConfigCellTextInput2(null, NekoConfig.customDoH, "https://1.0.0.1/dns-query, https://...", null));
     private final AbstractConfigCell dividerConnection = cellGroup.appendCell(new ConfigCellDivider());
 
+    // Performance
+    private final AbstractConfigCell headerPerformance = cellGroup.appendCell(new ConfigCellHeader("Производительность"));
+    private final AbstractConfigCell batterySavingRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.batterySaving70, null, "Экономия батареи до 70% (Умный режим)"));
+    private final AbstractConfigCell dividerPerformance = cellGroup.appendCell(new ConfigCellDivider());
+
     // Folder
     private final AbstractConfigCell headerFolder = cellGroup.appendCell(new ConfigCellHeader(getString(R.string.Folder)));
     private final AbstractConfigCell hideAllTabRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.hideAllTab, getString(R.string.HideAllTabAbout)));
