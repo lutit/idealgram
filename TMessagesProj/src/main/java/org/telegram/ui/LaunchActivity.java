@@ -1553,6 +1553,26 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         builder.setNegativeButton("Нет", null);
                         builder.show();
                     }
+                } else if (id == DrawerLayoutAdapter.nkbtnCovidTest) {
+                    drawerLayoutContainer.closeDrawer(false);
+                    org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
+                    builder.setTitle("Тест на коронавирус (Online)");
+                    builder.setMessage("Инициализация системы онлайн-обучения (апрель 2020)...\nЗапуск сканирования на COVID-19 через 5G-вышки...");
+                    builder.setPositiveButton("Сканировать", (dialogInterface, i) -> {
+                        org.telegram.ui.ActionBar.AlertDialog progressDialog = new org.telegram.ui.ActionBar.AlertDialog(LaunchActivity.this, org.telegram.ui.ActionBar.AlertDialog.ALERT_TYPE_SPINNER);
+                        progressDialog.setCanCancel(false);
+                        progressDialog.show();
+                        org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> {
+                            progressDialog.dismiss();
+                            org.telegram.ui.ActionBar.AlertDialog.Builder builder2 = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
+                            builder2.setTitle("Результат теста");
+                            builder2.setMessage("Вирус обнаружен! 🦠\nВам назначено обязательное онлайн-обучение.\nПожалуйста, оставайтесь дома.");
+                            builder2.setPositiveButton("Понятно", null);
+                            builder2.show();
+                        }, 3000);
+                    });
+                    builder.setNegativeButton("Отмена", null);
+                    builder.show();
                 } else if (id == DrawerLayoutAdapter.nkbtnHaramModeV2) {
                     org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
                     builder.setTitle("Режим харам v2");
