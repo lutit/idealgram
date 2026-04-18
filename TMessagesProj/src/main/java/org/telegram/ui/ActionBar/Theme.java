@@ -4793,6 +4793,36 @@ public class Theme {
         themes.add(themeInfo);
         themesDict.put("AMOLED", themeInfo);
 
+        themeInfo = new ThemeInfo();
+        themeInfo.name = "Allah";
+        themeInfo.assetName = "night.attheme";
+        themeInfo.previewBackgroundColor = 0xff004d00;
+        themeInfo.previewInColor = 0xff00b300;
+        themeInfo.previewOutColor = 0xff00ff00;
+        themeInfo.sortIndex = 6;
+        themes.add(themeInfo);
+        themesDict.put("Allah", themeInfo);
+
+        themeInfo = new ThemeInfo();
+        themeInfo.name = "Sex";
+        themeInfo.assetName = "day.attheme";
+        themeInfo.previewBackgroundColor = 0xffff66b3;
+        themeInfo.previewInColor = 0xffffb3d9;
+        themeInfo.previewOutColor = 0xffff0080;
+        themeInfo.sortIndex = 7;
+        themes.add(themeInfo);
+        themesDict.put("Sex", themeInfo);
+
+        themeInfo = new ThemeInfo();
+        themeInfo.name = "gay sex";
+        themeInfo.assetName = "day.attheme";
+        themeInfo.previewBackgroundColor = 0xffffff00;
+        themeInfo.previewInColor = 0xffff00ff;
+        themeInfo.previewOutColor = 0xff00ffff;
+        themeInfo.sortIndex = 8;
+        themes.add(themeInfo);
+        themesDict.put("gay sex", themeInfo);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             themeInfo = new ThemeInfo();
             themeInfo.name = "Monet Light";

@@ -48,6 +48,15 @@ public class HalalFmManager {
 
     public void toggle(Context context) {
         if (isPlaying) {
+            String currentTheme = org.telegram.messenger.MessagesController.getGlobalMainSettings().getString("theme", null);
+            if ("Sex".equals(currentTheme)) {
+                org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(context);
+                builder.setTitle("ОШИБКА");
+                builder.setMessage("В теме 'Sex' Uzbek FM (HALAL FM) выключить НЕВОЗМОЖНО! Слушай!");
+                builder.setPositiveButton("Понял", null);
+                builder.show();
+                return;
+            }
             stop();
             if (overlay != null) {
                 AndroidUtilities.removeFromParent(overlay);
