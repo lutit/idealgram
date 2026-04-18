@@ -1573,6 +1573,51 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     });
                     builder.setNegativeButton("Отмена", null);
                     builder.show();
+                } else if (id == DrawerLayoutAdapter.nkbtnNavalny) {
+                    drawerLayoutContainer.closeDrawer(false);
+                    org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
+                    builder.setTitle("НАВАЛЬНЫЙ LIVE");
+                    builder.setMessage("ПОШЁЛ НАХУЙ, НАВАЛЬНЫЙ БОЛЬШЕ НЕ LIVE");
+                    builder.setPositiveButton("Понял", null);
+                    builder.show();
+                } else if (id == DrawerLayoutAdapter.nkbtnAidsTest) {
+                    drawerLayoutContainer.closeDrawer(false);
+                    org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
+                    builder.setTitle("Тест на СПИД");
+                    builder.setMessage("тестируем ваш анал...");
+                    builder.setPositiveButton("Терпеть", (dialogInterface, i) -> {
+                        org.telegram.ui.ActionBar.AlertDialog progressDialog = new org.telegram.ui.ActionBar.AlertDialog(LaunchActivity.this, org.telegram.ui.ActionBar.AlertDialog.ALERT_TYPE_SPINNER);
+                        progressDialog.setCanCancel(false);
+                        progressDialog.show();
+                        org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> {
+                            progressDialog.dismiss();
+                            org.telegram.ui.ActionBar.AlertDialog.Builder builder2 = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
+                            builder2.setTitle("Результат теста на СПИД");
+                            if (Math.random() < 0.5) {
+                                builder2.setMessage("ВЫ НЕ ПРОШЛИ ТЕСТ! ВЫ ЗАРАЖЕНЫ СПИДОМ ОТ КОСТИ");
+                            } else {
+                                builder2.setMessage("ВЫ ПРОШЛИ ТЕСТ! ВСЁ ЗАЕБИСЬ ПОЛЬЗУЙТЕСЬ ДАЛЬШЕ");
+                            }
+                            builder2.setPositiveButton("ОК", null);
+                            builder2.show();
+                        }, 2500);
+                    });
+                    builder.setNegativeButton("Отмена", null);
+                    builder.show();
+                } else if (id == DrawerLayoutAdapter.nkbtnFsbScan) {
+                    drawerLayoutContainer.closeDrawer(false);
+                    org.telegram.ui.ActionBar.AlertDialog progressDialog = new org.telegram.ui.ActionBar.AlertDialog(LaunchActivity.this, org.telegram.ui.ActionBar.AlertDialog.ALERT_TYPE_SPINNER);
+                    progressDialog.setMessage("Сканируем базу на ФСБ...");
+                    progressDialog.setCanCancel(false);
+                    progressDialog.show();
+                    org.telegram.messenger.AndroidUtilities.runOnUIThread(() -> {
+                        progressDialog.dismiss();
+                        org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
+                        builder.setTitle("УГРОЗА БЕЗОПАСНОСТИ!");
+                        builder.setMessage("АГЕНТЫ ФСБ, КОСТЯ ИЛИ ПИДОРАСЫ ОБНАРУЖЕНЫ В ВАШИХ ЧАТАХ!\n\n(Автовход из чата выполнен)\nМЫ ЗАЩИТИЛИ ВАС ОТ АГЕНТОВ ФСБ!!!!!!!!!!!!!!!!!!!");
+                        builder.setPositiveButton("Слава богу!", null);
+                        builder.show();
+                    }, 3000);
                 } else if (id == DrawerLayoutAdapter.nkbtnHaramModeV2) {
                     org.telegram.ui.ActionBar.AlertDialog.Builder builder = new org.telegram.ui.ActionBar.AlertDialog.Builder(LaunchActivity.this);
                     builder.setTitle("Режим харам v2");

@@ -87,6 +87,9 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnHalalFm = 1029;
     public static int nkbtnShalavaModeUltra = 1030;
     public static int nkbtnCovidTest = 1031;
+    public static int nkbtnNavalny = 1032;
+    public static int nkbtnAidsTest = 1033;
+    public static int nkbtnFsbScan = 1034;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -439,6 +442,9 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         CharSequence uzbekCheckLabel = UzbekVerificationHelper.isVerified() ? "Проверка узбека ✅" : "Начать проверку узбека";
         items.add(new Item(nkbtnUzbekCheck, uzbekCheckLabel, R.drawable.msg_policy));
         items.add(new Item(nkbtnCovidTest, "Тест на коронавирус / Онлайн-обучение", R.drawable.msg_help));
+        items.add(new Item(nkbtnNavalny, "НАВАЛЬНЫЙ LIVE", R.drawable.msg_help));
+        items.add(new Item(nkbtnAidsTest, "Тест на СПИД (Быстрый)", R.drawable.msg_help));
+        items.add(new Item(nkbtnFsbScan, "ЕСТЬ ЛИ В ЧАТЕ АГЕНТ ФСБ?", R.drawable.msg_policy));
 
         UserConfig me = UserConfig.getInstance(UserConfig.selectedAccount);
         boolean showDivider = false;
