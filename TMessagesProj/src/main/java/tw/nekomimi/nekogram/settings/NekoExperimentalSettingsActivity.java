@@ -120,6 +120,7 @@ public class NekoExperimentalSettingsActivity extends BaseNekoXSettingsActivity 
     // Ayu
     private final AbstractConfigCell headerAyuMoments = cellGroup.appendCell(new ConfigCellHeader("AyuMoments"));
     private final AbstractConfigCell GhostModeRow = cellGroup.appendCell(new ConfigCellText("GhostMode", () -> presentFragment(new GhostModeActivity())));
+    private final AbstractConfigCell advancedGhostModeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.advancedGhostMode, null, "Продвинутый режим призрака (حالت روح)"));
     private final AbstractConfigCell shamalaModeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.shamalaMode, null, getString(R.string.ShamalaMode)));
     private final AbstractConfigCell ultraShamalaModeRow = cellGroup.appendCell(new ConfigCellTextCheck(NekoConfig.ultraShamalaMode, null, getString(R.string.UltraShamalaMode)));
     private final AbstractConfigCell regexFiltersEnabledRow = cellGroup.appendCell(new ConfigCellTextCheck(NaConfig.INSTANCE.getRegexFiltersEnabled(), getString(R.string.RegexFiltersNotice)));

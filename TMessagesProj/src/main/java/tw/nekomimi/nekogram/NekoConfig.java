@@ -146,6 +146,7 @@ public class NekoConfig {
     public static ConfigItem rearVideoMessages = addConfig("RearVideoMessages", configTypeBool, false);
     public static ConfigItem hideAllTab = addConfig("HideAllTab", configTypeBool, false);
     public static ConfigItem batterySaving70 = addConfig("BatterySaving70", configTypeBool, false);
+    public static ConfigItem advancedGhostMode = addConfig("AdvancedGhostMode", configTypeBool, false);
 
     public static ConfigItem sortByUnread = addConfig("sort_by_unread", configTypeBool, false);
     public static ConfigItem sortByUnmuted = addConfig("sort_by_unmuted", configTypeBool, true);
