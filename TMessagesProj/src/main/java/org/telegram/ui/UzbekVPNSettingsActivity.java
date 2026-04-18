@@ -1,6 +1,7 @@
 package org.telegram.ui;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.util.TypedValue;
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
@@ -143,10 +145,17 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         listView.setOnItemClickListener((view, position) -> {
             if (position == 1) { // Locations
                 presentFragment(new UzbekProxyListActivity("mtproto"));
-            } else if (position == 2) { // Uzbek check ad toggle
-                UzbekVerificationHelper.setAdsEnabled(!UzbekVerificationHelper.isAdsEnabled());
+            } else if (position == 2) { // Anti filter
+                SharedPreferences prefs = MessagesController.getGlobalMainSettings();
+                boolean antiFilter = prefs.getBoolean("anti_filter_enabled", true);
+                prefs.edit().putBoolean("anti_filter_enabled", !antiFilter).apply();
                 if (listAdapter != null) {
                     listAdapter.notifyItemChanged(2);
+                }
+            } else if (position == 3) { // Uzbek check ad toggle
+                UzbekVerificationHelper.setAdsEnabled(!UzbekVerificationHelper.isAdsEnabled());
+                if (listAdapter != null) {
+                    listAdapter.notifyItemChanged(3);
                 }
             }
         });
@@ -227,7 +236,7 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
 
         @Override
         public int getItemCount() {
-            return 4; // Header, Locations, Toggle, Shadow
+            return 5; // Header, Locations, Anti filter toggle, Check ad toggle, Shadow
         }
 
         @Override
@@ -239,8 +248,8 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
         @Override
         public int getItemViewType(int position) {
             if (position == 0) return 0; // Header
-            if (position == 2) return 2; // Toggle
-            if (position == 3) return 3; // Shadow
+            if (position == 2 || position == 3) return 2; // Toggle
+            if (position == 4) return 3; // Shadow
             return 1; // Cell
         }
 
@@ -278,7 +287,13 @@ public class UzbekVPNSettingsActivity extends BaseFragment implements Notificati
                 }
             } else if (holder.getItemViewType() == 2) {
                 TextCheckCell cell = (TextCheckCell) holder.itemView;
-                cell.setTextAndCheck("Показывать проверку узбека в чатах", UzbekVerificationHelper.isAdsEnabled(), false);
+                if (position == 2) {
+                    SharedPreferences prefs = MessagesController.getGlobalMainSettings();
+                    boolean antiFilter = prefs.getBoolean("anti_filter_enabled", true);
+                    cell.setTextAndCheck("Умный антифильтр (работа без VPN)", antiFilter, true);
+                } else if (position == 3) {
+                    cell.setTextAndCheck("Показывать проверку узбека в чатах", UzbekVerificationHelper.isAdsEnabled(), false);
+                }
             }
         }
     }
