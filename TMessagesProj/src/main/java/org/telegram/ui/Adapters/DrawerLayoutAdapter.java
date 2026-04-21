@@ -90,6 +90,7 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
     public static int nkbtnNavalny = 1032;
     public static int nkbtnAidsTest = 1033;
     public static int nkbtnFsbScan = 1034;
+    public static int nkbtnGipHot = 1035;
 
     public DrawerLayoutAdapter(Context context, SideMenultItemAnimator animator, DrawerLayoutContainer drawerLayoutContainer) {
         mContext = context;
@@ -525,13 +526,15 @@ public class DrawerLayoutAdapter extends RecyclerListView.SelectionAdapter imple
         boolean showUzbekHub = true;
         boolean showUzbekXXX = true;
         boolean showLegends = true;
-        if (showNSettings || showBrowser || showOpenQuran || showOpenBible || showQrLogin || showSessions || showTv || showPornTv || showUzbekHub || showUzbekXXX || showLegends) items.add(null); // divider
+        boolean showGipHot = true;
+        if (showNSettings || showBrowser || showOpenQuran || showOpenBible || showQrLogin || showSessions || showTv || showPornTv || showUzbekHub || showUzbekXXX || showLegends || showGipHot) items.add(null); // divider
         if (showNSettings) items.add(new Item(nkbtnSettings, LocaleController.getString(R.string.NekoSettings), R.drawable.nagramx_outline));
         if (showBrowser) items.add(new Item(nkbtnBrowser, LocaleController.getString(R.string.InappBrowser), R.drawable.web_browser));
         if (showTv) items.add(new Item(nkbtnTv, "TV", R.drawable.screencast_big_solar));
         if (showPornTv) items.add(new Item(nkbtnPornTv, "Porn TV", R.drawable.screencast_big_solar));
         if (showUzbekHub) items.add(new Item(nkbtnUzbekHub, "UzbekHub", R.drawable.screencast_big_solar));
         if (showUzbekXXX) items.add(new Item(nkbtnUzbekXXX, "UzbekXXX", R.drawable.screencast_big_solar));
+        if (showGipHot) items.add(new Item(nkbtnGipHot, "GipHot", R.drawable.web_browser));
         if (showLegends) items.add(new Item(nkbtnLegends, LocaleController.getString(R.string.Legends), R.drawable.msg_spoiler));
         if (showOpenQuran) items.add(new Item(nkbtnOpenQuran, LocaleController.getString(R.string.OpenQuran), R.drawable.filter_book_solar));
         if (showOpenBible) items.add(new Item(nkbtnOpenBible, LocaleController.getString(R.string.OpenBible), R.drawable.filter_book));

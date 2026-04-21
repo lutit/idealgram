@@ -1372,6 +1372,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 } else if (id == DrawerLayoutAdapter.nkbtnUzbekXXX) {
                     Browser.openUrl(LaunchActivity.this, "https://konachan.com/post?tags=-rating%3Asafe");
                     drawerLayoutContainer.closeDrawer(true);
+                } else if (id == DrawerLayoutAdapter.nkbtnGipHot) {
+                    openCustomWebApp("GipHot", "https://giphot.lutit.xyz", true);
                 } else if (id == DrawerLayoutAdapter.nkbtnOpenQuran) {
                     Browser.openUrl(LaunchActivity.this, "https://tanzil.net/");
                     drawerLayoutContainer.closeDrawer(true);
@@ -2148,6 +2150,47 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 //            webViewSheet.requestWebView(lastFragment, props);
 //            webViewSheet.show();
 //        }
+    }
+
+    private void openCustomWebApp(String title, String url, boolean sidemenu) {
+        drawerLayoutContainer.closeDrawer();
+        BaseFragment lastFragment = getLastFragment();
+        if (lastFragment == null || TextUtils.isEmpty(url)) return;
+
+        final long selfId = UserConfig.getInstance(currentAccount).getClientUserId();
+        final TLRPC.User selfUser = MessagesController.getInstance(currentAccount).getUser(selfId);
+        WebViewRequestProps props = WebViewRequestProps.of(
+                currentAccount,
+                selfId,
+                selfId,
+                title,
+                url,
+                BotWebViewAttachedSheet.TYPE_SIMPLE_WEB_VIEW_BUTTON,
+                0,
+                0L,
+                false,
+                null,
+                false,
+                null,
+                selfUser,
+                sidemenu ? BotWebViewSheet.FLAG_FROM_SIDE_MENU : 0,
+                false,
+                false
+        );
+        TLRPC.TL_simpleWebViewResultUrl resultUrl = new TLRPC.TL_simpleWebViewResultUrl();
+        resultUrl.url = url;
+        props.applyResponse(resultUrl);
+
+        if (getBottomSheetTabs() != null && getBottomSheetTabs().tryReopenTab(props) != null) {
+            return;
+        }
+
+        BotWebViewSheet webViewSheet = new BotWebViewSheet(this, lastFragment.getResourceProvider());
+        webViewSheet.setNeedsContext(false);
+        webViewSheet.setDefaultFullsize(sidemenu);
+        webViewSheet.setParentActivity(this);
+        webViewSheet.requestWebView(lastFragment, props);
+        webViewSheet.show();
     }
 
     @Override
