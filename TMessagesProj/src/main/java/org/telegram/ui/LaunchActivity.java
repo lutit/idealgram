@@ -1364,21 +1364,21 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     Browser.openUrl(LaunchActivity.this, "https://youtube.com/watch?v=dz1MhkbPthI");
                     drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnPornTv) {
-                    Browser.openUrl(LaunchActivity.this, "https://yande.re");
+                    openCustomWebApp("Porn TV", "https://yande.re", true);
                     drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnUzbekHub) {
-                    Browser.openUrl(LaunchActivity.this, "https://danbooru.donmai.us/posts?tags=animated+-rating%3Ageneral");
+                    openCustomWebApp("UzbekHub", "https://danbooru.donmai.us/posts?tags=animated+-rating%3Ageneral", true);
                     drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnUzbekXXX) {
-                    Browser.openUrl(LaunchActivity.this, "https://konachan.com/post?tags=-rating%3Asafe");
+                    openCustomWebApp("UzbekXXX", "https://konachan.com/post?tags=-rating%3Asafe", true);
                     drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnGipHot) {
                     openCustomWebApp("GipHot", "https://giphot.lutit.xyz", true);
                 } else if (id == DrawerLayoutAdapter.nkbtnOpenQuran) {
-                    Browser.openUrl(LaunchActivity.this, "https://tanzil.net/");
+                    openCustomWebApp("Quran", "https://tanzil.net", true);
                     drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnOpenBible) {
-                    Browser.openUrl(LaunchActivity.this, "https://www.biblegateway.com/");
+                    openCustomWebApp("Bible", "https://www.biblegateway.com", true);
                     drawerLayoutContainer.closeDrawer(true);
                 } else if (id == DrawerLayoutAdapter.nkbtnLegends) {
                     presentFragment(new LegendsActivity());
